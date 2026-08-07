@@ -1,7 +1,6 @@
 \set ON_ERROR_STOP on
 \pset tuples_only on
 
--- ============================================ 1. forfeit on a missed window ==
 insert into auth.users (id, email, raw_user_meta_data) values
   ('aaaaaaaa-0000-0000-0000-000000000001','f1@x.de','{"handle":"forf_a","display_name":"ForfA"}'),
   ('aaaaaaaa-0000-0000-0000-000000000002','f2@x.de','{"handle":"forf_b","display_name":"ForfB"}'),
@@ -10,18 +9,17 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('cccccccc-0000-0000-0000-000000000001','d1@x.de','{"handle":"dead_a","display_name":"DeadA"}'),
   ('cccccccc-0000-0000-0000-000000000002','d2@x.de','{"handle":"dead_b","display_name":"DeadB"}');
 
+-- ============================================ 1. forfeit on a missed window ==
 insert into public.matches (discipline_id, format_id, shooter_a, shooter_b, state, opens_at, closes_at)
 select d.id, f.id, 'aaaaaaaa-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000002',
        'live', now() - interval '8 days', now() - interval '1 day'
   from public.disciplines d, public.formats f where d.code='AR10ET' and f.code='single_10';
 
--- only one side turns up; backdate the bout so shot_at passes validation
 update public.bouts set closes_at = now() + interval '1 hour'
  where match_id = (select id from public.matches where shooter_a='aaaaaaaa-0000-0000-0000-000000000001');
 
-insert into public.submissions (bout_id, shooter_id, shots, shot_at, source)
-select b.id, 'aaaaaaaa-0000-0000-0000-000000000001',
-       array[10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0], now(), 'manual'
+insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
+select b.id, 'aaaaaaaa-0000-0000-0000-000000000001', 100.0, 5, now(), b.id::text || '/a/x.jpg'
   from public.bouts b
   join public.matches m on m.id = b.match_id
  where m.shooter_a = 'aaaaaaaa-0000-0000-0000-000000000001';
@@ -40,13 +38,13 @@ select d.id, f.id, 'bbbbbbbb-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0
        'live', now() - interval '1 hour', now() + interval '7 days'
   from public.disciplines d, public.formats f where d.code='AR10ET' and f.code='single_10';
 
-insert into public.submissions (bout_id, shooter_id, shots, shot_at, source)
-select b.id, m.shooter_a, array[10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0], now(), 'manual'
+insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
+select b.id, m.shooter_a, 103.0, 7, now(), b.id::text || '/a/x.jpg'
   from public.bouts b join public.matches m on m.id = b.match_id
  where m.shooter_a='bbbbbbbb-0000-0000-0000-000000000001';
 
-insert into public.submissions (bout_id, shooter_id, shots, shot_at, source)
-select b.id, m.shooter_b, array[10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0], now(), 'manual'
+insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
+select b.id, m.shooter_b, 103.0, 7, now(), b.id::text || '/b/x.jpg'
   from public.bouts b join public.matches m on m.id = b.match_id
  where m.shooter_a='bbbbbbbb-0000-0000-0000-000000000001';
 
@@ -55,7 +53,17 @@ select 'tied match state: ' || state || ', bouts now: ' || (
 ) || ' (shoot-off added)'
   from public.matches m where m.shooter_a='bbbbbbbb-0000-0000-0000-000000000001';
 
--- ==================================== 3. nobody shows up -> match is voided ==
+-- ===================== 3. lapsed peer confirmation auto-accepts, but counts ==
+update public.bouts set confirm_closes_at = now() - interval '1 minute'
+ where match_id = (select id from public.matches where shooter_a='bbbbbbbb-0000-0000-0000-000000000001')
+   and state = 'settled';
+
+select 'expire_confirmations auto-accepted ' || public.expire_confirmations() || ' submission(s)';
+select 'tie_a confirmations: ' || confirmations_given || '/' || confirmations_due
+       || ' -> rate ' || coalesce(confirmation_rate_pct::text,'n/a') || '%'
+  from public.shooter_reliability where handle = 'tie_a';
+
+-- ==================================== 4. nobody shows up -> match is voided ==
 insert into public.matches (discipline_id, format_id, shooter_a, shooter_b, state, opens_at, closes_at)
 select d.id, f.id, 'cccccccc-0000-0000-0000-000000000001', 'cccccccc-0000-0000-0000-000000000002',
        'live', now() - interval '9 days', now() - interval '2 days'
@@ -65,33 +73,51 @@ select 'void_dead_matches voided ' || public.void_dead_matches() || ' match(es)'
 select 'dead match state: ' || state from public.matches
  where shooter_a='cccccccc-0000-0000-0000-000000000001';
 
--- ============================================ 4. input validation on shots ==
+-- ============================================ 5. input validation, no OCR ==
 \set ON_ERROR_STOP off
-\echo '-- 9 shots instead of 10 (expect failure)'
-insert into public.submissions (bout_id, shooter_id, shots, shot_at, source)
-select b.id, m.shooter_a, array[10,10,10,10,10,10,10,10,10]::numeric[], now(), 'manual'
-  from public.bouts b join public.matches m on m.id = b.match_id
- where m.shooter_a='bbbbbbbb-0000-0000-0000-000000000001' and b.state='open' limit 1;
 
-\echo '-- 11.5 on a 10.9 discipline (expect failure)'
-insert into public.submissions (bout_id, shooter_id, shots, shot_at, source)
-select b.id, m.shooter_a, array[11.5,10,10,10,10,10,10,10,10,10]::numeric[], now(), 'manual'
-  from public.bouts b join public.matches m on m.id = b.match_id
- where m.shooter_a='bbbbbbbb-0000-0000-0000-000000000001' and b.state='open' limit 1;
-
-\echo '-- decimal value on an integer-scored pistol discipline (expect failure)'
 insert into public.matches (discipline_id, format_id, shooter_a, shooter_b, state, opens_at, closes_at)
 select d.id, f.id, 'bbbbbbbb-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000002',
        'live', now() - interval '1 hour', now() + interval '7 days'
   from public.disciplines d, public.formats f where d.code='AP10ET' and f.code='single_10';
 
-insert into public.submissions (bout_id, shooter_id, shots, shot_at, source)
-select b.id, m.shooter_a, array[10.4,10,10,10,10,10,10,10,10,10]::numeric[], now(), 'manual'
-  from public.bouts b join public.matches m on m.id = b.match_id
- where m.discipline_id = (select id from public.disciplines where code='AP10ET') limit 1;
+select b.id as pbout from public.bouts b join public.matches m on m.id = b.match_id
+ where m.discipline_id = (select id from public.disciplines where code='AP10ET') limit 1 \gset
+
+select b.id as rbout from public.bouts b join public.matches m on m.id = b.match_id
+ where m.shooter_a = 'bbbbbbbb-0000-0000-0000-000000000001'
+   and m.discipline_id = (select id from public.disciplines where code='AR10ET')
+   and b.state = 'open' limit 1 \gset
+
+\echo '-- total above the discipline maximum (expect failure)'
+insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
+values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 120.0, 10, now(), 'x/y/z.jpg');
+
+\echo '-- 11 tens in a 10 shot series (expect failure)'
+insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
+values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 100.0, 11, now(), 'x/y/z.jpg');
+
+\echo '-- 104.4 cannot happen with only 2 tens (expect failure)'
+insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
+values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 104.4, 2, now(), 'x/y/z.jpg');
+
+\echo '-- 60.0 cannot happen with 8 tens (expect failure)'
+insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
+values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 60.0, 8, now(), 'x/y/z.jpg');
+
+\echo '-- decimal total on an integer-scored pistol discipline (expect failure)'
+insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
+values (:'pbout', 'bbbbbbbb-0000-0000-0000-000000000001', 95.4, 5, now(), 'x/y/z.jpg');
+
+\echo '-- shots array disagreeing with the reported total (expect failure)'
+insert into public.submissions (bout_id, shooter_id, total, tens, shots, shot_at, photo_path, source)
+values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 104.4, 8,
+        array[10.5,10.4,10.3,10.6,10.2,10.5,10.4,9.8,10.7,7.0], now(), 'x/y/z.jpg', 'file_export');
 
 \echo '-- series fired before the bout opened (expect failure)'
-insert into public.submissions (bout_id, shooter_id, shots, shot_at, source)
-select b.id, m.shooter_a, array[10,10,10,10,10,10,10,10,10,10]::numeric[], now() - interval '30 days', 'manual'
-  from public.bouts b join public.matches m on m.id = b.match_id
- where m.discipline_id = (select id from public.disciplines where code='AP10ET') limit 1;
+insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
+values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 100.0, 5, now() - interval '30 days', 'x/y/z.jpg');
+
+\echo '-- no photo (expect failure)'
+insert into public.submissions (bout_id, shooter_id, total, tens, shot_at)
+values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 100.0, 5, now());

@@ -63,6 +63,8 @@ create table public.bouts (
   opens_at      timestamptz not null,
   closes_at     timestamptz not null,
   revealed_at   timestamptz,
+  -- Set on reveal. Until then there is nothing to confirm.
+  confirm_closes_at timestamptz,
   -- null winner on a settled bout means the bout was tied.
   winner_id     uuid references public.profiles (id),
   is_tie        boolean not null default false,

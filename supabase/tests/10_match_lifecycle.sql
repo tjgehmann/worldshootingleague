@@ -30,34 +30,32 @@ select m.state, count(b.*) as bouts, min(b.state::text) as bout_state
   from public.matches m join public.bouts b on b.match_id = m.id
  group by m.id, m.state;
 
--- play the first match: shooter_a takes bouts 1-3
+-- Play the first match. Both shooters report two numbers and a photo, which is
+-- the everyday path: no shot array, no OCR.
 do $$
 declare
   v_match public.matches%rowtype;
   v_bout  public.bouts%rowtype;
-  v_a numeric[]; v_b numeric[];
 begin
   select * into v_match from public.matches order by id limit 1;
 
   for v_bout in select * from public.bouts where match_id = v_match.id order by index loop
-    -- a shoots 104.x, b shoots 102.x -> a wins every bout, match ends after 3
-    v_a := array[10.5,10.4,10.3,10.6,10.2,10.5,10.4,10.3,10.7,10.5];
-    v_b := array[10.1,10.2,10.0, 9.8,10.3,10.1, 9.9,10.2,10.0,10.1];
-
-    insert into public.submissions (bout_id, shooter_id, shots, shot_at, source)
-      values (v_bout.id, v_match.shooter_a, v_a, now(), 'manual');
+    -- A reports 104.4 with 8 tens, B reports 102.7 with 6 -> A wins every bout
+    insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
+      values (v_bout.id, v_match.shooter_a, 104.4, 8, now(), v_bout.id::text || '/a/shot.jpg');
 
     raise notice 'after A submits bout %: bout state=%',
       v_bout.index, (select state from public.bouts where id = v_bout.id);
 
-    insert into public.submissions (bout_id, shooter_id, shots, shot_at, source)
-      values (v_bout.id, v_match.shooter_b, v_b, now(), 'manual');
+    insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
+      values (v_bout.id, v_match.shooter_b, 102.7, 6, now(), v_bout.id::text || '/b/shot.jpg');
 
     exit when (select state from public.matches where id = v_match.id) <> 'live';
   end loop;
 end $$;
 
-select index, state, is_tie, (winner_id is not null) as has_winner
+select index, state, is_tie, (winner_id is not null) as has_winner,
+       (confirm_closes_at is not null) as confirm_window_set
   from public.bouts
  where match_id = (select id from public.matches order by id limit 1)
  order by index;
@@ -82,5 +80,28 @@ select p.handle, r.rating, r.rd, r.volatility, r.matches_played, r.wins, r.losse
  order by r.rating desc;
 
 select count(*) as rating_events from public.rating_events;
+
+-- recent form, used by the client to warn about a slipped digit before upload
+select 'thomas form: ' || series || ' series, avg ' || average || ', best ' || best
+  from public.shooter_recent_form(
+    '11111111-1111-1111-1111-111111111111',
+    (select id from public.disciplines where code = 'AR10ET'));
+
+-- a file export may carry the individual shots; they must agree with the numbers
+insert into public.matches (discipline_id, format_id, shooter_a, shooter_b, state, opens_at, closes_at)
+select d.id, f.id, '33333333-3333-3333-3333-333333333333', '44444444-4444-4444-4444-444444444444',
+       'live', now() - interval '1 hour', now() + interval '7 days'
+  from public.disciplines d, public.formats f where d.code='AR10ET' and f.code='single_10';
+
+insert into public.submissions (bout_id, shooter_id, total, tens, shots, shot_at, photo_path, source)
+select b.id, m.shooter_a, 100.4, 8,
+       array[10.5,10.4,10.3,10.6,10.2,10.5,10.4,9.8,10.7,7.0], now(),
+       b.id::text || '/c/export.jpg', 'file_export'
+  from public.bouts b join public.matches m on m.id = b.match_id
+ where m.shooter_a = '33333333-3333-3333-3333-333333333333'
+   and m.format_id = (select id from public.formats where code = 'single_10');
+
+select 'file export accepted, total ' || total || ' / tens ' || tens || ' / source ' || source
+  from public.submissions where source = 'file_export';
 
 rollback;

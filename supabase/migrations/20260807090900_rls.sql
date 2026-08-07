@@ -221,6 +221,7 @@ create policy insert_confirmation on public.bout_confirmations
   for insert to authenticated
   with check (
     confirmed_by = auth.uid()
+    and not is_auto                              -- only expire_confirmations() sets that
     and exists (
       select 1 from public.submissions s join public.bouts b on b.id = s.bout_id
        where s.id = submission_id
@@ -302,4 +303,23 @@ with (security_invoker = false) as
   join public.disciplines d on d.id = r.discipline_id
   where r.matches_played > 0 and p.is_public;
 
-grant select on public.match_results, public.leaderboard to anon, authenticated;
+-- With no automated scoring, peer verification is the check. How reliably a
+-- shooter performs it belongs next to their name.
+create view public.shooter_reliability
+with (security_invoker = false) as
+  select
+    p.id     as shooter_id,
+    p.handle,
+    count(c.*)                                          as confirmations_due,
+    count(c.*) filter (where not c.is_auto)             as confirmations_given,
+    case
+      when count(c.*) = 0 then null
+      else round(100.0 * count(c.*) filter (where not c.is_auto) / count(c.*))
+    end                                                 as confirmation_rate_pct
+  from public.profiles p
+  left join public.bout_confirmations c on c.confirmed_by = p.id
+  where p.is_public
+  group by p.id, p.handle;
+
+grant select on public.match_results, public.leaderboard, public.shooter_reliability
+  to anon, authenticated;

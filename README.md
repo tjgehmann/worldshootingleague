@@ -1,9 +1,10 @@
 # World Shooting League
 
 Online-Liga für Sportschützen auf elektronischen Ständen. Zwei Schützen treten
-zeit- und ortsunabhängig gegeneinander an: jeder schießt in seinem Verein, lädt
-das Ergebnis hoch, und erst wenn beide abgegeben haben, werden die Ergebnisse
-gegenseitig sichtbar.
+zeit- und ortsunabhängig gegeneinander an: jeder schießt in seinem Verein,
+meldet Gesamtergebnis und Anzahl Zehner mit einem Foto der Anzeige, und erst
+wenn beide abgegeben haben, werden die Ergebnisse gegenseitig sichtbar.
+Anschließend prüft jeder das Foto des Gegners.
 
 Dieses Repository enthält aktuell das **Datenmodell** — Postgres-Schema für
 Supabase, inklusive Zustandsautomat, Row Level Security und Glicko-2-Rating.
@@ -73,8 +74,11 @@ Getestet werden:
   Doppelabgabe, Abgabe für Dritte, Überschreiben und Löschen scheitern; ein
   Unbeteiligter sieht das Ergebnis, aber keine Submission.
 * **`30_deadlines_and_validation.sql`** — Forfeit bei verpasster Deadline,
-  Stechkampf-Bout bei Gleichstand, Verwerfen toter Matches, Ablehnung falscher
-  Schusszahl, überhöhter Werte, Zehntel bei Pistole und rückdatierter Serien.
+  Stechkampf-Bout bei Gleichstand, automatische Bestätigung nach abgelaufenem
+  Fenster (und ihre Wirkung auf die Quote), Verwerfen toter Matches; Ablehnung
+  überhöhter Ergebnisse, unmöglicher Zehner/Ergebnis-Kombinationen, Zehntel bei
+  Pistole, abweichender Einzelschussdaten, rückdatierter Serien und fehlender
+  Fotos.
 
 ## Auf ein Supabase-Projekt anwenden
 
@@ -87,9 +91,19 @@ psql "$DATABASE_URL" -f supabase/seed.sql
 `pg_cron` vorher unter *Database → Extensions* aktivieren, sonst schlägt die
 Scheduling-Migration fehl.
 
+## Eingabemodell
+
+Zwei Zahlen und ein Foto — mehr nicht. Bewusst **keine OCR**: eine Zahl zu
+tippen lohnt keine Automatisierung, und die Verifikation macht der Gegner nach
+dem Reveal, motiviert und zuverlässiger als ein Modell auf einem Monitorfoto.
+Wer exportieren kann (SIUS-CSV, später Hersteller-API), darf zusätzlich die
+Einzelschüsse liefern; dann prüfen sich beide Wege gegenseitig.
+
+Details und Begründung in [`docs/data-model.md`](docs/data-model.md).
+
 ## Nächste Schritte
 
-1. Edge Function für die OCR der Meyton-/DISAG-Streifen, die
-   `submissions.shots` befüllt (`source = 'photo_ocr'`).
-2. Expo-Client: Ladder, Upload, Match-Detail, Push bei „Gegner hat abgegeben".
+1. Expo-Client: Ladder, Meldung (zwei Felder + Kamera), Match-Detail,
+   Bestätigungsschritt, Push bei „Gegner hat abgegeben".
+2. CSV-Import für SIUS-Exporte (`source = 'file_export'`).
 3. Referee-Ansicht für die Fallliste.

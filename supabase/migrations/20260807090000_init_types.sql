@@ -41,9 +41,19 @@ create type public.submission_state as enum (
   'submitted', 'revealed', 'accepted', 'disputed', 'rejected'
 );
 
--- Where the shot values came from. 'device_api' is reserved for a future
--- direct integration with the target manufacturers.
-create type public.submission_source as enum ('photo_ocr', 'manual', 'device_api');
+-- Where the result came from. 'manual' is the default and works on every range
+-- in the world: the shooter reads two numbers off the display and types them in.
+-- 'file_export' is the SIUS/DISAG CSV path, which also carries the individual
+-- shots. 'device_api' is reserved for a direct manufacturer integration.
+--
+-- There is deliberately no OCR path. Typing one number is not worth automating,
+-- and the opponent verifies the photo after the reveal anyway — better than a
+-- model reading a photo of a monitor.
+create type public.submission_source as enum ('manual', 'file_export', 'device_api');
+
+-- How the evidence photo reached the app. Capturing in-app removes the easiest
+-- way to submit an old result; it is not a guarantee, just a cheap bar.
+create type public.capture_method as enum ('in_app_camera', 'gallery', 'file');
 
 create type public.dispute_state as enum ('open', 'assigned', 'resolved', 'withdrawn');
 

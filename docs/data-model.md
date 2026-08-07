@@ -11,7 +11,7 @@ Postgres-Schema für die World Shooting League auf Supabase. Kurze Formate:
 | **Match** | Duell zweier Schützen. `single_10` = 1 Bout, `best_of_five` = bis zu 5 Bouts. |
 | **Round** | Eine Runde der Saison-Ladder. Erzeugt für jeden Teilnehmer ein Match. |
 | **Season** | Ladder über eine Disziplin und ein Format, mit fester Rundenzahl. |
-| **Submission** | Was ein Schütze für einen Bout hochlädt: 10 Werte, Foto, Schießzeitpunkt. |
+| **Submission** | Was ein Schütze für einen Bout meldet: Gesamtergebnis, Anzahl Zehner, Foto, Schießzeitpunkt. |
 
 ## Entitäten
 
@@ -92,22 +92,56 @@ Erreicht eine Seite `points_to_win` (3.0), werden die restlichen Bouts auf
 Gleichstand nach allen Bouts wird in dieser Reihenfolge aufgelöst:
 Gesamtringzahl → Anzahl Zehner → zusätzlicher Stechkampf-Bout über 48 Stunden.
 
+## Eingabe: zwei Zahlen und ein Foto
+
+Der Schütze liest **Gesamtergebnis** und **Anzahl Zehner** von der Anzeige oder
+dem Ausdruck ab und tippt sie ein. Das Foto ist Pflicht — es ist das
+Beweismittel, das der Gegner nach dem Reveal prüft.
+
+Es gibt bewusst **keine OCR**. Eine Zahl zu tippen lohnt keine Automatisierung,
+und die Verifikation macht der Gegner ohnehin: motiviert, und zuverlässiger als
+ein Modell auf einem Monitorfoto. Anlagen, die exportieren können (SIUS-CSV,
+später Hersteller-API), dürfen zusätzlich die Einzelschüsse mitliefern
+(`source = 'file_export'`) — dann prüfen sich beide Wege gegenseitig.
+
+Warum zwei Zahlen und nicht nur eine:
+
+* Der **Zehner-Tiebreak** bleibt erhalten. Bei Pistole über 10 Schuss sind
+  Gleichstände häufig; ohne Zehnerzahl ginge jeder davon in den Stechkampf.
+* Die beiden Zahlen müssen **zueinander passen**. `t` Schüsse mit 10 oder
+  besser und der Rest darunter begrenzen das erreichbare Gesamtergebnis von
+  beiden Seiten: 104,4 mit nur 2 Zehnern ist unmöglich und wird abgelehnt. Das
+  hält keinen entschlossenen Betrüger auf, fängt aber den verrutschten Finger —
+  den realistischen Fehlerfall.
+
 ## Was das Vertrauensmodell trägt
 
-1. **Submissions sind unveränderlich.** Für Schützen gibt es keine
+1. **Der Blind Reveal ist der stärkste Hebel.** Wer nicht weiß, welchen Wert er
+   schlagen muss, kann nicht so lange schießen, bis es reicht.
+2. **Submissions sind unveränderlich.** Für Schützen gibt es keine
    UPDATE- und keine DELETE-Policy. Eine Korrektur passiert über
    `adjusted_total` durch einen Schiedsrichter; der Originalwert bleibt stehen.
-2. **Abgeleitete Werte kommen nie vom Client.** `total` und `tens` berechnet
-   `validate_submission()` aus dem Array. Was der Client als Summe schickt,
-   wird überschrieben.
-3. **`shot_at` muss im Bout-Fenster liegen** (1 h Toleranz für Uhrendrift auf
-   Standdruckern). Billigster Replay-Schutz gegen das Hochladen alter Serien.
-4. **Wertebereich pro Disziplin.** 10 Werte, 0 bis `max_shot_value`, bei
-   Pistole nur ganze Ringe.
-5. **Fotos sind Beweismittel.** Der Storage-Bucket erlaubt Insert und Select,
+3. **Die Peer-Bestätigung ersetzt die automatische Auswertung.** Jeder Schütze
+   prüft das Foto des Gegners gegen die gemeldeten Zahlen. Wer das Fenster
+   verstreichen lässt, blockiert die Liga nicht — die Bestätigung wird
+   automatisch gesetzt und zählt gegen seine Quote in
+   `shooter_reliability`.
+4. **`shot_at` muss im Bout-Fenster liegen** (1 h Toleranz für Uhrendrift auf
+   Standdruckern). Billigster Replay-Schutz gegen das Melden alter Serien.
+5. **Plausibilität pro Disziplin.** Gesamtergebnis in Reichweite, Zehnerzahl
+   nicht über der Schusszahl, bei Pistole nur ganze Ringe, und beide Zahlen
+   konsistent zueinander.
+6. **Fotos sind Beweismittel.** Der Storage-Bucket erlaubt Insert und Select,
    kein Update, kein Delete — und spiegelt die Reveal-Regel exakt.
-6. **Ratings erst nach dem Einspruchsfenster.** `finalize_match()` verweigert,
+   `capture_method` hält fest, ob in der App aufgenommen oder aus der Galerie
+   importiert wurde.
+7. **Ratings erst nach dem Einspruchsfenster.** `finalize_match()` verweigert,
    solange `dispute_closes_at` in der Zukunft liegt oder ein Fall offen ist.
+
+`shooter_recent_form()` liefert dem Client die letzten Serien eines Schützen,
+damit er vor dem Absenden warnen kann: „104,4 wäre 8 Ringe über deinem Schnitt
+— sicher?" Das fängt Tippfehler billiger ab, als eine OCR sie je gefunden
+hätte.
 
 ## Rating: Glicko-2
 
@@ -151,5 +185,6 @@ und gibt eine Zusammenfassung als JSON zurück.
 ## Noch nicht enthalten
 
 Bewusst ausgelassen für den MVP: Social Feed, Awards, Premium-Stufen,
-Team-Wettbewerbe und die Hersteller-Anbindung. `submissions.source` kennt
-`'device_api'` bereits als Wert — mehr braucht es dafür heute nicht.
+Team-Wettbewerbe, OCR und die Hersteller-Anbindung. `submissions.source` kennt
+`'file_export'` und `'device_api'` bereits als Werte — mehr braucht es dafür
+heute nicht.

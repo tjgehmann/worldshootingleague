@@ -37,6 +37,10 @@ create table public.formats (
   window_hours    integer not null default 168 check (window_hours between 1 and 1440),
   -- Grace period after settlement in which either side may call a referee.
   dispute_hours   integer not null default 24 check (dispute_hours between 0 and 336),
+  -- How long a shooter has to confirm the opponent's photo after the reveal.
+  -- Lapsing does not block the ladder — it counts against the shooter's
+  -- confirmation rate (see public.shooter_reliability).
+  confirm_hours   integer not null default 48 check (confirm_hours between 1 and 336),
   is_active       boolean not null default true,
   created_at      timestamptz not null default now(),
 

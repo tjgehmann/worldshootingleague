@@ -16,12 +16,14 @@ declare
   v_rounds     integer;
   v_expired    integer;
   v_voided     integer;
+  v_confirmed  integer;
   v_finalized  integer := 0;
   v_match      record;
 begin
-  v_rounds  := public.open_due_rounds();
-  v_expired := public.expire_bouts();
-  v_voided  := public.void_dead_matches();
+  v_rounds    := public.open_due_rounds();
+  v_expired   := public.expire_bouts();
+  v_voided    := public.void_dead_matches();
+  v_confirmed := public.expire_confirmations();
 
   for v_match in
     select id from public.matches
@@ -36,10 +38,11 @@ begin
   end loop;
 
   return jsonb_build_object(
-    'rounds_paired',    v_rounds,
-    'bouts_expired',    v_expired,
-    'matches_voided',   v_voided,
-    'matches_finalized', v_finalized,
+    'rounds_paired',        v_rounds,
+    'bouts_expired',        v_expired,
+    'matches_voided',       v_voided,
+    'confirmations_lapsed', v_confirmed,
+    'matches_finalized',    v_finalized,
     'at', now()
   );
 end;

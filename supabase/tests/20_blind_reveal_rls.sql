@@ -19,22 +19,19 @@ select id as bout from public.bouts limit 1 \gset
 set role authenticated;
 set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
 
-\echo '[A] upload own series'
-insert into public.submissions (bout_id, shooter_id, shots, shot_at, source)
-values (:'bout', '11111111-1111-1111-1111-111111111111',
-        array[10.5,10.4,10.3,10.6,10.2,10.5,10.4,10.3,10.7,10.5], now(), 'manual');
+\echo '[A] report own result'
+insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
+values (:'bout', '11111111-1111-1111-1111-111111111111', 104.4, 8, now(), :'bout' || '/a/shot.jpg');
 
 select 'A sees ' || count(*) || ' submission(s)' from public.submissions;
 
-\echo '[A] second upload for the same bout (expect failure)'
-insert into public.submissions (bout_id, shooter_id, shots, shot_at, source)
-values (:'bout', '11111111-1111-1111-1111-111111111111',
-        array[10.9,10.9,10.9,10.9,10.9,10.9,10.9,10.9,10.9,10.9], now(), 'manual');
+\echo '[A] second report for the same bout (expect failure)'
+insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
+values (:'bout', '11111111-1111-1111-1111-111111111111', 108.0, 10, now(), :'bout' || '/a/2.jpg');
 
-\echo '[A] upload on B''s behalf (expect failure)'
-insert into public.submissions (bout_id, shooter_id, shots, shot_at, source)
-values (:'bout', '22222222-2222-2222-2222-222222222222',
-        array[1,1,1,1,1,1,1,1,1,1]::numeric[], now(), 'manual');
+\echo '[A] report on B''s behalf (expect failure)'
+insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
+values (:'bout', '22222222-2222-2222-2222-222222222222', 50.0, 0, now(), :'bout' || '/b/fake.jpg');
 
 \echo '[A] rewrite own score (expect failure)'
 update public.submissions set total = 109.0;
@@ -44,18 +41,32 @@ delete from public.submissions;
 
 -- ================================================ shooter B, before reveal ==
 set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
-\echo '[B] before uploading'
+\echo '[B] before reporting'
 select 'B sees ' || count(*) || ' submission(s)  <- must be 0' from public.submissions;
 select 'bout state visible to B: ' || state from public.bouts;
 
-\echo '[B] upload own series'
-insert into public.submissions (bout_id, shooter_id, shots, shot_at, source)
-values (:'bout', '22222222-2222-2222-2222-222222222222',
-        array[10.1,10.2,10.0,9.8,10.3,10.1,9.9,10.2,10.0,10.1], now(), 'manual');
+\echo '[B] report own result'
+insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
+values (:'bout', '22222222-2222-2222-2222-222222222222', 102.7, 6, now(), :'bout' || '/b/shot.jpg');
 
 select 'B sees ' || count(*) || ' submission(s)  <- must be 2' from public.submissions;
-select 'B sees A''s total: ' || total from public.submissions
+select 'B sees A''s total: ' || total || ' with ' || tens || ' tens' from public.submissions
  where shooter_id = '11111111-1111-1111-1111-111111111111';
+
+\echo '[B] confirm A''s photo'
+insert into public.bout_confirmations (submission_id, confirmed_by, accepted)
+select id, '22222222-2222-2222-2222-222222222222', true from public.submissions
+ where shooter_id = '11111111-1111-1111-1111-111111111111';
+
+\echo '[B] forge an auto-confirmation (expect failure)'
+insert into public.bout_confirmations (submission_id, confirmed_by, accepted, is_auto)
+select id, '22222222-2222-2222-2222-222222222222', true, true from public.submissions
+ where shooter_id = '22222222-2222-2222-2222-222222222222';
+
+\echo '[B] confirm own submission (expect failure)'
+insert into public.bout_confirmations (submission_id, confirmed_by, accepted)
+select id, '22222222-2222-2222-2222-222222222222', true from public.submissions
+ where shooter_id = '22222222-2222-2222-2222-222222222222';
 
 -- ============================================================ third party ==
 set request.jwt.claim.sub = '33333333-3333-3333-3333-333333333333';
@@ -68,3 +79,5 @@ select 'bout ' || state || ', A won: ' || (winner_id = '11111111-1111-1111-1111-
   from public.bouts;
 select 'match ' || state || ', points ' || points_a || ':' || points_b || ' by ' || decided_by
   from public.matches;
+select 'stefan confirmation rate: ' || coalesce(confirmation_rate_pct::text, 'n/a') || '%'
+  from public.shooter_reliability where handle = 'stefan';

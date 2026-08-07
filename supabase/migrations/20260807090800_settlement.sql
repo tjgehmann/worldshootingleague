@@ -370,6 +370,71 @@ begin
 end;
 $$;
 
+-- Peer verification that nobody got round to. The result stands — a silent
+-- shooter must not be able to stall the ladder — but the confirmation is
+-- recorded as automatic, which is what public.shooter_reliability counts.
+create or replace function public.expire_confirmations()
+returns integer
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_count integer;
+begin
+  with due as (
+    insert into public.bout_confirmations (submission_id, confirmed_by, accepted, is_auto, note)
+    select s.id,
+           case when s.shooter_id = m.shooter_a then m.shooter_b else m.shooter_a end,
+           true,
+           true,
+           'auto-accepted: confirmation window lapsed'
+      from public.submissions s
+      join public.bouts b   on b.id = s.bout_id
+      join public.matches m on m.id = b.match_id
+     where b.confirm_closes_at is not null
+       and b.confirm_closes_at < now()
+       and b.state in ('revealed', 'settled')
+    on conflict (submission_id, confirmed_by) do nothing
+    returning 1
+  )
+  select count(*) into v_count from due;
+
+  return v_count;
+end;
+$$;
+
+-- Feeds the client-side plausibility warning: a total far above a shooter's own
+-- recent form is usually a slipped digit, and worth a "sure?" before upload.
+create or replace function public.shooter_recent_form(
+  p_shooter    uuid,
+  p_discipline uuid,
+  p_limit      integer default 10
+)
+returns table (series integer, average numeric, best numeric, worst numeric)
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  with recent as (
+    select public.submission_effective_total(s) as total
+      from public.submissions s
+      join public.bouts b   on b.id = s.bout_id
+      join public.matches m on m.id = b.match_id
+     where s.shooter_id = p_shooter
+       and m.discipline_id = p_discipline
+       and b.state in ('settled', 'forfeited')
+     order by s.submitted_at desc
+     limit greatest(p_limit, 1)
+  )
+  select count(*)::integer,
+         round(avg(total), 1),
+         max(total),
+         min(total)
+    from recent;
+$$;
+
 -- Referee closes a case: the bout goes back through settlement with whatever
 -- adjusted totals the referee recorded.
 create or replace function public.resolve_dispute(p_dispute_id uuid, p_note text)
