@@ -1,13 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Empty, Loading } from '@/components/ui';
+import { Avatar, Empty, Hint, Kicker, LargeTitle, Loading, Meta } from '@/components/ui';
 import { fetchDisciplines, fetchLeaderboard } from '@/lib/queries';
-import { colors, radius, space, type } from '@/lib/theme';
+import { TAB_BAR_CLEARANCE, useTheme } from '@/lib/theme';
 
 export default function LeaderboardScreen() {
   const [code, setCode] = useState<string | undefined>();
+  const t = useTheme();
 
   const disciplines = useQuery({ queryKey: ['disciplines'], queryFn: fetchDisciplines });
   const rows = useQuery({
@@ -15,68 +17,130 @@ export default function LeaderboardScreen() {
     queryFn: () => fetchLeaderboard(code),
   });
 
+  const nameFor = (c: string) =>
+    disciplines.data?.find((d) => d.code === c)?.name ?? c;
+
   return (
-    <View style={styles.flex}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filters}>
-        <View style={styles.filterRow}>
-          <Chip label="Alle" active={!code} onPress={() => setCode(undefined)} />
-          {(disciplines.data ?? []).map((d) => (
-            <Chip
-              key={d.id}
-              label={d.code}
-              active={code === d.code}
-              onPress={() => setCode(d.code)}
-            />
-          ))}
-        </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.ground }} edges={['top']}>
+      <View style={{ paddingHorizontal: t.space.xl, paddingTop: t.space.md }}>
+        <Kicker>Aktuelle Saison</Kicker>
+        <LargeTitle>Rangliste</LargeTitle>
+      </View>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ flexGrow: 0, marginBottom: t.space.md }}
+        contentContainerStyle={{ paddingHorizontal: t.space.xl, gap: t.space.sm }}
+      >
+        <Chip label="Alle" active={!code} onPress={() => setCode(undefined)} />
+        {(disciplines.data ?? []).map((d) => (
+          <Chip
+            key={d.id}
+            label={d.name}
+            active={code === d.code}
+            onPress={() => setCode(d.code)}
+          />
+        ))}
       </ScrollView>
 
       {rows.isLoading ? (
         <Loading />
-      ) : !rows.data?.length ? (
-        <Empty text="Noch keine gewerteten Matches." />
       ) : (
         <FlatList
           data={rows.data}
           keyExtractor={(r) => `${r.discipline_id}-${r.shooter_id}`}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={{
+            paddingHorizontal: t.space.xl,
+            paddingBottom: TAB_BAR_CLEARANCE,
+          }}
           refreshing={rows.isRefetching}
           onRefresh={() => rows.refetch()}
-          ListHeaderComponent={
-            <View style={[styles.row, styles.head]}>
-              <Text style={[styles.pos, type.muted]}>#</Text>
-              <Text style={[styles.grow, type.muted]}>Schütze</Text>
-              <Text style={[styles.num, type.muted]}>Rating</Text>
-              <Text style={[styles.num, type.muted]}>S/N</Text>
-            </View>
-          }
+          ListEmptyComponent={<Empty text="Noch keine gewerteten Matches." />}
+          ItemSeparatorComponent={() => (
+            <View style={{ height: 1, backgroundColor: t.colors.hairline }} />
+          )}
           renderItem={({ item }) => (
-            <View style={styles.row}>
-              <Text style={styles.pos}>{item.position}</Text>
-              <View style={styles.grow}>
-                <Text style={styles.name}>
-                  {item.display_name}
-                  {item.is_provisional ? ' *' : ''}
-                </Text>
-                <Text style={type.muted}>
-                  {item.country_code} · {item.discipline}
-                </Text>
-              </View>
-              <Text style={[styles.num, styles.rating]}>{Math.round(item.rating)}</Text>
-              <Text style={[styles.num, type.muted]}>
-                {item.wins}/{item.losses}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: t.space.md,
+                paddingVertical: 11,
+              }}
+            >
+              <Text
+                style={{
+                  width: 24,
+                  fontSize: 14,
+                  fontWeight: '700',
+                  color: item.position === 1 ? t.colors.accent : t.colors.inkFaint,
+                  fontVariant: ['tabular-nums'],
+                }}
+              >
+                {item.position}
               </Text>
+              <Avatar name={item.display_name} size={34} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space.sm }}>
+                  <Text style={[t.text.name, { color: t.colors.ink }]} numberOfLines={1}>
+                    {item.display_name}
+                  </Text>
+                  {item.is_provisional ? (
+                    <View
+                      style={{
+                        backgroundColor: t.colors.surfaceAlt,
+                        borderRadius: t.radius.sm,
+                        paddingHorizontal: 6,
+                        paddingVertical: 2,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: t.colors.inkFaint,
+                          fontSize: 9.5,
+                          fontWeight: '700',
+                          letterSpacing: 0.6,
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        vorläufig
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+                <Meta>
+                  {item.country_code} · {nameFor(item.discipline)}
+                </Meta>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text
+                  style={{
+                    fontSize: 17,
+                    fontWeight: '700',
+                    letterSpacing: -0.4,
+                    color: t.colors.ink,
+                    fontVariant: ['tabular-nums'],
+                  }}
+                >
+                  {Math.round(item.rating)}
+                </Text>
+                <Meta>
+                  {item.wins} / {item.losses}
+                </Meta>
+              </View>
             </View>
           )}
           ListFooterComponent={
-            <Text style={styles.note}>
-              * vorläufig — die Einstufung ist noch unsicher, weil zu wenige Matches
-              gewertet wurden.
-            </Text>
+            rows.data?.length ? (
+              <Hint>
+                „Vorläufig" heißt: zu wenige Matches, die Einstufung ist noch unsicher.
+              </Hint>
+            ) : null
           }
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -89,40 +153,28 @@ function Chip({
   active: boolean;
   onPress: () => void;
 }) {
+  const t = useTheme();
   return (
-    <Pressable onPress={onPress} style={[styles.chip, active && styles.chipActive]}>
-      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      onPress={onPress}
+      style={{
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: t.radius.pill,
+        backgroundColor: active ? t.colors.accentSolid : t.colors.surface,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 13,
+          fontWeight: '600',
+          color: active ? t.colors.onSolid : t.colors.inkMuted,
+        }}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  filters: { flexGrow: 0, borderBottomWidth: 1, borderBottomColor: colors.border },
-  filterRow: { flexDirection: 'row', gap: space.sm, padding: space.md },
-  chip: {
-    paddingHorizontal: space.md,
-    paddingVertical: space.sm,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  chipActive: { backgroundColor: colors.navy, borderColor: colors.navy },
-  chipText: { ...type.muted, fontWeight: '600' },
-  chipTextActive: { color: colors.textInverse },
-  list: { padding: space.md },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: space.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  head: { borderBottomWidth: 2 },
-  pos: { width: 34, ...type.body, fontWeight: '700' },
-  grow: { flex: 1 },
-  name: { ...type.body, fontWeight: '600' },
-  num: { width: 60, textAlign: 'right', ...type.body },
-  rating: { fontWeight: '700' },
-  note: { ...type.muted, marginTop: space.md },
-});

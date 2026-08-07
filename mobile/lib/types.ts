@@ -86,6 +86,8 @@ export interface Match {
   points_b: number;
   winner_id: string | null;
   decided_by: string | null;
+  dispute_closes_at: string | null;
+  finalized_at: string | null;
 }
 
 /** matches joined with the bits the list and detail screens need. */

@@ -1,9 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, ScrollView, Text, TextInput, View } from 'react-native';
 
-import { Banner, Button, Empty, Loading } from '@/components/ui';
+import {
+  Avatar,
+  Button,
+  Card,
+  Empty,
+  Hint,
+  Kicker,
+  LargeTitle,
+  Loading,
+  Meta,
+  Note,
+} from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { formatDateTime, formatScore } from '@/lib/format';
 import {
@@ -13,7 +24,7 @@ import {
   fetchBoutSubmissions,
   raiseDispute,
 } from '@/lib/queries';
-import { colors, radius, space, type } from '@/lib/theme';
+import { useTheme } from '@/lib/theme';
 
 /**
  * The step that replaces automated scoring: look at the opponent's photo, say
@@ -25,6 +36,7 @@ export default function ConfirmScreen() {
   const { userId } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const t = useTheme();
 
   const [disputing, setDisputing] = useState(false);
   const [reason, setReason] = useState('');
@@ -69,106 +81,119 @@ export default function ConfirmScreen() {
     return <Empty text="Das Ergebnis des Gegners ist noch nicht sichtbar." />;
   }
 
-  const { match } = detail.data;
+  const { match, bout } = detail.data;
   const mode = match.discipline.scoring_mode;
   const opponent = match.shooter_a === userId ? match.profile_b : match.profile_a;
 
   return (
-    <ScrollView contentContainerStyle={styles.body}>
-      <Text style={type.heading}>{opponent.display_name} hat gemeldet</Text>
+    <ScrollView
+      style={{ backgroundColor: t.colors.ground }}
+      contentContainerStyle={{ paddingHorizontal: t.space.xl, paddingBottom: t.space.xxl }}
+    >
+      <Kicker>
+        Serie {bout.index} · gemeldet am {formatDateTime(theirs.shot_at)}
+      </Kicker>
+      <LargeTitle>Stimmt das?</LargeTitle>
 
-      {error ? <Banner tone="error">{error}</Banner> : null}
+      {error ? <Note tone="error">{error}</Note> : null}
 
-      <View style={styles.numbers}>
-        <View style={styles.number}>
-          <Text style={styles.value}>{formatScore(theirs.total, mode)}</Text>
-          <Text style={type.muted}>Gesamt</Text>
+      <Card>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space.md }}>
+          <Avatar name={opponent.display_name} />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={[t.text.name, { color: t.colors.ink }]} numberOfLines={1}>
+              {opponent.display_name}
+            </Text>
+            <Meta>hat gemeldet</Meta>
+          </View>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={[t.text.scoreSm, { color: t.colors.ink }]}>
+              {formatScore(theirs.total, mode)}
+            </Text>
+            <Meta>{theirs.tens} Zehner</Meta>
+          </View>
         </View>
-        <View style={styles.number}>
-          <Text style={styles.value}>{theirs.tens}</Text>
-          <Text style={type.muted}>Zehner</Text>
-        </View>
-      </View>
-
-      <Text style={[type.muted, styles.shotAt]}>
-        Geschossen am {formatDateTime(theirs.shot_at)}
-      </Text>
+      </Card>
 
       {photoUrl.data ? (
-        <Image source={{ uri: photoUrl.data }} style={styles.photo} resizeMode="contain" />
+        <Image
+          source={{ uri: photoUrl.data }}
+          style={{
+            width: '100%',
+            height: 280,
+            borderRadius: t.radius.xl,
+            backgroundColor: t.colors.surfaceAlt,
+            marginBottom: t.space.md,
+          }}
+          resizeMode="contain"
+        />
       ) : (
-        <View style={styles.placeholder}>
-          <Text style={type.muted}>Foto konnte nicht geladen werden.</Text>
+        <View
+          style={{
+            width: '100%',
+            height: 200,
+            borderRadius: t.radius.xl,
+            backgroundColor: t.colors.surfaceAlt,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: t.space.md,
+          }}
+        >
+          <Text style={{ color: t.colors.inkFaint, fontSize: 14 }}>
+            Foto konnte nicht geladen werden.
+          </Text>
         </View>
       )}
 
-      <Banner tone="info">
-        Stimmen die Zahlen mit dem Foto überein? Wenn nicht, entscheidet ein
-        Schiedsrichter — bis dahin wird das Match nicht gewertet.
-      </Banner>
-
       {disputing ? (
         <View>
-          <Text style={styles.reasonLabel}>Was stimmt nicht?</Text>
+          <Text style={[t.text.label, { color: t.colors.inkFaint, marginBottom: 7 }]}>
+            Was stimmt nicht?
+          </Text>
           <TextInput
             value={reason}
             onChangeText={setReason}
             multiline
             numberOfLines={4}
-            style={styles.reason}
             placeholder="Auf dem Foto steht 98,4, gemeldet wurden 104,4."
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={t.colors.inkFaint}
+            style={{
+              backgroundColor: t.colors.surfaceAlt,
+              borderRadius: t.radius.lg,
+              padding: t.space.lg,
+              minHeight: 100,
+              textAlignVertical: 'top',
+              color: t.colors.ink,
+              fontSize: 15,
+            }}
           />
           <Button
             label="Schiedsrichter rufen"
-            variant="danger"
             onPress={() => decide.mutate(false)}
             disabled={reason.trim().length < 10}
             busy={decide.isPending}
           />
-          <Button label="Doch nicht" variant="secondary" onPress={() => setDisputing(false)} />
+          <Button label="Doch nicht" variant="text" onPress={() => setDisputing(false)} />
         </View>
       ) : (
         <View>
-          <Button label="Passt" onPress={() => decide.mutate(true)} busy={decide.isPending} />
-          <Button label="Stimmt nicht" variant="secondary" onPress={() => setDisputing(true)} />
+          <Button
+            label="Passt"
+            variant="positive"
+            onPress={() => decide.mutate(true)}
+            busy={decide.isPending}
+          />
+          <Button
+            label="Stimmt nicht — Schiedsrichter"
+            variant="quiet"
+            onPress={() => setDisputing(true)}
+          />
+          <Hint center>
+            Ohne Antwort gilt es nach 48 Stunden als bestätigt, zählt dann aber nicht als deine
+            Prüfung.
+          </Hint>
         </View>
       )}
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  body: { padding: space.md, paddingBottom: space.xl },
-  numbers: { flexDirection: 'row', marginVertical: space.md },
-  number: { flex: 1, alignItems: 'center' },
-  value: { fontSize: 32, fontWeight: '700', color: colors.text },
-  shotAt: { textAlign: 'center', marginBottom: space.md },
-  photo: {
-    width: '100%',
-    height: 340,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    marginBottom: space.md,
-  },
-  placeholder: {
-    width: '100%',
-    height: 200,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: space.md,
-  },
-  reasonLabel: { ...type.muted, fontWeight: '600', marginBottom: space.xs },
-  reason: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: space.md,
-    minHeight: 96,
-    textAlignVertical: 'top',
-    color: colors.text,
-    fontSize: 15,
-  },
-});

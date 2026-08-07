@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Banner, Button, Field, Header } from '@/components/ui';
+import { Button, Field, Hint, Kicker, LargeTitle, Note } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
-import { colors, space, type } from '@/lib/theme';
+import { useTheme } from '@/lib/theme';
 
 export default function SignInScreen() {
   const { signIn, signUp } = useAuth();
+  const t = useTheme();
+
   const [mode, setMode] = useState<'in' | 'up'>('in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,16 +42,23 @@ export default function SignInScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <Header title="WORLD SHOOTING LEAGUE" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.ground }} edges={['top']}>
       <KeyboardAvoidingView
-        style={styles.flex}
+        style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-          <Text style={styles.claim}>Challenging shooters</Text>
+        <ScrollView
+          contentContainerStyle={{ paddingHorizontal: t.space.xl, paddingBottom: t.space.xxl }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={{ marginTop: t.space.xxl }}>
+            <Kicker tone={t.colors.accent}>Challenging shooters</Kicker>
+            <LargeTitle>
+              {mode === 'in' ? 'World Shooting League' : 'Konto anlegen'}
+            </LargeTitle>
+          </View>
 
-          {error ? <Banner tone="error">{error}</Banner> : null}
+          {error ? <Note tone="error">{error}</Note> : null}
 
           <Field
             label="E-Mail"
@@ -81,7 +90,7 @@ export default function SignInScreen() {
                 value={displayName}
                 onChangeText={setDisplayName}
                 autoCapitalize="words"
-                placeholder="Thomas"
+                placeholder="Thomas Gehmann"
               />
               <Field
                 label="Land"
@@ -102,15 +111,15 @@ export default function SignInScreen() {
           />
           <Button
             label={mode === 'in' ? 'Neu hier? Konto anlegen' : 'Ich habe schon ein Konto'}
-            variant="secondary"
+            variant="text"
             onPress={() => {
               setMode(mode === 'in' ? 'up' : 'in');
               setError(null);
             }}
           />
 
-          <View style={styles.footer}>
-            <Text style={type.muted}>
+          <View style={{ marginTop: t.space.xxl }}>
+            <Text style={{ color: t.colors.inkFaint, fontSize: 14, lineHeight: 21 }}>
               Du meldest nach jedem Durchgang Gesamtergebnis und Anzahl Zehner mit einem Foto
               der Anzeige. Das Ergebnis deines Gegners siehst du erst, wenn ihr beide
               abgegeben habt.
@@ -121,17 +130,3 @@ export default function SignInScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.navy },
-  flex: { flex: 1, backgroundColor: colors.bg },
-  body: { padding: space.md, paddingBottom: space.xl },
-  claim: {
-    ...type.muted,
-    textAlign: 'center',
-    marginVertical: space.lg,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  footer: { marginTop: space.xl },
-});

@@ -2,23 +2,25 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import {
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 
-import { Banner, Button, Empty, Field, Loading } from '@/components/ui';
+import {
+  Button,
+  Card,
+  Empty,
+  Field,
+  Hint,
+  Kicker,
+  LargeTitle,
+  Loading,
+  Note,
+} from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { formatScore } from '@/lib/format';
 import { fetchBoutDetail, fetchRecentForm, submitResult } from '@/lib/queries';
-import { colors, radius, space, type } from '@/lib/theme';
+import { useTheme } from '@/lib/theme';
 
-/** Above this gap to the shooter's own average, ask twice before submitting. */
+/** Above this gap to the shooter's own average, ask once more before sending. */
 const SUSPICIOUS_MARGIN = 5;
 
 export default function ReportScreen() {
@@ -26,12 +28,11 @@ export default function ReportScreen() {
   const { userId } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const t = useTheme();
 
   const [total, setTotal] = useState('');
   const [tens, setTens] = useState('');
-  const [photo, setPhoto] = useState<{ uri: string; base64: string; fromCamera: boolean } | null>(
-    null,
-  );
+  const [photo, setPhoto] = useState<{ uri: string; base64: string; fromCamera: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [warningAccepted, setWarningAccepted] = useState(false);
 
@@ -100,132 +101,143 @@ export default function ReportScreen() {
     tensValue >= 0 &&
     tensValue <= discipline.shot_count;
 
-  // Same bounds the database enforces, checked here so the shooter finds out
-  // before the upload rather than after it.
+  // The same bounds validate_submission() enforces, checked here so the shooter
+  // finds out before the upload rather than after it.
   const subTen = discipline.scoring_mode === 'integer' ? 9 : 9.9;
   const reachable =
     !numbersEntered ||
     (totalValue >= tensValue * 10 &&
-      totalValue <= tensValue * discipline.max_shot_value +
-        (discipline.shot_count - tensValue) * subTen);
+      totalValue <=
+        tensValue * discipline.max_shot_value + (discipline.shot_count - tensValue) * subTen);
 
   const average = form.data?.average ?? null;
-  const farAboveForm =
-    numbersValid && average !== null && totalValue - average > SUSPICIOUS_MARGIN;
+  const farAboveForm = numbersValid && average !== null && totalValue - average > SUSPICIOUS_MARGIN;
 
   const ready = numbersValid && reachable && !!photo && (!farAboveForm || warningAccepted);
 
   return (
     <KeyboardAvoidingView
-      style={styles.flex}
+      style={{ flex: 1, backgroundColor: t.colors.ground }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <Text style={type.heading}>
-          {discipline.code} · Serie {detail.data.bout.index}
-        </Text>
-        <Text style={[type.muted, styles.intro]}>
-          {discipline.shot_count} Schuss. Trag ein, was auf der Anzeige steht, und
-          fotografiere sie.
-        </Text>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: t.space.xl, paddingBottom: t.space.xxl }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Kicker>
+          Serie {detail.data.bout.index} · {discipline.shot_count} Schuss
+        </Kicker>
+        <LargeTitle>Ergebnis melden</LargeTitle>
 
-        {error ? <Banner tone="error">{error}</Banner> : null}
+        {error ? <Note tone="error">{error}</Note> : null}
 
-        <Field
-          label="Gesamtergebnis"
-          value={total}
-          onChangeText={(v) => {
-            setTotal(v);
-            setWarningAccepted(false);
-          }}
-          keyboardType="decimal-pad"
-          placeholder={discipline.scoring_mode === 'integer' ? '95' : '104,4'}
-          hint={`höchstens ${formatScore(maxTotal, discipline.scoring_mode)}`}
-        />
-
-        <Field
-          label="Anzahl Zehner"
-          value={tens}
-          onChangeText={(v) => {
-            setTens(v);
-            setWarningAccepted(false);
-          }}
-          keyboardType="number-pad"
-          placeholder="8"
-          hint="Schüsse mit 10 oder besser — entscheidet bei Gleichstand"
-        />
+        <Card>
+          <View style={{ flexDirection: 'row', gap: t.space.md, alignItems: 'flex-start' }}>
+            <Field
+              label="Gesamt"
+              value={total}
+              onChangeText={(v) => {
+                setTotal(v);
+                setWarningAccepted(false);
+              }}
+              keyboardType="decimal-pad"
+              placeholder={discipline.scoring_mode === 'integer' ? '95' : '104,4'}
+              big
+              style={{ flex: 1, marginBottom: 0 }}
+            />
+            <Field
+              label="Zehner"
+              value={tens}
+              onChangeText={(v) => {
+                setTens(v);
+                setWarningAccepted(false);
+              }}
+              keyboardType="number-pad"
+              placeholder="8"
+              big
+              style={{ width: 104, marginBottom: 0 }}
+            />
+          </View>
+          <Hint>
+            Höchstens {formatScore(maxTotal, discipline.scoring_mode)} · Zehner entscheiden bei
+            Gleichstand
+          </Hint>
+        </Card>
 
         {numbersEntered && !reachable ? (
-          <Banner tone="warn">
+          <Note tone="warn">
             {`${total} lässt sich mit ${tens} Zehnern nicht schießen. Sieh nochmal auf die Anzeige.`}
-          </Banner>
+          </Note>
         ) : null}
 
         {farAboveForm && average !== null ? (
           <View>
-            <Banner tone="warn">
-              {`Das liegt ${formatScore(totalValue - average, discipline.scoring_mode)} über deinem Schnitt aus den letzten ${form.data?.series} Serien (${formatScore(average, discipline.scoring_mode)}). Vertippt?`}
-            </Banner>
+            <Note tone="warn">
+              {`${formatScore(totalValue - average, discipline.scoring_mode)} über deinem Schnitt. Deine letzten ${form.data?.series} Serien liegen bei ${formatScore(average, discipline.scoring_mode)}. Falls das stimmt: weiter. Falls nicht, ist jetzt der Moment.`}
+            </Note>
             {!warningAccepted ? (
               <Button
                 label="Stimmt so"
-                variant="secondary"
+                variant="quiet"
+                size="sm"
                 onPress={() => setWarningAccepted(true)}
               />
             ) : null}
           </View>
         ) : null}
 
-        <Text style={styles.photoLabel}>Nachweis</Text>
+        <Text style={[t.text.label, { color: t.colors.inkFaint, marginTop: t.space.md, marginBottom: 7 }]}>
+          Nachweis
+        </Text>
         {photo ? (
-          <Image source={{ uri: photo.uri }} style={styles.preview} resizeMode="cover" />
+          <Image
+            source={{ uri: photo.uri }}
+            style={{ width: '100%', height: 200, borderRadius: t.radius.xl, backgroundColor: t.colors.surfaceAlt }}
+            resizeMode="cover"
+          />
         ) : (
-          <View style={styles.placeholder}>
-            <Text style={type.muted}>Noch kein Foto</Text>
+          <View
+            style={{
+              width: '100%',
+              height: 200,
+              borderRadius: t.radius.xl,
+              borderWidth: 1.5,
+              borderStyle: 'dashed',
+              borderColor: t.colors.hairline,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: t.colors.inkFaint, fontSize: 14 }}>Noch kein Foto</Text>
           </View>
         )}
 
-        <Button label={photo ? 'Neu aufnehmen' : 'Anzeige fotografieren'} onPress={() => capture(true)} />
-        <Button label="Aus der Galerie wählen" variant="secondary" onPress={() => capture(false)} />
-
-        <View style={styles.submit}>
+        <View style={{ flexDirection: 'row', gap: t.space.sm }}>
           <Button
-            label="Melden"
-            onPress={() => submit.mutate()}
-            disabled={!ready}
-            busy={submit.isPending}
+            label={photo ? 'Neu aufnehmen' : 'Anzeige fotografieren'}
+            variant="quiet"
+            size="sm"
+            onPress={() => capture(true)}
+            style={{ flex: 1 }}
           />
-          <Text style={[type.muted, styles.note]}>
-            Nach dem Absenden lässt sich die Meldung nicht mehr ändern. Das Ergebnis
-            deines Gegners wird erst sichtbar, wenn er ebenfalls gemeldet hat.
-          </Text>
+          <Button
+            label="Galerie"
+            variant="quiet"
+            size="sm"
+            onPress={() => capture(false)}
+            style={{ flex: 1 }}
+          />
         </View>
+
+        <Button
+          label="Melden"
+          onPress={() => submit.mutate()}
+          disabled={!ready}
+          busy={submit.isPending}
+          style={{ marginTop: t.space.lg }}
+        />
+        <Hint center>Danach nicht mehr änderbar.</Hint>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.bg },
-  body: { padding: space.md, paddingBottom: space.xl },
-  intro: { marginTop: space.xs, marginBottom: space.lg },
-  photoLabel: { ...type.muted, fontWeight: '600', marginTop: space.md, marginBottom: space.xs },
-  preview: {
-    width: '100%',
-    height: 220,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-  },
-  placeholder: {
-    width: '100%',
-    height: 220,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  submit: { marginTop: space.lg },
-  note: { marginTop: space.sm, lineHeight: 19 },
-});

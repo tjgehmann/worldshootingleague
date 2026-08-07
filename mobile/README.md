@@ -8,6 +8,23 @@ wertet nichts. Er liest Sichten, schreibt eine Zeile, lädt ein Foto hoch. Die
 gesamte Logik — Blind Reveal, Auswertung, Rating, Sichtbarkeit — liegt in
 Postgres. Wer die App patcht, ändert nichts.
 
+## Gestaltung
+
+Dunkel als Standard, hell gleichwertig daneben; die App folgt der
+Systemeinstellung (`userInterfaceStyle: "automatic"`). Beide Paletten stehen in
+`lib/theme.ts` und sind eigenständig gebaut, nicht invertiert: im Hellen tragen
+Karten einen Schatten statt einer Aufhellung, und Grün, Amber und Rot wandern
+dunkler, damit sie auf Weiß lesbar bleiben.
+
+Komponenten holen sich die aktive Palette über `useTheme()`. Es gibt kein
+globales `StyleSheet.create` mehr mit festen Farben — Stile, die von der Palette
+abhängen, entstehen im Render.
+
+Zwei Regeln, die für die Zielgruppe wichtiger sind als der Zeitgeist: **hoher
+Kontrast** und **große Ziele**. Schützen sind im Schnitt älter, stehen in einer
+dämmrigen Halle, haben kalte Finger und tragen womöglich eine Schießbrille.
+Knöpfe sind 52 Punkte hoch, Fließtext 16, Ergebnisse 40 mit Tabellenziffern.
+
 ## Start
 
 ```bash
@@ -53,6 +70,14 @@ OCR beim einzigen realistischen Fehlerfall, dem Tippfehler.
 
 Das Foto wird per Kamera aufgenommen (`capture_method = 'in_app_camera'`); die
 Galerie bleibt möglich, wird aber als solche gespeichert.
+
+## Geprüft
+
+`npm run typecheck` läuft sauber, und der Metro-Bundle für Android und Web geht
+durch. Der Web-Build wurde zusätzlich im Browser geladen und in beiden Themes
+aufgenommen — die App rendert ohne Laufzeitfehler.
+
+Nicht geprüft: der Durchlauf gegen eine echte Supabase-Instanz.
 
 ## Bekannte Vereinfachungen
 

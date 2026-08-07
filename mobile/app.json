@@ -5,17 +5,18 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "scheme": "wsl",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#2E3180"
+      "backgroundColor": "#0B0D13"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.worldshootingleague.app"
+      "bundleIdentifier": "com.worldshootingleague.app",
+      "userInterfaceStyle": "automatic"
     },
     "android": {
       "package": "com.worldshootingleague.app",
@@ -23,9 +24,10 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png",
-        "backgroundColor": "#2E3180"
+        "backgroundColor": "#0B0D13"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "userInterfaceStyle": "automatic"
     },
     "web": {
       "bundler": "metro",

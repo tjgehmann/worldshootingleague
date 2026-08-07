@@ -1,21 +1,31 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useLocalSearchParams } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
-import { Banner, Button, Card, Empty, Loading } from '@/components/ui';
-import { useAuth } from '@/lib/auth';
-import { boutLabel, formatPoints, formatScore, timeLeft } from '@/lib/format';
 import {
-  fetchBoutSubmissions,
-  fetchConfirmedSubmissionIds,
-  fetchMatch,
-} from '@/lib/queries';
-import { colors, space, type } from '@/lib/theme';
+  Button,
+  Card,
+  Empty,
+  HeadToHead,
+  Hint,
+  Kicker,
+  Label,
+  LargeTitle,
+  Loading,
+  Meta,
+  Pill,
+  type PillTone,
+} from '@/components/ui';
+import { useAuth } from '@/lib/auth';
+import { formatPoints, formatScore, timeLeft } from '@/lib/format';
+import { fetchBoutSubmissions, fetchConfirmedSubmissionIds, fetchMatch } from '@/lib/queries';
+import { useTheme } from '@/lib/theme';
 import type { Bout, ScoringMode, Submission } from '@/lib/types';
 
 export default function MatchScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { userId } = useAuth();
+  const t = useTheme();
 
   const match = useQuery({ queryKey: ['match', id], queryFn: () => fetchMatch(id) });
   const boutIds = (match.data?.bouts ?? []).map((b) => b.id);
@@ -38,39 +48,72 @@ export default function MatchScreen() {
   const isA = m.shooter_a === userId;
   const opponent = isA ? m.profile_b : m.profile_a;
   const opponentId = isA ? m.shooter_b : m.shooter_a;
+  const myPoints = isA ? m.points_a : m.points_b;
+  const theirPoints = isA ? m.points_b : m.points_a;
   const decided = m.state === 'settled' || m.state === 'finalized';
+  const won = m.winner_id === userId;
+
+  // Bouts that never got played because the match was already decided are
+  // folded into one line rather than repeated as empty cards.
+  const played = m.bouts.filter((b) => b.state !== 'void');
+  const dropped = m.bouts.filter((b) => b.state === 'void');
 
   return (
-    <ScrollView contentContainerStyle={styles.body}>
-      <Text style={styles.discipline}>{m.discipline.name}</Text>
-
-      <View style={styles.scoreline}>
-        <Text style={styles.side}>Du</Text>
-        <Text style={styles.score}>
-          {formatPoints(isA ? m.points_a : m.points_b)} :{' '}
-          {formatPoints(isA ? m.points_b : m.points_a)}
-        </Text>
-        <Text style={styles.side}>{opponent.display_name}</Text>
-      </View>
+    <ScrollView
+      style={{ backgroundColor: t.colors.ground }}
+      contentContainerStyle={{ paddingHorizontal: t.space.xl, paddingBottom: t.space.xxl }}
+    >
+      <Kicker>
+        {m.discipline.name} · Best of {m.bouts.length}
+      </Kicker>
+      <LargeTitle>gegen {opponent.display_name}</LargeTitle>
 
       {decided ? (
-        <Banner tone="info">
-          {m.winner_id === userId ? 'Match gewonnen.' : 'Match verloren.'}
-          {m.state === 'settled'
-            ? ' Das Ergebnis kann noch beanstandet werden, danach wird es gewertet.'
-            : ' Gewertet.'}
-        </Banner>
+        <Card tone={won ? 'positive' : undefined}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <View>
+              <Text style={[t.text.label, { color: won ? t.colors.positive : t.colors.inkMuted }]}>
+                {won ? 'Match gewonnen' : 'Match verloren'}
+              </Text>
+              <Text
+                style={[
+                  t.text.scoreSm,
+                  { color: won ? t.colors.positive : t.colors.ink, marginTop: 4 },
+                ]}
+              >
+                {formatPoints(myPoints)} : {formatPoints(theirPoints)}
+              </Text>
+            </View>
+          </View>
+          <Text
+            style={{
+              color: won ? t.colors.positive : t.colors.inkMuted,
+              fontSize: 12.5,
+              marginTop: t.space.md,
+              lineHeight: 18,
+            }}
+          >
+            {m.state === 'finalized'
+              ? 'Gewertet. Das Rating ist angepasst.'
+              : `Wird ${timeLeft(m.dispute_closes_at ?? m.closes_at)} gewertet — bis dahin kann beanstandet werden.`}
+          </Text>
+        </Card>
       ) : (
-        <Banner tone="info">
-          {`Fenster läuft ${timeLeft(m.closes_at)}. Du kannst alle Serien in einer Standsitzung schießen.`}
-        </Banner>
+        <Card>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={[t.text.points, { color: t.colors.ink }]}>
+              {formatPoints(myPoints)} : {formatPoints(theirPoints)}
+            </Text>
+            <Pill tone="wait">{timeLeft(m.closes_at)}</Pill>
+          </View>
+          <Hint>Du kannst alle Serien in einer Standsitzung schießen.</Hint>
+        </Card>
       )}
 
-      {m.bouts.map((bout) => (
+      {played.map((bout) => (
         <BoutCard
           key={bout.id}
           bout={bout}
-          totalBouts={m.bouts.length}
           userId={userId}
           opponentId={opponentId}
           opponentName={opponent.display_name}
@@ -79,13 +122,28 @@ export default function MatchScreen() {
           confirmedIds={confirmed.data ?? new Set<string>()}
         />
       ))}
+
+      {dropped.length > 0 ? (
+        <Card>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Label>
+              {dropped.length === 1
+                ? `Serie ${dropped[0].index}`
+                : `Serie ${dropped[0].index}–${dropped[dropped.length - 1].index}`}
+            </Label>
+            <Pill tone="wait">Entfallen</Pill>
+          </View>
+          <Meta style={{ marginTop: t.space.sm }}>
+            Nicht mehr nötig — das Match war schon entschieden.
+          </Meta>
+        </Card>
+      ) : null}
     </ScrollView>
   );
 }
 
 function BoutCard({
   bout,
-  totalBouts,
   userId,
   opponentId,
   opponentName,
@@ -94,7 +152,6 @@ function BoutCard({
   confirmedIds,
 }: {
   bout: Bout;
-  totalBouts: number;
   userId: string;
   opponentId: string;
   opponentName: string;
@@ -102,118 +159,91 @@ function BoutCard({
   submissions: Submission[];
   confirmedIds: Set<string>;
 }) {
+  const t = useTheme();
   const forBout = submissions.filter((s) => s.bout_id === bout.id);
   const mine = forBout.find((s) => s.shooter_id === userId);
   // Before the reveal this is always undefined — RLS does not return the row.
   const theirs = forBout.find((s) => s.shooter_id === opponentId);
 
-  const canReport =
-    !mine && (bout.state === 'open' || bout.state === 'awaiting_opponent');
-  const needsCheck = !!theirs && !confirmedIds.has(theirs.id) && bout.state !== 'void';
+  const canReport = !mine && (bout.state === 'open' || bout.state === 'awaiting_opponent');
+  const needsCheck = !!theirs && !confirmedIds.has(theirs.id);
+  const blind = !theirs && !!mine;
+  const firstName = opponentName.split(' ')[0];
+
+  const { tone, label } = boutStatus(bout, userId, !!mine, firstName);
 
   return (
     <Card>
-      <View style={styles.boutHead}>
-        <Text style={styles.boutTitle}>{boutLabel(bout, totalBouts)}</Text>
-        <Text style={type.muted}>{statusText(bout, !!mine, opponentName)}</Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: t.space.md,
+        }}
+      >
+        <Label>Serie {bout.index}</Label>
+        <Pill tone={tone}>{label}</Pill>
       </View>
 
-      {bout.state === 'void' ? (
-        <Text style={type.muted}>Nicht mehr nötig — das Match war schon entschieden.</Text>
-      ) : (
-        <View style={styles.compare}>
-          <ScoreBlock
-            caption="Du"
-            submission={mine}
-            mode={scoringMode}
-            highlight={bout.winner_id === userId}
-          />
-          <ScoreBlock
-            caption={opponentName}
-            submission={theirs}
-            mode={scoringMode}
-            hidden={!theirs && !!mine && bout.state === 'awaiting_opponent'}
-            highlight={!!bout.winner_id && bout.winner_id !== userId}
-          />
-        </View>
-      )}
-
-      {canReport ? (
+      {canReport && !mine ? (
         <Link href={{ pathname: '/bout/[id]/report', params: { id: bout.id } }} asChild>
           <Button label="Ergebnis melden" onPress={() => {}} />
         </Link>
-      ) : null}
+      ) : (
+        <>
+          <HeadToHead
+            leftLabel="Du"
+            leftValue={formatScore(mine?.adjusted_total ?? mine?.total, scoringMode)}
+            leftMeta={mine ? `${mine.tens} Zehner` : undefined}
+            leftWon={bout.winner_id === userId}
+            rightLabel={firstName}
+            rightValue={blind ? '···' : formatScore(theirs?.adjusted_total ?? theirs?.total, scoringMode)}
+            rightMeta={
+              blind ? `verdeckt bis ${firstName} meldet` : theirs ? `${theirs.tens} Zehner` : undefined
+            }
+            rightWon={!!bout.winner_id && bout.winner_id === opponentId}
+            rightBlind={blind}
+          />
 
-      {needsCheck ? (
-        <Link href={{ pathname: '/bout/[id]/confirm', params: { id: bout.id } }} asChild>
-          <Button label={`Foto von ${opponentName} prüfen`} variant="secondary" onPress={() => {}} />
-        </Link>
-      ) : null}
+          {needsCheck ? (
+            <Link href={{ pathname: '/bout/[id]/confirm', params: { id: bout.id } }} asChild>
+              <Button label={`Foto von ${firstName} prüfen`} variant="quiet" size="sm" onPress={() => {}} />
+            </Link>
+          ) : null}
+        </>
+      )}
     </Card>
   );
 }
 
-function ScoreBlock({
-  caption,
-  submission,
-  mode,
-  hidden,
-  highlight,
-}: {
-  caption: string;
-  submission?: Submission;
-  mode: ScoringMode;
-  hidden?: boolean;
-  highlight?: boolean;
-}) {
-  return (
-    <View style={styles.block}>
-      <Text style={type.muted} numberOfLines={1}>
-        {caption}
-      </Text>
-      <Text style={[styles.blockScore, highlight && { color: colors.win }]}>
-        {hidden ? '···' : formatScore(submission?.adjusted_total ?? submission?.total, mode)}
-      </Text>
-      <Text style={type.muted}>
-        {submission && !hidden ? `${submission.tens} Zehner` : hidden ? 'verdeckt' : '–'}
-      </Text>
-    </View>
-  );
-}
-
-function statusText(bout: Bout, hasMine: boolean, opponentName: string): string {
+function boutStatus(
+  bout: Bout,
+  userId: string,
+  hasMine: boolean,
+  opponentFirstName: string,
+): { tone: PillTone; label: string } {
   switch (bout.state) {
     case 'open':
-      return 'offen';
+      return { tone: 'turn', label: 'Du bist dran' };
     case 'awaiting_opponent':
-      return hasMine ? `wartet auf ${opponentName}` : 'du bist dran';
+      return hasMine
+        ? { tone: 'wait', label: `Wartet auf ${opponentFirstName}` }
+        : { tone: 'turn', label: 'Du bist dran' };
     case 'revealed':
-      return 'aufgedeckt';
+      return { tone: 'wait', label: 'Wird gewertet' };
     case 'settled':
-      return bout.is_tie ? 'unentschieden' : 'gewertet';
+      if (bout.is_tie) return { tone: 'wait', label: 'Unentschieden' };
+      return bout.winner_id === userId
+        ? { tone: 'won', label: 'Gewonnen' }
+        : { tone: 'lost', label: 'Verloren' };
     case 'disputed':
-      return 'in Prüfung';
+      return { tone: 'turn', label: 'In Prüfung' };
     case 'forfeited':
-      return 'kampflos';
+      return bout.winner_id === userId
+        ? { tone: 'won', label: 'Kampflos' }
+        : { tone: 'lost', label: 'Kampflos' };
     default:
-      return '';
+      return { tone: 'wait', label: '' };
   }
 }
-
-const styles = StyleSheet.create({
-  body: { padding: space.md, paddingBottom: space.xl },
-  discipline: { ...type.heading, marginBottom: space.md },
-  scoreline: { flexDirection: 'row', alignItems: 'center', marginBottom: space.md },
-  side: { ...type.muted, flex: 1, textAlign: 'center' },
-  score: { ...type.score },
-  boutHead: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space.sm,
-  },
-  boutTitle: { ...type.body, fontWeight: '700' },
-  compare: { flexDirection: 'row', gap: space.md },
-  block: { flex: 1, alignItems: 'center', paddingVertical: space.sm },
-  blockScore: { fontSize: 26, fontWeight: '700', color: colors.text, marginVertical: 2 },
-});

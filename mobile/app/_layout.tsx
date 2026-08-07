@@ -6,7 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Loading } from '@/components/ui';
 import { AuthProvider, useAuth } from '@/lib/auth';
-import { colors } from '@/lib/theme';
+import { useTheme } from '@/lib/theme';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,6 +21,7 @@ function AuthGate() {
   const { session, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const t = useTheme();
 
   useEffect(() => {
     if (loading) return;
@@ -38,17 +39,21 @@ function AuthGate() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: colors.navy },
-        headerTintColor: colors.textInverse,
-        headerTitleStyle: { fontWeight: '600' },
-        contentStyle: { backgroundColor: colors.bg },
+        // No coloured chrome: the header is the same ground as the content and
+        // carries only the back control. Each screen renders its own title.
+        headerStyle: { backgroundColor: t.colors.ground },
+        headerShadowVisible: false,
+        headerTintColor: t.colors.accent,
+        headerTitle: '',
+        headerBackTitleStyle: { fontSize: 15 },
+        contentStyle: { backgroundColor: t.colors.ground },
       }}
     >
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="match/[id]" options={{ title: 'Match' }} />
-      <Stack.Screen name="bout/[id]/report" options={{ title: 'Ergebnis melden' }} />
-      <Stack.Screen name="bout/[id]/confirm" options={{ title: 'Prüfen' }} />
+      <Stack.Screen name="match/[id]" options={{ headerBackTitle: 'Matches' }} />
+      <Stack.Screen name="bout/[id]/report" options={{ headerBackTitle: 'Abbrechen' }} />
+      <Stack.Screen name="bout/[id]/confirm" options={{ headerBackTitle: 'Match' }} />
     </Stack>
   );
 }
@@ -58,7 +63,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <StatusBar style="light" />
+          <StatusBar style="auto" />
           <AuthGate />
         </AuthProvider>
       </QueryClientProvider>
