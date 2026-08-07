@@ -6,8 +6,11 @@ meldet Gesamtergebnis und Anzahl Zehner mit einem Foto der Anzeige, und erst
 wenn beide abgegeben haben, werden die Ergebnisse gegenseitig sichtbar.
 Anschließend prüft jeder das Foto des Gegners.
 
-Dieses Repository enthält aktuell das **Datenmodell** — Postgres-Schema für
-Supabase, inklusive Zustandsautomat, Row Level Security und Glicko-2-Rating.
+Dieses Repository enthält:
+
+* **`supabase/`** — das Datenmodell: Postgres-Schema mit Zustandsautomat, Row
+  Level Security und Glicko-2-Rating.
+* **`mobile/`** — den Expo-Client für iOS, Android und Web.
 
 ## Formate
 
@@ -28,6 +31,7 @@ supabase/
   migrations/   Schema in Anwendungsreihenfolge
   seed.sql      Disziplinen und Formate
   tests/        SQL-Tests gegen ein Wegwerf-Cluster
+mobile/         Expo-Client (siehe mobile/README.md)
 scripts/
   test-local.sh Migrationen anwenden und Tests fahren
 docs/
@@ -101,9 +105,21 @@ Einzelschüsse liefern; dann prüfen sich beide Wege gegenseitig.
 
 Details und Begründung in [`docs/data-model.md`](docs/data-model.md).
 
+## App starten
+
+```bash
+cd mobile
+cp .env.example .env      # Supabase-URL und anon key eintragen
+npm install
+npm start
+```
+
+Details in [`mobile/README.md`](mobile/README.md).
+
 ## Nächste Schritte
 
-1. Expo-Client: Ladder, Meldung (zwei Felder + Kamera), Match-Detail,
-   Bestätigungsschritt, Push bei „Gegner hat abgegeben".
-2. CSV-Import für SIUS-Exporte (`source = 'file_export'`).
+1. Push-Benachrichtigungen: Tabelle für Gerätetokens, Trigger beim Reveal und
+   vor Deadlines. Bei rundenbasiertem Spiel der Retention-Motor.
+2. Saison-Beitritt aus der App statt per Hand in `season_entries`.
 3. Referee-Ansicht für die Fallliste.
+4. CSV-Import für SIUS-Exporte (`source = 'file_export'`).

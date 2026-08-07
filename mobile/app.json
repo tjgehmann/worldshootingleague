@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "World Shooting League",
+    "slug": "world-shooting-league",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "wsl",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2E3180"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.worldshootingleague.app"
+    },
+    "android": {
+      "package": "com.worldshootingleague.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png",
+        "backgroundColor": "#2E3180"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Die App braucht die Kamera, um ein Foto der Anzeige oder des Ausdrucks als Nachweis aufzunehmen."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
