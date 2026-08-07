@@ -86,14 +86,31 @@ Getestet werden:
 
 ## Auf ein Supabase-Projekt anwenden
 
-```bash
-supabase link --project-ref <ref>
-supabase db push
-psql "$DATABASE_URL" -f supabase/seed.sql
-```
+1. **`pg_cron` aktivieren** — Dashboard → Database → Extensions. Ohne die
+   Erweiterung schlägt die Scheduling-Migration fehl.
+2. **Schema und Katalog einspielen:**
+   ```bash
+   npx supabase link --project-ref <ref>
+   npx supabase db push
+   psql "$DATABASE_URL" -f supabase/seed.sql
+   ```
+3. **Prüfen, dass alles gelandet ist:**
+   ```bash
+   psql "$DATABASE_URL" -f scripts/verify-deploy.sql
+   ```
+   Jede Zeile muss auf OK enden. Geprüft werden Tabellen, RLS auf jeder
+   Tabelle, die drei Select-Policies des Blind Reveal, Insert-only auf
+   `submissions`, Funktionen, Sichten, Trigger, die Storage-Buckets samt
+   Policies, der Seed, der Cron-Job und die Glicko-2-Rechnung gegen die
+   Referenzwerte.
+4. **Schlüssel eintragen** — `mobile/.env` bekommt Projekt-URL und den
+   Publishable Key (früher „anon key"), zu finden unter *Project Settings →
+   API Keys*. Der ist öffentlich by design und gehört in den Client; der
+   Secret- bzw. `service_role`-Key umgeht RLS und darf nie in die App.
 
-`pg_cron` vorher unter *Database → Extensions* aktivieren, sonst schlägt die
-Scheduling-Migration fehl.
+Zum Testen ist es bequem, unter *Authentication → Sign In / Providers → Email*
+die Bestätigungsmail abzuschalten — sonst kommt man nach der Registrierung
+nicht direkt in die App.
 
 ## Eingabemodell
 
