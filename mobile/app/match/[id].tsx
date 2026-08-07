@@ -42,7 +42,7 @@ export default function MatchScreen() {
   });
 
   if (match.isLoading) return <Loading />;
-  if (!match.data || !userId) return <Empty text="Match nicht gefunden." />;
+  if (!match.data || !userId) return <Empty text="Match not found." />;
 
   const m = match.data;
   const isA = m.shooter_a === userId;
@@ -66,14 +66,14 @@ export default function MatchScreen() {
       <Kicker>
         {m.discipline.name} · Best of {m.bouts.length}
       </Kicker>
-      <LargeTitle>gegen {opponent.display_name}</LargeTitle>
+      <LargeTitle>vs {opponent.display_name}</LargeTitle>
 
       {decided ? (
         <Card tone={won ? 'positive' : undefined}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <View>
               <Text style={[t.text.label, { color: won ? t.colors.positive : t.colors.inkMuted }]}>
-                {won ? 'Match gewonnen' : 'Match verloren'}
+                {won ? 'Match won' : 'Match lost'}
               </Text>
               <Text
                 style={[
@@ -94,8 +94,8 @@ export default function MatchScreen() {
             }}
           >
             {m.state === 'finalized'
-              ? 'Gewertet. Das Rating ist angepasst.'
-              : `Wird ${timeLeft(m.dispute_closes_at ?? m.closes_at)} gewertet — bis dahin kann beanstandet werden.`}
+              ? 'Rated. Your rating has been updated.'
+              : `Rated once the dispute window closes — ${timeLeft(m.dispute_closes_at ?? m.closes_at)}.`}
           </Text>
         </Card>
       ) : (
@@ -106,7 +106,7 @@ export default function MatchScreen() {
             </Text>
             <Pill tone="wait">{timeLeft(m.closes_at)}</Pill>
           </View>
-          <Hint>Du kannst alle Serien in einer Standsitzung schießen.</Hint>
+          <Hint>You can shoot every series in one range session.</Hint>
         </Card>
       )}
 
@@ -128,13 +128,13 @@ export default function MatchScreen() {
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Label>
               {dropped.length === 1
-                ? `Serie ${dropped[0].index}`
-                : `Serie ${dropped[0].index}–${dropped[dropped.length - 1].index}`}
+                ? `Series ${dropped[0].index}`
+                : `Series ${dropped[0].index}–${dropped[dropped.length - 1].index}`}
             </Label>
-            <Pill tone="wait">Entfallen</Pill>
+            <Pill tone="wait">Dropped</Pill>
           </View>
           <Meta style={{ marginTop: t.space.sm }}>
-            Nicht mehr nötig — das Match war schon entschieden.
+            Not needed — the match was already decided.
           </Meta>
         </Card>
       ) : null}
@@ -182,25 +182,29 @@ function BoutCard({
           marginBottom: t.space.md,
         }}
       >
-        <Label>Serie {bout.index}</Label>
+        <Label>Series {bout.index}</Label>
         <Pill tone={tone}>{label}</Pill>
       </View>
 
       {canReport && !mine ? (
         <Link href={{ pathname: '/bout/[id]/report', params: { id: bout.id } }} asChild>
-          <Button label="Ergebnis melden" onPress={() => {}} />
+          <Button label="Report result" onPress={() => {}} />
         </Link>
       ) : (
         <>
           <HeadToHead
-            leftLabel="Du"
+            leftLabel="You"
             leftValue={formatScore(mine?.adjusted_total ?? mine?.total, scoringMode)}
-            leftMeta={mine ? `${mine.tens} Zehner` : undefined}
+            leftMeta={mine?.inner_tens != null ? `${mine.inner_tens} inner tens` : undefined}
             leftWon={bout.winner_id === userId}
             rightLabel={firstName}
             rightValue={blind ? '···' : formatScore(theirs?.adjusted_total ?? theirs?.total, scoringMode)}
             rightMeta={
-              blind ? `verdeckt bis ${firstName} meldet` : theirs ? `${theirs.tens} Zehner` : undefined
+              blind
+                ? `hidden until ${firstName} submits`
+                : theirs?.inner_tens != null
+                  ? `${theirs.inner_tens} inner tens`
+                  : undefined
             }
             rightWon={!!bout.winner_id && bout.winner_id === opponentId}
             rightBlind={blind}
@@ -208,7 +212,7 @@ function BoutCard({
 
           {needsCheck ? (
             <Link href={{ pathname: '/bout/[id]/confirm', params: { id: bout.id } }} asChild>
-              <Button label={`Foto von ${firstName} prüfen`} variant="quiet" size="sm" onPress={() => {}} />
+              <Button label={`Check ${firstName}'s photo`} variant="quiet" size="sm" onPress={() => {}} />
             </Link>
           ) : null}
         </>
@@ -225,24 +229,24 @@ function boutStatus(
 ): { tone: PillTone; label: string } {
   switch (bout.state) {
     case 'open':
-      return { tone: 'turn', label: 'Du bist dran' };
+      return { tone: 'turn', label: 'Your turn' };
     case 'awaiting_opponent':
       return hasMine
-        ? { tone: 'wait', label: `Wartet auf ${opponentFirstName}` }
-        : { tone: 'turn', label: 'Du bist dran' };
+        ? { tone: 'wait', label: `Waiting for ${opponentFirstName}` }
+        : { tone: 'turn', label: 'Your turn' };
     case 'revealed':
-      return { tone: 'wait', label: 'Wird gewertet' };
+      return { tone: 'wait', label: 'Being scored' };
     case 'settled':
-      if (bout.is_tie) return { tone: 'wait', label: 'Unentschieden' };
+      if (bout.is_tie) return { tone: 'wait', label: 'Tied' };
       return bout.winner_id === userId
-        ? { tone: 'won', label: 'Gewonnen' }
-        : { tone: 'lost', label: 'Verloren' };
+        ? { tone: 'won', label: 'Won' }
+        : { tone: 'lost', label: 'Lost' };
     case 'disputed':
-      return { tone: 'turn', label: 'In Prüfung' };
+      return { tone: 'turn', label: 'Under review' };
     case 'forfeited':
       return bout.winner_id === userId
-        ? { tone: 'won', label: 'Kampflos' }
-        : { tone: 'lost', label: 'Kampflos' };
+        ? { tone: 'won', label: 'Walkover' }
+        : { tone: 'lost', label: 'Walkover' };
     default:
       return { tone: 'wait', label: '' };
   }

@@ -21,7 +21,7 @@ import type {
 
 const MATCH_SELECT = `
   *,
-  discipline:disciplines(id, code, name, shot_count, scoring_mode, max_shot_value),
+  discipline:disciplines(id, code, name, shot_count, scoring_mode, max_shot_value, requires_inner_tens),
   bouts(*),
   profile_a:profiles!matches_shooter_a_fkey(id, handle, display_name, country_code),
   profile_b:profiles!matches_shooter_b_fkey(id, handle, display_name, country_code)
@@ -82,7 +82,9 @@ export async function fetchBoutSubmissions(boutIds: string[]): Promise<Submissio
 
   const { data, error } = await supabase
     .from('submissions')
-    .select('id, bout_id, shooter_id, total, tens, adjusted_total, photo_path, shot_at, submitted_at')
+    .select(
+      'id, bout_id, shooter_id, total, inner_tens, adjusted_total, photo_path, shot_at, submitted_at',
+    )
     .in('bout_id', boutIds)
     .returns<Submission[]>();
 
@@ -118,7 +120,7 @@ export async function fetchLeaderboard(disciplineCode?: string): Promise<Leaderb
 export async function fetchDisciplines(): Promise<Discipline[]> {
   const { data, error } = await supabase
     .from('disciplines')
-    .select('id, code, name, shot_count, scoring_mode, max_shot_value')
+    .select('id, code, name, shot_count, scoring_mode, max_shot_value, requires_inner_tens')
     .eq('is_active', true)
     .order('code')
     .returns<Discipline[]>();
@@ -191,7 +193,8 @@ export interface SubmitResultInput {
   boutId: string;
   shooterId: string;
   total: number;
-  tens: number;
+  /** Omitted for disciplines scored in tenths. */
+  innerTens: number | null;
   photoBase64: string;
   fromCamera: boolean;
 }
@@ -217,7 +220,7 @@ export async function submitResult(input: SubmitResultInput): Promise<void> {
     bout_id: input.boutId,
     shooter_id: input.shooterId,
     total: input.total,
-    tens: input.tens,
+    inner_tens: input.innerTens,
     photo_path: path,
     capture_method: input.fromCamera ? 'in_app_camera' : 'gallery',
     source: 'manual',

@@ -18,8 +18,8 @@ select d.id, f.id, 'aaaaaaaa-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0
 update public.bouts set closes_at = now() + interval '1 hour'
  where match_id = (select id from public.matches where shooter_a='aaaaaaaa-0000-0000-0000-000000000001');
 
-insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
-select b.id, 'aaaaaaaa-0000-0000-0000-000000000001', 100.0, 5, now(), b.id::text || '/a/x.jpg'
+insert into public.submissions (bout_id, shooter_id, total, shot_at, photo_path)
+select b.id, 'aaaaaaaa-0000-0000-0000-000000000001', 100.0, now(), b.id::text || '/a/x.jpg'
   from public.bouts b
   join public.matches m on m.id = b.match_id
  where m.shooter_a = 'aaaaaaaa-0000-0000-0000-000000000001';
@@ -38,13 +38,13 @@ select d.id, f.id, 'bbbbbbbb-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0
        'live', now() - interval '1 hour', now() + interval '7 days'
   from public.disciplines d, public.formats f where d.code='AR10ET' and f.code='single_10';
 
-insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
-select b.id, m.shooter_a, 103.0, 7, now(), b.id::text || '/a/x.jpg'
+insert into public.submissions (bout_id, shooter_id, total, shot_at, photo_path)
+select b.id, m.shooter_a, 103.0, now(), b.id::text || '/a/x.jpg'
   from public.bouts b join public.matches m on m.id = b.match_id
  where m.shooter_a='bbbbbbbb-0000-0000-0000-000000000001';
 
-insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
-select b.id, m.shooter_b, 103.0, 7, now(), b.id::text || '/b/x.jpg'
+insert into public.submissions (bout_id, shooter_id, total, shot_at, photo_path)
+select b.id, m.shooter_b, 103.0, now(), b.id::text || '/b/x.jpg'
   from public.bouts b join public.matches m on m.id = b.match_id
  where m.shooter_a='bbbbbbbb-0000-0000-0000-000000000001';
 
@@ -90,34 +90,34 @@ select b.id as rbout from public.bouts b join public.matches m on m.id = b.match
    and b.state = 'open' limit 1 \gset
 
 \echo '-- total above the discipline maximum (expect failure)'
-insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
-values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 120.0, 10, now(), 'x/y/z.jpg');
+insert into public.submissions (bout_id, shooter_id, total, shot_at, photo_path)
+values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 120.0, now(), 'x/y/z.jpg');
 
-\echo '-- 11 tens in a 10 shot series (expect failure)'
-insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
-values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 100.0, 11, now(), 'x/y/z.jpg');
+\echo '-- pistol submitted without the mandatory inner ten count (expect failure)'
+insert into public.submissions (bout_id, shooter_id, total, shot_at, photo_path)
+values (:'pbout', 'bbbbbbbb-0000-0000-0000-000000000001', 95, now(), 'x/y/z.jpg');
 
-\echo '-- 104.4 cannot happen with only 2 tens (expect failure)'
-insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
-values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 104.4, 2, now(), 'x/y/z.jpg');
+\echo '-- 11 inner tens in a 10 shot series (expect failure)'
+insert into public.submissions (bout_id, shooter_id, total, inner_tens, shot_at, photo_path)
+values (:'pbout', 'bbbbbbbb-0000-0000-0000-000000000001', 100, 11, now(), 'x/y/z.jpg');
 
-\echo '-- 60.0 cannot happen with 8 tens (expect failure)'
-insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
-values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 60.0, 8, now(), 'x/y/z.jpg');
+\echo '-- 8 inner tens cannot add up to a total of 60 (expect failure)'
+insert into public.submissions (bout_id, shooter_id, total, inner_tens, shot_at, photo_path)
+values (:'pbout', 'bbbbbbbb-0000-0000-0000-000000000001', 60, 8, now(), 'x/y/z.jpg');
 
 \echo '-- decimal total on an integer-scored pistol discipline (expect failure)'
-insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
+insert into public.submissions (bout_id, shooter_id, total, inner_tens, shot_at, photo_path)
 values (:'pbout', 'bbbbbbbb-0000-0000-0000-000000000001', 95.4, 5, now(), 'x/y/z.jpg');
 
 \echo '-- shots array disagreeing with the reported total (expect failure)'
-insert into public.submissions (bout_id, shooter_id, total, tens, shots, shot_at, photo_path, source)
-values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 104.4, 8,
+insert into public.submissions (bout_id, shooter_id, total, shots, shot_at, photo_path, source)
+values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 104.4,
         array[10.5,10.4,10.3,10.6,10.2,10.5,10.4,9.8,10.7,7.0], now(), 'x/y/z.jpg', 'file_export');
 
 \echo '-- series fired before the bout opened (expect failure)'
-insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
-values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 100.0, 5, now() - interval '30 days', 'x/y/z.jpg');
+insert into public.submissions (bout_id, shooter_id, total, shot_at, photo_path)
+values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 100.0, now() - interval '30 days', 'x/y/z.jpg');
 
 \echo '-- no photo (expect failure)'
-insert into public.submissions (bout_id, shooter_id, total, tens, shot_at)
-values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 100.0, 5, now());
+insert into public.submissions (bout_id, shooter_id, total, shot_at)
+values (:'rbout', 'bbbbbbbb-0000-0000-0000-000000000001', 100.0, now());

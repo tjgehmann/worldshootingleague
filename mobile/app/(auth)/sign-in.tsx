@@ -35,7 +35,7 @@ export default function SignInScreen() {
         });
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Anmeldung fehlgeschlagen');
+      setError(e instanceof Error ? e.message : 'Sign-in failed');
     } finally {
       setBusy(false);
     }
@@ -54,46 +54,46 @@ export default function SignInScreen() {
           <View style={{ marginTop: t.space.xxl }}>
             <Kicker tone={t.colors.accent}>Challenging shooters</Kicker>
             <LargeTitle>
-              {mode === 'in' ? 'World Shooting League' : 'Konto anlegen'}
+              {mode === 'in' ? 'World Shooting League' : 'Create an account'}
             </LargeTitle>
           </View>
 
           {error ? <Note tone="error">{error}</Note> : null}
 
           <Field
-            label="E-Mail"
+            label="Email"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
             autoComplete="email"
-            placeholder="du@verein.de"
+            placeholder="you@club.org"
           />
           <Field
-            label="Passwort"
+            label="Password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            placeholder="mindestens 6 Zeichen"
+            placeholder="at least 6 characters"
           />
 
           {mode === 'up' ? (
             <>
               <Field
-                label="Kürzel"
+                label="Handle"
                 value={handle}
                 onChangeText={setHandle}
                 placeholder="thomas"
-                hint="Kleinbuchstaben, Ziffern und _, 3–24 Zeichen"
+                hint="Lower case, digits and _, 3–24 characters"
               />
               <Field
-                label="Anzeigename"
+                label="Display name"
                 value={displayName}
                 onChangeText={setDisplayName}
                 autoCapitalize="words"
                 placeholder="Thomas Gehmann"
               />
               <Field
-                label="Land"
+                label="Country"
                 value={country}
                 onChangeText={setCountry}
                 autoCapitalize="characters"
@@ -104,13 +104,13 @@ export default function SignInScreen() {
           ) : null}
 
           <Button
-            label={mode === 'in' ? 'Anmelden' : 'Konto anlegen'}
+            label={mode === 'in' ? 'Sign in' : 'Create account'}
             onPress={submit}
             busy={busy}
             disabled={!email || !password || (mode === 'up' && !handle)}
           />
           <Button
-            label={mode === 'in' ? 'Neu hier? Konto anlegen' : 'Ich habe schon ein Konto'}
+            label={mode === 'in' ? 'New here? Create an account' : 'I already have an account'}
             variant="text"
             onPress={() => {
               setMode(mode === 'in' ? 'up' : 'in');
@@ -120,9 +120,8 @@ export default function SignInScreen() {
 
           <View style={{ marginTop: t.space.xxl }}>
             <Text style={{ color: t.colors.inkFaint, fontSize: 14, lineHeight: 21 }}>
-              Du meldest nach jedem Durchgang Gesamtergebnis und Anzahl Zehner mit einem Foto
-              der Anzeige. Das Ergebnis deines Gegners siehst du erst, wenn ihr beide
-              abgegeben habt.
+              After every series you report your score with a photo of the display. Your
+              opponent's result stays hidden until you have both submitted.
             </Text>
           </View>
         </ScrollView>

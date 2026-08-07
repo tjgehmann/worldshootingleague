@@ -1,91 +1,95 @@
 # WSL Mobile
 
-Expo-Client für die World Shooting League. iOS, Android und Web aus einer
-Codebasis.
+The Expo client for the World Shooting League. iOS, Android and web from one
+codebase.
 
-Der Client ist bewusst dünn: er rechnet nichts aus, entscheidet nichts und
-wertet nichts. Er liest Sichten, schreibt eine Zeile, lädt ein Foto hoch. Die
-gesamte Logik — Blind Reveal, Auswertung, Rating, Sichtbarkeit — liegt in
-Postgres. Wer die App patcht, ändert nichts.
+The client is deliberately thin: it computes nothing, decides nothing and scores
+nothing. It reads views, writes one row and uploads one photo. All the logic —
+blind reveal, settlement, rating, visibility — lives in Postgres. Patching the
+app changes nothing.
 
-## Gestaltung
+## Design
 
-Dunkel als Standard, hell gleichwertig daneben; die App folgt der
-Systemeinstellung (`userInterfaceStyle: "automatic"`). Beide Paletten stehen in
-`lib/theme.ts` und sind eigenständig gebaut, nicht invertiert: im Hellen tragen
-Karten einen Schatten statt einer Aufhellung, und Grün, Amber und Rot wandern
-dunkler, damit sie auf Weiß lesbar bleiben.
+Dark by default, light as an equal partner; the app follows the system setting
+(`userInterfaceStyle: "automatic"`). Both palettes live in `lib/theme.ts` and are
+built separately rather than inverted: in light, cards carry a shadow instead of
+a lift in brightness, and green, amber and red move darker so they stay legible
+on white.
 
-Komponenten holen sich die aktive Palette über `useTheme()`. Es gibt kein
-globales `StyleSheet.create` mehr mit festen Farben — Stile, die von der Palette
-abhängen, entstehen im Render.
+Components read the active palette through `useTheme()`. There is no global
+`StyleSheet.create` with fixed colours — styles that depend on the palette are
+built during render.
 
-Zwei Regeln, die für die Zielgruppe wichtiger sind als der Zeitgeist: **hoher
-Kontrast** und **große Ziele**. Schützen sind im Schnitt älter, stehen in einer
-dämmrigen Halle, haben kalte Finger und tragen womöglich eine Schießbrille.
-Knöpfe sind 52 Punkte hoch, Fließtext 16, Ergebnisse 40 mit Tabellenziffern.
+Two rules that matter more here than the prevailing style: **high contrast** and
+**large targets**. Shooters skew older, stand in a dim hall, have cold hands and
+may be wearing shooting glasses. Buttons are 52pt tall, body text 16, scores 40
+with tabular figures.
 
-## Start
+## Getting started
 
 ```bash
-cp .env.example .env      # Supabase-URL und anon key eintragen
+cp .env.example .env      # project URL and publishable key
 npm install
 npm start
 ```
 
-`npm run web` für den Browser, `npm run ios` / `npm run android` für die
-Geräte. `npm run typecheck` prüft ohne Build.
+`npm run web` for the browser, `npm run ios` / `npm run android` for devices.
+`npm run typecheck` checks without building.
 
-## Bildschirme
+## Screens
 
 ```
 app/
-  (auth)/sign-in.tsx      Anmelden und Konto anlegen
-  (tabs)/index.tsx        Meine Matches
-  (tabs)/leaderboard.tsx  Rangliste je Disziplin
-  (tabs)/profile.tsx      Profil, Ratings, Bestätigungsquote
-  match/[id].tsx          Match mit allen Serien
-  bout/[id]/report.tsx    Ergebnis melden: zwei Zahlen + Foto
-  bout/[id]/confirm.tsx   Foto des Gegners prüfen
+  (auth)/sign-in.tsx      sign in and create an account
+  (tabs)/index.tsx        my matches
+  (tabs)/leaderboard.tsx  rankings per discipline
+  (tabs)/profile.tsx      profile, ratings, confirmation rate
+  match/[id].tsx          a match with all its series
+  bout/[id]/report.tsx    report a result: score + photo
+  bout/[id]/confirm.tsx   check the opponent's photo
 ```
 
-## Wie der Blind Reveal im Client aussieht
+## What the blind reveal looks like in the client
 
-Gar nicht. Vor dem Reveal liefert die Datenbank die Zeile des Gegners nicht
-aus — es gibt nichts zu verstecken und keine Bedingung, die der Client
-auswerten müsste. `match/[id].tsx` rendert schlicht, was in `submissions`
-steht: solange nur die eigene Meldung da ist, zeigt der Block des Gegners
-`···`.
+Like nothing at all. Before the reveal the database does not return the
+opponent's row, so there is nothing to hide and no condition for the client to
+evaluate. `match/[id].tsx` simply renders what is in `submissions`: while only
+your own report exists, the opponent's block shows `···`.
 
-## Meldung
+## Reporting
 
-Zwei Felder und ein Foto. Vor dem Absenden prüft der Client dieselben Grenzen
-wie `validate_submission()` in der Datenbank — Wertebereich, Zehnerzahl, und ob
-Gesamtergebnis und Zehnerzahl überhaupt zueinander passen. Nicht als Sicherung,
-sondern damit der Schütze es vor dem Upload erfährt statt danach.
+A total and a photo. Where the discipline is scored in whole rings — pistol —
+the shooter also reports inner tens, which is the ISSF tiebreak for full-ring
+scores; decimal disciplines break their own ties, so the field is not shown
+there at all.
 
-Zusätzlich fragt er `shooter_recent_form()` ab und warnt, wenn die Meldung mehr
-als 5 Ringe über dem eigenen Schnitt liegt. Das ist der billige Ersatz für eine
-OCR beim einzigen realistischen Fehlerfall, dem Tippfehler.
+Before submitting, the client checks the same bounds `validate_submission()`
+enforces in the database — range, inner ten count, and whether the total is even
+reachable with that many inner tens. Not as a safeguard, but so the shooter
+finds out before the upload rather than after it.
 
-Das Foto wird per Kamera aufgenommen (`capture_method = 'in_app_camera'`); die
-Galerie bleibt möglich, wird aber als solche gespeichert.
+It also calls `shooter_recent_form()` and asks once more when a report sits more
+than 5 rings above the shooter's own average. That is the cheap substitute for
+OCR on the one realistic failure mode, the typo.
 
-## Geprüft
+The photo is taken with the camera (`capture_method = 'in_app_camera'`); the
+library stays available but is recorded as such.
 
-`npm run typecheck` läuft sauber, und der Metro-Bundle für Android und Web geht
-durch. Der Web-Build wurde zusätzlich im Browser geladen und in beiden Themes
-aufgenommen — die App rendert ohne Laufzeitfehler.
+## Verified
 
-Nicht geprüft: der Durchlauf gegen eine echte Supabase-Instanz.
+`npm run typecheck` is clean and the Metro bundles for Android and web both
+build. The web build was additionally loaded in a browser and captured in both
+themes — the app renders with no runtime errors.
 
-## Bekannte Vereinfachungen
+Not verified: a run against a live Supabase instance.
 
-* `shot_at` wird auf den Zeitpunkt der Meldung gesetzt. Solange direkt nach dem
-  Schießen gemeldet wird, stimmt das; ein eigenes Feld dafür fehlt noch.
-* Keine Push-Benachrichtigungen. Bei rundenbasiertem Spiel sind sie der
-  Retention-Motor und sollten als Nächstes kommen — dafür fehlen noch eine
-  Tabelle für Gerätetokens und ein Trigger beim Reveal.
-* Kein Beitritt zu einer Saison aus der App heraus; Teilnehmer werden bisher
-  direkt in `season_entries` eingetragen.
-* Keine Referee-Ansicht. Einsprüche lassen sich stellen, aber nicht bearbeiten.
+## Known simplifications
+
+* `shot_at` is set to the moment of reporting. That holds as long as shooters
+  report right after shooting; a field of its own is still missing.
+* No push notifications. In turn-based play they are the retention engine and
+  should come next — that needs a table for device tokens and a trigger on
+  reveal.
+* No joining a season from inside the app; entrants are still inserted into
+  `season_entries` directly.
+* No referee view. Disputes can be raised but not worked.

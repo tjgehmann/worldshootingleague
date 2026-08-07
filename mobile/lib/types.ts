@@ -44,6 +44,8 @@ export interface Discipline {
   shot_count: number;
   scoring_mode: ScoringMode;
   max_shot_value: number;
+  /** Whether the shooter must report inner tens. Set for full-ring scoring. */
+  requires_inner_tens: boolean;
 }
 
 export interface Bout {
@@ -64,7 +66,8 @@ export interface Submission {
   bout_id: string;
   shooter_id: string;
   total: number;
-  tens: number;
+  /** ISSF tiebreak for full-ring scores; null where scoring is decimal. */
+  inner_tens: number | null;
   adjusted_total: number | null;
   photo_path: string | null;
   shot_at: string;

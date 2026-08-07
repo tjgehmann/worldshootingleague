@@ -31,7 +31,7 @@ export default function ReportScreen() {
   const t = useTheme();
 
   const [total, setTotal] = useState('');
-  const [tens, setTens] = useState('');
+  const [innerTens, setInnerTens] = useState('');
   const [photo, setPhoto] = useState<{ uri: string; base64: string; fromCamera: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [warningAccepted, setWarningAccepted] = useState(false);
@@ -47,12 +47,12 @@ export default function ReportScreen() {
 
   const submit = useMutation({
     mutationFn: async () => {
-      if (!photo || !userId) throw new Error('Foto fehlt');
+      if (!photo || !userId) throw new Error('Photo missing');
       await submitResult({
         boutId,
         shooterId: userId,
         total: Number(total.replace(',', '.')),
-        tens: Number(tens),
+        innerTens: requiresInnerTens ? Number(innerTens) : null,
         photoBase64: photo.base64,
         fromCamera: photo.fromCamera,
       });
@@ -63,7 +63,7 @@ export default function ReportScreen() {
       await queryClient.invalidateQueries({ queryKey: ['submissions'] });
       router.back();
     },
-    onError: (e) => setError(e instanceof Error ? e.message : 'Meldung abgelehnt'),
+    onError: (e) => setError(e instanceof Error ? e.message : 'Submission rejected'),
   });
 
   async function capture(fromCamera: boolean) {
@@ -73,7 +73,7 @@ export default function ReportScreen() {
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      setError('Ohne Zugriff auf die Kamera lässt sich kein Nachweis aufnehmen.');
+      setError('Without camera access there is no way to capture proof.');
       return;
     }
 
@@ -86,29 +86,33 @@ export default function ReportScreen() {
   }
 
   if (detail.isLoading) return <Loading />;
-  if (!detail.data || !discipline) return <Empty text="Serie nicht gefunden." />;
+  if (!detail.data || !discipline) return <Empty text="Series not found." />;
+
+  // Inner tens are the ISSF tiebreak for full-ring scores. Disciplines scored
+  // in tenths break their own ties, so the field is not shown there at all.
+  const requiresInnerTens = discipline.requires_inner_tens;
 
   const totalValue = Number(total.replace(',', '.'));
-  const tensValue = Number(tens);
+  const innerTensValue = Number(innerTens);
   const maxTotal = discipline.shot_count * discipline.max_shot_value;
 
-  const numbersEntered = total.length > 0 && tens.length > 0;
   const numbersValid =
     Number.isFinite(totalValue) &&
-    Number.isFinite(tensValue) &&
+    total.length > 0 &&
     totalValue >= 0 &&
     totalValue <= maxTotal &&
-    tensValue >= 0 &&
-    tensValue <= discipline.shot_count;
+    (!requiresInnerTens ||
+      (innerTens.length > 0 &&
+        Number.isFinite(innerTensValue) &&
+        innerTensValue >= 0 &&
+        innerTensValue <= discipline.shot_count));
 
-  // The same bounds validate_submission() enforces, checked here so the shooter
-  // finds out before the upload rather than after it.
-  const subTen = discipline.scoring_mode === 'integer' ? 9 : 9.9;
+  // The same floor validate_submission() enforces, checked here so the shooter
+  // finds out before the upload rather than after it. Every inner ten is a ten,
+  // so it contributes at least 10 to the total. There is no useful ceiling: a
+  // shot that is not an inner ten can still score a full ten.
   const reachable =
-    !numbersEntered ||
-    (totalValue >= tensValue * 10 &&
-      totalValue <=
-        tensValue * discipline.max_shot_value + (discipline.shot_count - tensValue) * subTen);
+    !requiresInnerTens || !numbersValid || totalValue >= innerTensValue * 10;
 
   const average = form.data?.average ?? null;
   const farAboveForm = numbersValid && average !== null && totalValue - average > SUSPICIOUS_MARGIN;
@@ -125,59 +129,59 @@ export default function ReportScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Kicker>
-          Serie {detail.data.bout.index} · {discipline.shot_count} Schuss
+          Series {detail.data.bout.index} · {discipline.shot_count} shots
         </Kicker>
-        <LargeTitle>Ergebnis melden</LargeTitle>
+        <LargeTitle>Report result</LargeTitle>
 
         {error ? <Note tone="error">{error}</Note> : null}
 
         <Card>
           <View style={{ flexDirection: 'row', gap: t.space.md, alignItems: 'flex-start' }}>
             <Field
-              label="Gesamt"
+              label="Total"
               value={total}
               onChangeText={(v) => {
                 setTotal(v);
                 setWarningAccepted(false);
               }}
               keyboardType="decimal-pad"
-              placeholder={discipline.scoring_mode === 'integer' ? '95' : '104,4'}
+              placeholder={discipline.scoring_mode === 'integer' ? '95' : '104.4'}
               big
               style={{ flex: 1, marginBottom: 0 }}
             />
-            <Field
-              label="Zehner"
-              value={tens}
-              onChangeText={(v) => {
-                setTens(v);
-                setWarningAccepted(false);
-              }}
-              keyboardType="number-pad"
-              placeholder="8"
-              big
-              style={{ width: 104, marginBottom: 0 }}
-            />
+            {requiresInnerTens ? (
+              <Field
+                label="Inner tens"
+                value={innerTens}
+                onChangeText={setInnerTens}
+                keyboardType="number-pad"
+                placeholder="4"
+                big
+                style={{ width: 112, marginBottom: 0 }}
+              />
+            ) : null}
           </View>
           <Hint>
-            Höchstens {formatScore(maxTotal, discipline.scoring_mode)} · Zehner entscheiden bei
-            Gleichstand
+            {requiresInnerTens
+              ? `At most ${formatScore(maxTotal, discipline.scoring_mode)} · inner tens break a tie`
+              : `At most ${formatScore(maxTotal, discipline.scoring_mode)} · decimal scoring breaks its own ties`}
           </Hint>
         </Card>
 
-        {numbersEntered && !reachable ? (
+        {!reachable ? (
           <Note tone="warn">
-            {`${total} lässt sich mit ${tens} Zehnern nicht schießen. Sieh nochmal auf die Anzeige.`}
+            {`${innerTens} inner tens cannot add up to only ${total}. Check the display again.`}
           </Note>
         ) : null}
 
         {farAboveForm && average !== null ? (
           <View>
             <Note tone="warn">
-              {`${formatScore(totalValue - average, discipline.scoring_mode)} über deinem Schnitt. Deine letzten ${form.data?.series} Serien liegen bei ${formatScore(average, discipline.scoring_mode)}. Falls das stimmt: weiter. Falls nicht, ist jetzt der Moment.`}
+              {`${formatScore(totalValue - average, discipline.scoring_mode)} above your average. Your last ${form.data?.series} series sit at ${formatScore(average, discipline.scoring_mode)}. If that is right, carry on. If not, now is the moment.`}
             </Note>
             {!warningAccepted ? (
               <Button
-                label="Stimmt so"
+                label="That is right"
                 variant="quiet"
                 size="sm"
                 onPress={() => setWarningAccepted(true)}
@@ -187,7 +191,7 @@ export default function ReportScreen() {
         ) : null}
 
         <Text style={[t.text.label, { color: t.colors.inkFaint, marginTop: t.space.md, marginBottom: 7 }]}>
-          Nachweis
+          Proof
         </Text>
         {photo ? (
           <Image
@@ -208,20 +212,20 @@ export default function ReportScreen() {
               justifyContent: 'center',
             }}
           >
-            <Text style={{ color: t.colors.inkFaint, fontSize: 14 }}>Noch kein Foto</Text>
+            <Text style={{ color: t.colors.inkFaint, fontSize: 14 }}>No photo yet</Text>
           </View>
         )}
 
         <View style={{ flexDirection: 'row', gap: t.space.sm }}>
           <Button
-            label={photo ? 'Neu aufnehmen' : 'Anzeige fotografieren'}
+            label={photo ? 'Retake' : 'Photograph the display'}
             variant="quiet"
             size="sm"
             onPress={() => capture(true)}
             style={{ flex: 1 }}
           />
           <Button
-            label="Galerie"
+            label="Library"
             variant="quiet"
             size="sm"
             onPress={() => capture(false)}
@@ -230,13 +234,13 @@ export default function ReportScreen() {
         </View>
 
         <Button
-          label="Melden"
+          label="Submit"
           onPress={() => submit.mutate()}
           disabled={!ready}
           busy={submit.isPending}
           style={{ marginTop: t.space.lg }}
         />
-        <Hint center>Danach nicht mehr änderbar.</Hint>
+        <Hint center>Cannot be changed afterwards.</Hint>
       </ScrollView>
     </KeyboardAvoidingView>
   );

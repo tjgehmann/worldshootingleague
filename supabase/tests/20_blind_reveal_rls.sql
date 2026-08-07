@@ -20,18 +20,18 @@ set role authenticated;
 set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
 
 \echo '[A] report own result'
-insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
-values (:'bout', '11111111-1111-1111-1111-111111111111', 104.4, 8, now(), :'bout' || '/a/shot.jpg');
+insert into public.submissions (bout_id, shooter_id, total, shot_at, photo_path)
+values (:'bout', '11111111-1111-1111-1111-111111111111', 104.4, now(), :'bout' || '/a/shot.jpg');
 
 select 'A sees ' || count(*) || ' submission(s)' from public.submissions;
 
 \echo '[A] second report for the same bout (expect failure)'
-insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
-values (:'bout', '11111111-1111-1111-1111-111111111111', 108.0, 10, now(), :'bout' || '/a/2.jpg');
+insert into public.submissions (bout_id, shooter_id, total, shot_at, photo_path)
+values (:'bout', '11111111-1111-1111-1111-111111111111', 108.0, now(), :'bout' || '/a/2.jpg');
 
 \echo '[A] report on B''s behalf (expect failure)'
-insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
-values (:'bout', '22222222-2222-2222-2222-222222222222', 50.0, 0, now(), :'bout' || '/b/fake.jpg');
+insert into public.submissions (bout_id, shooter_id, total, shot_at, photo_path)
+values (:'bout', '22222222-2222-2222-2222-222222222222', 50.0, now(), :'bout' || '/b/fake.jpg');
 
 \echo '[A] rewrite own score (expect failure)'
 update public.submissions set total = 109.0;
@@ -46,11 +46,11 @@ select 'B sees ' || count(*) || ' submission(s)  <- must be 0' from public.submi
 select 'bout state visible to B: ' || state from public.bouts;
 
 \echo '[B] report own result'
-insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
-values (:'bout', '22222222-2222-2222-2222-222222222222', 102.7, 6, now(), :'bout' || '/b/shot.jpg');
+insert into public.submissions (bout_id, shooter_id, total, shot_at, photo_path)
+values (:'bout', '22222222-2222-2222-2222-222222222222', 102.7, now(), :'bout' || '/b/shot.jpg');
 
 select 'B sees ' || count(*) || ' submission(s)  <- must be 2' from public.submissions;
-select 'B sees A''s total: ' || total || ' with ' || tens || ' tens' from public.submissions
+select 'B sees A''s total: ' || total from public.submissions
  where shooter_id = '11111111-1111-1111-1111-111111111111';
 
 \echo '[B] confirm A''s photo'

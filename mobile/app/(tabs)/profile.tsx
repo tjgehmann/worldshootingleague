@@ -74,7 +74,7 @@ export default function ProfileScreen() {
 
         {(ratings.data ?? []).length === 0 ? (
           <Card>
-            <Meta>Noch keine gewerteten Matches.</Meta>
+            <Meta>No rated matches yet.</Meta>
           </Card>
         ) : (
           (ratings.data ?? []).map((r) => (
@@ -95,13 +95,13 @@ export default function ProfileScreen() {
                       {Math.round(r.rating)}
                     </Text>
                   </View>
-                  {r.rd > 110 ? <Pill tone="wait">Vorläufig</Pill> : null}
+                  {r.rd > 110 ? <Pill tone="wait">Provisional</Pill> : null}
                 </View>
                 <StatRow
                   items={[
                     { value: String(r.matches_played), label: 'Matches' },
-                    { value: `${r.wins}/${r.draws}/${r.losses}`, label: 'S/U/N' },
-                    { value: `±${Math.round(r.rd)}`, label: 'Streuung' },
+                    { value: `${r.wins}/${r.draws}/${r.losses}`, label: 'W/D/L' },
+                    { value: `±${Math.round(r.rd)}`, label: 'Deviation' },
                   ]}
                 />
               </Card>
@@ -109,26 +109,26 @@ export default function ProfileScreen() {
           ))
         )}
 
-        <Kicker>Zuverlässigkeit</Kicker>
+        <Kicker>Reliability</Kicker>
         <Card>
           {rate === null ? (
-            <Meta>Noch nichts zu bestätigen gewesen.</Meta>
+            <Meta>Nothing to check yet.</Meta>
           ) : (
             <>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Meta>Selbst geprüft</Meta>
+                <Meta>Checked yourself</Meta>
                 <Text style={[t.text.points, { color: t.colors.positive }]}>{rate}%</Text>
               </View>
               <Meter percent={rate} />
               <Hint>
-                {reliability.data?.confirmations_given} von {reliability.data?.confirmations_due}{' '}
-                Ergebnissen deiner Gegner hast du selbst bestätigt.
+                You confirmed {reliability.data?.confirmations_given} of{' '}
+                {reliability.data?.confirmations_due} opponent results yourself.
               </Hint>
             </>
           )}
         </Card>
 
-        <Button label="Abmelden" variant="text" onPress={signOut} />
+        <Button label="Sign out" variant="text" onPress={signOut} />
       </ScrollView>
     </SafeAreaView>
   );

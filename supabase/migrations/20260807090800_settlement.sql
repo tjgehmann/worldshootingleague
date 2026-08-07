@@ -51,8 +51,8 @@ declare
   v_bout          record;
   v_total_a       numeric;
   v_total_b       numeric;
-  v_tens_a        integer;
-  v_tens_b        integer;
+  v_inner_a       integer;
+  v_inner_b       integer;
   v_points_a      numeric := 0;
   v_points_b      numeric := 0;
   v_decider_index integer;
@@ -75,11 +75,11 @@ begin
      where match_id = p_match_id and state = 'revealed'
      order by index
   loop
-    select public.submission_effective_total(s), s.tens into v_total_a, v_tens_a
+    select public.submission_effective_total(s) into v_total_a
       from public.submissions s
      where s.bout_id = v_bout.id and s.shooter_id = v_match.shooter_a;
 
-    select public.submission_effective_total(s), s.tens into v_total_b, v_tens_b
+    select public.submission_effective_total(s) into v_total_b
       from public.submissions s
      where s.bout_id = v_bout.id and s.shooter_id = v_match.shooter_b;
 
@@ -159,21 +159,23 @@ begin
     return;
   end if;
 
-  -- 3c. Level on points: aggregate score, then count of tens, then shoot-off.
+  -- 3c. Level on points: aggregate score, then inner tens (the ISSF tiebreak
+  -- for full-ring scores), then a shoot-off. Disciplines scored in tenths carry
+  -- no inner ten count, so for those the aggregate almost always decides.
   select
     coalesce(sum(public.submission_effective_total(s)) filter (where s.shooter_id = v_match.shooter_a), 0),
     coalesce(sum(public.submission_effective_total(s)) filter (where s.shooter_id = v_match.shooter_b), 0),
-    coalesce(sum(s.tens) filter (where s.shooter_id = v_match.shooter_a), 0),
-    coalesce(sum(s.tens) filter (where s.shooter_id = v_match.shooter_b), 0)
-    into v_agg_a, v_agg_b, v_tens_a, v_tens_b
+    coalesce(sum(s.inner_tens) filter (where s.shooter_id = v_match.shooter_a), 0),
+    coalesce(sum(s.inner_tens) filter (where s.shooter_id = v_match.shooter_b), 0)
+    into v_agg_a, v_agg_b, v_inner_a, v_inner_b
     from public.submissions s
     join public.bouts b on b.id = s.bout_id
    where b.match_id = p_match_id and b.state = 'settled';
 
   if v_agg_a <> v_agg_b then
     v_winner := case when v_agg_a > v_agg_b then v_match.shooter_a else v_match.shooter_b end;
-  elsif v_tens_a <> v_tens_b then
-    v_winner := case when v_tens_a > v_tens_b then v_match.shooter_a else v_match.shooter_b end;
+  elsif v_inner_a <> v_inner_b then
+    v_winner := case when v_inner_a > v_inner_b then v_match.shooter_a else v_match.shooter_b end;
   end if;
 
   if v_winner is not null then

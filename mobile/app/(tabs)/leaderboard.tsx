@@ -23,8 +23,8 @@ export default function LeaderboardScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.ground }} edges={['top']}>
       <View style={{ paddingHorizontal: t.space.xl, paddingTop: t.space.md }}>
-        <Kicker>Aktuelle Saison</Kicker>
-        <LargeTitle>Rangliste</LargeTitle>
+        <Kicker>Current season</Kicker>
+        <LargeTitle>Rankings</LargeTitle>
       </View>
 
       <ScrollView
@@ -33,7 +33,7 @@ export default function LeaderboardScreen() {
         style={{ flexGrow: 0, marginBottom: t.space.md }}
         contentContainerStyle={{ paddingHorizontal: t.space.xl, gap: t.space.sm }}
       >
-        <Chip label="Alle" active={!code} onPress={() => setCode(undefined)} />
+        <Chip label="All" active={!code} onPress={() => setCode(undefined)} />
         {(disciplines.data ?? []).map((d) => (
           <Chip
             key={d.id}
@@ -56,7 +56,7 @@ export default function LeaderboardScreen() {
           }}
           refreshing={rows.isRefetching}
           onRefresh={() => rows.refetch()}
-          ListEmptyComponent={<Empty text="Noch keine gewerteten Matches." />}
+          ListEmptyComponent={<Empty text="No rated matches yet." />}
           ItemSeparatorComponent={() => (
             <View style={{ height: 1, backgroundColor: t.colors.hairline }} />
           )}
@@ -104,7 +104,7 @@ export default function LeaderboardScreen() {
                           textTransform: 'uppercase',
                         }}
                       >
-                        vorläufig
+                        provisional
                       </Text>
                     </View>
                   ) : null}
@@ -134,7 +134,7 @@ export default function LeaderboardScreen() {
           ListFooterComponent={
             rows.data?.length ? (
               <Hint>
-                „Vorläufig" heißt: zu wenige Matches, die Einstufung ist noch unsicher.
+                "Provisional" means too few matches so far for a settled rating.
               </Hint>
             ) : null
           }

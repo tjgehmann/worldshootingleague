@@ -1,142 +1,149 @@
 # World Shooting League
 
-Online-Liga für Sportschützen auf elektronischen Ständen. Zwei Schützen treten
-zeit- und ortsunabhängig gegeneinander an: jeder schießt in seinem Verein,
-meldet Gesamtergebnis und Anzahl Zehner mit einem Foto der Anzeige, und erst
-wenn beide abgegeben haben, werden die Ergebnisse gegenseitig sichtbar.
-Anschließend prüft jeder das Foto des Gegners.
+An online league for sport shooters on electronic targets. Two shooters compete
+independently of time and place: each shoots at their own club, reports the
+score with a photo of the display, and neither result becomes visible until both
+have submitted. Afterwards each checks the other's photo.
 
-Dieses Repository enthält:
+This repository contains:
 
-* **`supabase/`** — das Datenmodell: Postgres-Schema mit Zustandsautomat, Row
-  Level Security und Glicko-2-Rating.
-* **`mobile/`** — den Expo-Client für iOS, Android und Web.
+* **`supabase/`** — the data model: Postgres schema with the state machine, row
+  level security and Glicko-2 rating.
+* **`mobile/`** — the Expo client for iOS, Android and web.
 
-## Formate
+## Formats
 
-Kurze Formate, bewusst:
+Short formats, deliberately:
 
-| Format | Ablauf |
+| Format | How it runs |
 |---|---|
-| `single_10` | Eine Serie über 10 Schuss, eine Woche Zeit. |
-| `best_of_five` | Fünf Serien à 10 Schuss, wer zuerst 3 Punkte hat, gewinnt. Alle fünf Bouts sind gleichzeitig offen. |
+| `single_10` | One series of 10 shots, one week to shoot it. |
+| `best_of_five` | Five series of 10 shots, first to 3 points wins. All five bouts are open at once. |
 
-Disziplinen im Seed: `AR10ET` (LG 10 m stehend), `AP10ET` (LP 10 m),
-`SBR10ET` (KK 50 m liegend), `SBP10ET` (Sportpistole 25 m).
+Disciplines in the seed: `AR10ET` (air rifle 10 m standing), `AP10ET` (air
+pistol 10 m), `SBR10ET` (smallbore 50 m prone), `SBP10ET` (sport pistol 25 m).
 
-## Aufbau
+## Layout
 
 ```
 supabase/
-  migrations/   Schema in Anwendungsreihenfolge
-  seed.sql      Disziplinen und Formate
-  tests/        SQL-Tests gegen ein Wegwerf-Cluster
-mobile/         Expo-Client (siehe mobile/README.md)
+  migrations/        schema, in the order it is applied
+  seed.sql           disciplines and formats
+  tests/             SQL tests against a throwaway cluster
+mobile/              Expo client (see mobile/README.md)
 scripts/
-  test-local.sh Migrationen anwenden und Tests fahren
+  test-local.sh      apply migrations and run the tests
+  verify-deploy.sql  check a live project after db push
 docs/
-  data-model.md Entitäten, Zustandsautomat, Designentscheidungen
+  data-model.md      entities, state machine, design decisions
 ```
 
-Migrationen:
+Migrations:
 
-| Datei | Inhalt |
+| File | Contents |
 |---|---|
-| `..._init_types.sql` | Enums und gemeinsame Helfer |
-| `..._profiles.sql` | Schützenprofile, Signup-Trigger |
-| `..._catalog.sql` | Disziplinen und Formate |
-| `..._seasons.sql` | Saisons, Teilnehmer, Runden |
-| `..._matches.sql` | Matches und Bouts |
-| `..._submissions.sql` | Uploads, Validierung, Blind Reveal |
-| `..._disputes.sql` | Schiedsrichterfälle |
+| `..._init_types.sql` | enums and shared helpers |
+| `..._profiles.sql` | shooter profiles, signup trigger |
+| `..._catalog.sql` | disciplines and formats |
+| `..._seasons.sql` | seasons, entries, rounds |
+| `..._matches.sql` | matches and bouts |
+| `..._submissions.sql` | reports, validation, blind reveal |
+| `..._disputes.sql` | referee cases |
 | `..._ratings.sql` | Glicko-2 |
-| `..._settlement.sql` | Auswertung, Deadlines, Finalisierung |
-| `..._rls.sql` | Row Level Security und öffentliche Sichten |
-| `..._storage.sql` | Buckets für Scheibenfotos und Avatare |
-| `..._pairing.sql` | Rundenpaarung |
-| `..._scheduling.sql` | `run_league_tick()` und der Cron-Job |
+| `..._settlement.sql` | scoring, deadlines, finalization |
+| `..._rls.sql` | row level security and public views |
+| `..._storage.sql` | buckets for target photos and avatars |
+| `..._pairing.sql` | round pairing |
+| `..._scheduling.sql` | `run_league_tick()` and the cron job |
 
-## Lokal testen
+## Testing locally
 
-Braucht nur `postgresql-16`, kein Docker und keine Supabase-CLI:
+Needs only `postgresql-16` — no Docker, no Supabase CLI:
 
 ```bash
 ./scripts/test-local.sh
 ```
 
-Das Skript baut ein Wegwerf-Cluster, wendet Stub, Migrationen und Seed an und
-fährt die Tests in `supabase/tests/`. Der Stub ersetzt, was Supabase sonst
-mitbringt: `auth.users`, `auth.uid()`, das `storage`-Schema und die Rollen
-`anon` / `authenticated`.
+The script builds a throwaway cluster, applies stub, migrations and seed, and
+runs the tests in `supabase/tests/`. The stub stands in for what Supabase
+normally provides: `auth.users`, `auth.uid()`, the `storage` schema and the
+`anon` / `authenticated` roles.
 
-Getestet werden:
+What is covered:
 
-* **`10_match_lifecycle.sql`** — Paarung, Blind Reveal, Best-of-Five endet nach
-  drei gewonnenen Bouts, Einspruchsfenster blockiert die Wertung, Glicko-2
-  greift danach, `finalize_match()` ist idempotent.
-* **`20_blind_reveal_rls.sql`** — der Gegner sieht vor eigener Abgabe **nichts**;
-  Doppelabgabe, Abgabe für Dritte, Überschreiben und Löschen scheitern; ein
-  Unbeteiligter sieht das Ergebnis, aber keine Submission.
-* **`30_deadlines_and_validation.sql`** — Forfeit bei verpasster Deadline,
-  Stechkampf-Bout bei Gleichstand, automatische Bestätigung nach abgelaufenem
-  Fenster (und ihre Wirkung auf die Quote), Verwerfen toter Matches; Ablehnung
-  überhöhter Ergebnisse, unmöglicher Zehner/Ergebnis-Kombinationen, Zehntel bei
-  Pistole, abweichender Einzelschussdaten, rückdatierter Serien und fehlender
-  Fotos.
+* **`10_match_lifecycle.sql`** — pairing, blind reveal, a best-of-five ending
+  after three won bouts, the dispute window blocking rating, Glicko-2 applying
+  afterwards, `finalize_match()` being idempotent, a file export cross-checking
+  its own total, and a tied pistol match decided on inner tens.
+* **`20_blind_reveal_rls.sql`** — the opponent sees **nothing** before
+  submitting; double submission, submitting on someone else's behalf,
+  overwriting and deleting all fail; an outsider sees the result but no
+  submission.
+* **`30_deadlines_and_validation.sql`** — walkover on a missed deadline,
+  shoot-off bout on a dead-level match, automatic confirmation after a lapsed
+  window (and its effect on the rate), voiding dead matches; rejection of
+  impossible totals, missing inner tens where the discipline requires them,
+  more inner tens than shots, tenths in a full-ring discipline, a shot array
+  that disagrees with the total, backdated series and missing photos.
 
-## Auf ein Supabase-Projekt anwenden
+## Applying to a Supabase project
 
-1. **`pg_cron` aktivieren** — Dashboard → Database → Extensions. Ohne die
-   Erweiterung schlägt die Scheduling-Migration fehl.
-2. **Schema und Katalog einspielen:**
+1. **Enable `pg_cron`** — Dashboard → Database → Extensions. Without it the
+   scheduling migration fails.
+2. **Push schema and catalog:**
    ```bash
    npx supabase link --project-ref <ref>
    npx supabase db push
    psql "$DATABASE_URL" -f supabase/seed.sql
    ```
-3. **Prüfen, dass alles gelandet ist:**
+3. **Verify everything landed:**
    ```bash
    psql "$DATABASE_URL" -f scripts/verify-deploy.sql
    ```
-   Jede Zeile muss auf OK enden. Geprüft werden Tabellen, RLS auf jeder
-   Tabelle, die drei Select-Policies des Blind Reveal, Insert-only auf
-   `submissions`, Funktionen, Sichten, Trigger, die Storage-Buckets samt
-   Policies, der Seed, der Cron-Job und die Glicko-2-Rechnung gegen die
-   Referenzwerte.
-4. **Schlüssel eintragen** — `mobile/.env` bekommt Projekt-URL und den
-   Publishable Key (früher „anon key"), zu finden unter *Project Settings →
-   API Keys*. Der ist öffentlich by design und gehört in den Client; der
-   Secret- bzw. `service_role`-Key umgeht RLS und darf nie in die App.
+   Every line must end in OK. It checks the tables, RLS on each of them, the
+   three select policies behind the blind reveal, `submissions` being
+   insert-only, the functions, views and triggers, the storage buckets and their
+   policies, the seed, the cron job, and the Glicko-2 maths against reference
+   values.
+4. **Wire up the client** — `mobile/.env` takes the project URL and the
+   publishable key (formerly "anon key") from *Project Settings → API Keys*.
+   That key is public by design and belongs in the client; the secret /
+   `service_role` key bypasses RLS and must never ship in an app.
 
-Zum Testen ist es bequem, unter *Authentication → Sign In / Providers → Email*
-die Bestätigungsmail abzuschalten — sonst kommt man nach der Registrierung
-nicht direkt in die App.
+For testing it helps to turn off the confirmation email under *Authentication →
+Sign In / Providers → Email*, otherwise a new account cannot sign in right away.
 
-## Eingabemodell
+## Reporting model
 
-Zwei Zahlen und ein Foto — mehr nicht. Bewusst **keine OCR**: eine Zahl zu
-tippen lohnt keine Automatisierung, und die Verifikation macht der Gegner nach
-dem Reveal, motiviert und zuverlässiger als ein Modell auf einem Monitorfoto.
-Wer exportieren kann (SIUS-CSV, später Hersteller-API), darf zusätzlich die
-Einzelschüsse liefern; dann prüfen sich beide Wege gegenseitig.
+Two numbers at most, and a photo. Deliberately **no OCR**: typing one number is
+not worth automating, and the verification is done by the opponent after the
+reveal — motivated, and more reliable than a model reading a photo of a monitor.
+Ranges that can export their data (SIUS CSV, later a manufacturer API) may also
+supply the individual shots, in which case the two paths cross-check.
 
-Details und Begründung in [`docs/data-model.md`](docs/data-model.md).
+The second number, inner tens, is asked for only where the discipline is scored
+in whole rings. That is the ISSF tiebreak for full-ring scores, and simulation
+puts the tie rate for a 10-shot pistol series around 11% against roughly 2% for
+decimal rifle — so pistol needs it and rifle does not.
 
-## App starten
+Reasoning in [`docs/data-model.md`](docs/data-model.md).
+
+## Running the app
 
 ```bash
 cd mobile
-cp .env.example .env      # Supabase-URL und anon key eintragen
+cp .env.example .env      # project URL and publishable key
 npm install
 npm start
 ```
 
 Details in [`mobile/README.md`](mobile/README.md).
 
-## Nächste Schritte
+## Next steps
 
-1. Push-Benachrichtigungen: Tabelle für Gerätetokens, Trigger beim Reveal und
-   vor Deadlines. Bei rundenbasiertem Spiel der Retention-Motor.
-2. Saison-Beitritt aus der App statt per Hand in `season_entries`.
-3. Referee-Ansicht für die Fallliste.
-4. CSV-Import für SIUS-Exporte (`source = 'file_export'`).
+1. Push notifications: a table for device tokens, a trigger on reveal and
+   before deadlines. In turn-based play this is the retention engine.
+2. Joining a season from the app instead of inserting into `season_entries`
+   by hand.
+3. A referee view for the case queue.
+4. CSV import for SIUS exports (`source = 'file_export'`).

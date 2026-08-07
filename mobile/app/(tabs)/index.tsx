@@ -41,10 +41,10 @@ function status(
 ): { tone: PillTone; label: string } {
   if (match.state === 'settled' || match.state === 'finalized') {
     return match.winner_id === userId
-      ? { tone: 'won', label: 'Gewonnen' }
-      : { tone: 'lost', label: 'Verloren' };
+      ? { tone: 'won', label: 'Won' }
+      : { tone: 'lost', label: 'Lost' };
   }
-  return needsAction ? { tone: 'turn', label: 'Du bist dran' } : { tone: 'wait', label: 'Wartet' };
+  return needsAction ? { tone: 'turn', label: 'Your turn' } : { tone: 'wait', label: 'Waiting' };
 }
 
 function MatchRow({
@@ -92,8 +92,8 @@ function MatchRow({
             </Text>
             <Meta>
               {decided
-                ? `${done} von ${match.bouts.length} Serien`
-                : `Serie ${Math.min(done + 1, match.bouts.length)} von ${match.bouts.length}`}
+                ? `${done} of ${match.bouts.length} series`
+                : `Series ${Math.min(done + 1, match.bouts.length)} of ${match.bouts.length}`}
             </Meta>
           </View>
 
@@ -125,7 +125,7 @@ export default function MatchesScreen() {
   });
 
   if (matches.isLoading) return <Loading />;
-  if (matches.error) return <Empty text="Matches konnten nicht geladen werden." />;
+  if (matches.error) return <Empty text="Could not load your matches." />;
 
   const mine = new Set(
     (submissions.data ?? []).filter((s) => s.shooter_id === userId).map((s) => s.bout_id),
@@ -146,12 +146,12 @@ export default function MatchesScreen() {
         onRefresh={() => matches.refetch()}
         ListHeaderComponent={
           <View style={{ paddingTop: t.space.md }}>
-            {openRound ? <Kicker>Laufende Saison</Kicker> : null}
-            <LargeTitle>Meine Matches</LargeTitle>
+            {openRound ? <Kicker>Current season</Kicker> : null}
+            <LargeTitle>My matches</LargeTitle>
           </View>
         }
         ListEmptyComponent={
-          <Empty text="Noch keine Matches. Tritt einer Saison bei, dann wird gepaart." />
+          <Empty text="No matches yet. Join a season and you will be paired." />
         }
         renderItem={({ item }) => (
           <MatchRow

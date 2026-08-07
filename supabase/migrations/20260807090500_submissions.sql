@@ -1,10 +1,10 @@
 -- Submissions: what a shooter reports for one bout.
 --
--- Two numbers and a photo. The shooter reads the total and the number of tens
--- off the range display or the printout and types them in; the photo is the
--- evidence the opponent checks after the reveal. Ranges that can export their
--- data (SIUS CSV, later a manufacturer API) may additionally supply the
--- individual shots, in which case the two paths cross-check each other.
+-- A total, a photo, and — where the discipline is scored in whole rings — the
+-- number of inner tens. The shooter reads them off the range display or the
+-- printout; the photo is the evidence the opponent checks after the reveal.
+-- Ranges that can export their data (SIUS CSV, later a manufacturer API) may
+-- additionally supply the individual shots, which cross-check the total.
 --
 -- Three properties carry the trust model:
 --   1. A submission is immutable. There is no update path for shooters (see
@@ -22,13 +22,13 @@ create table public.submissions (
 
   -- Reported by the shooter. Authoritative unless a referee adjusts it.
   total           numeric(5, 1) not null,
-  -- Shots scoring 10 or better. Keeps the ISSF-style tiebreak working without
-  -- asking for the full series, and gives the total a second value to be
-  -- consistent with.
-  tens            integer not null check (tens >= 0),
+  -- Shots inside the inner-ten ring — the ISSF tiebreak for full-ring scores.
+  -- Required only where disciplines.requires_inner_tens is set; null elsewhere,
+  -- because a decimal score breaks its own ties.
+  inner_tens      integer check (inner_tens >= 0),
 
   -- Optional, from a file export or a shooter who wants the detail. When
-  -- present it must agree with total and tens.
+  -- present its sum must agree with the total.
   shots           numeric(3, 1)[],
 
   -- Referee correction. Effective score is coalesce(adjusted_total, total).
@@ -67,12 +67,16 @@ $$;
 
 -- Validates a submission against the bout and the discipline it belongs to.
 --
--- With shots supplied, the array is authoritative and total/tens must match it
--- exactly — that is the checksum a file export gets for free. Without shots,
--- total and tens must at least be arithmetically compatible with each other:
--- t shots of 10 or better and the rest below 10 bound the achievable total from
--- both sides. It will not catch a deliberate lie, but it catches a slipped
--- digit, which is the realistic failure mode.
+-- With shots supplied, the array is authoritative and the total must match its
+-- sum exactly — the checksum a file export gets for free. Inner tens cannot be
+-- cross-checked that way: an inner ten is a position on the target, not a ring
+-- value, so a 10.9 and a 10.0 are indistinguishable from the score alone.
+--
+-- Without shots only one bound survives, and it is weaker than a ring count
+-- would have been: every inner ten is worth at least 10, so the total cannot be
+-- below inner_tens * 10. There is no useful upper bound, because a shot that is
+-- not an inner ten can still score a full 10. Typos are caught by
+-- shooter_recent_form() in the client, not here.
 create or replace function public.validate_submission()
 returns trigger
 language plpgsql
@@ -85,10 +89,6 @@ declare
   v_discipline public.disciplines%rowtype;
   v_shot       numeric;
   v_sum        numeric;
-  v_tens       integer;
-  v_sub_ten    numeric;   -- highest value strictly below 10 in this discipline
-  v_min_total  numeric;
-  v_max_total  numeric;
 begin
   select * into v_bout from public.bouts where id = new.bout_id for update;
   if not found then
@@ -114,10 +114,25 @@ begin
   end if;
 
   -- ------------------------------------------------------------ the numbers
-  if new.tens > v_discipline.shot_count then
-    raise exception 'tens (%) cannot exceed the % shots of discipline %',
-      new.tens, v_discipline.shot_count, v_discipline.code
-      using errcode = 'check_violation';
+  if v_discipline.requires_inner_tens and new.inner_tens is null then
+    raise exception 'discipline % is scored in whole rings and needs the inner ten count',
+      v_discipline.code
+      using errcode = 'not_null_violation';
+  end if;
+
+  if new.inner_tens is not null then
+    if new.inner_tens > v_discipline.shot_count then
+      raise exception 'inner tens (%) cannot exceed the % shots of discipline %',
+        new.inner_tens, v_discipline.shot_count, v_discipline.code
+        using errcode = 'check_violation';
+    end if;
+
+    -- An inner ten is a ten, so each one contributes at least 10 to the total.
+    if new.total < new.inner_tens * 10.0 then
+      raise exception '% inner ten(s) cannot add up to a total of only %',
+        new.inner_tens, new.total
+        using errcode = 'check_violation';
+    end if;
   end if;
 
   if new.total < 0 or new.total > v_discipline.shot_count * v_discipline.max_shot_value then
@@ -128,18 +143,6 @@ begin
 
   if v_discipline.scoring_mode = 'integer' and new.total <> trunc(new.total) then
     raise exception 'discipline % scores whole rings, got total %', v_discipline.code, new.total
-      using errcode = 'check_violation';
-  end if;
-
-  v_sub_ten := case when v_discipline.scoring_mode = 'integer' then 9.0 else 9.9 end;
-  v_min_total := new.tens * 10.0;
-  v_max_total := new.tens * v_discipline.max_shot_value
-                 + (v_discipline.shot_count - new.tens) * v_sub_ten;
-
-  if new.total < v_min_total or new.total > v_max_total then
-    raise exception
-      'total % is not reachable with % ten(s) in discipline % (expected % .. %)',
-      new.total, new.tens, v_discipline.code, v_min_total, v_max_total
       using errcode = 'check_violation';
   end if;
 
@@ -163,16 +166,10 @@ begin
       end if;
     end loop;
 
-    select sum(s), count(*) filter (where s >= 10.0)
-      into v_sum, v_tens
-      from unnest(new.shots) as s;
+    select sum(s) into v_sum from unnest(new.shots) as s;
 
     if v_sum <> new.total then
       raise exception 'shots add up to % but total says %', v_sum, new.total
-        using errcode = 'check_violation';
-    end if;
-    if v_tens <> new.tens then
-      raise exception 'shots contain % ten(s) but tens says %', v_tens, new.tens
         using errcode = 'check_violation';
     end if;
   end if;
@@ -240,7 +237,7 @@ $$;
 
 -- Peer verification. With no automated scoring in the loop, this is the check:
 -- each shooter looks at the opponent's photo and says whether the reported
--- numbers match it. Accepting is the normal path; disputing opens a referee
+-- figures match it. Accepting is the normal path; disputing opens a referee
 -- case. Letting the window lapse auto-accepts but counts against the shooter.
 create table public.bout_confirmations (
   id             uuid primary key default gen_random_uuid(),

@@ -13,6 +13,13 @@ create table public.disciplines (
   shot_count     integer not null check (shot_count between 5 and 60),
   scoring_mode   public.scoring_mode not null,
   max_shot_value numeric(3, 1) not null check (max_shot_value > 0),
+  -- Whether a shooter must report inner tens alongside the total.
+  --
+  -- ISSF breaks a tied full-ring score on inner tens, so disciplines scored in
+  -- whole rings need the count. Where the discipline is scored in tenths the
+  -- decimal value already separates almost every tie, and asking for a second
+  -- number at the moment of submission would cost more than it returns.
+  requires_inner_tens boolean not null default false,
   -- Everything in the league is shot on electronic targets; the column exists
   -- so a paper-target variant can be added without another migration.
   target_system  text not null default 'electronic',

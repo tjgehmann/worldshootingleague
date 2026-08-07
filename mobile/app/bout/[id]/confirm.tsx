@@ -58,7 +58,7 @@ export default function ConfirmScreen() {
 
   const decide = useMutation({
     mutationFn: async (accepted: boolean) => {
-      if (!theirs || !userId || !detail.data) throw new Error('Nichts zu prüfen');
+      if (!theirs || !userId || !detail.data) throw new Error('Nothing to check');
 
       if (accepted) {
         await confirmSubmission(theirs.id, userId, true);
@@ -73,12 +73,12 @@ export default function ConfirmScreen() {
       await queryClient.invalidateQueries({ queryKey: ['reliability'] });
       router.back();
     },
-    onError: (e) => setError(e instanceof Error ? e.message : 'Konnte nicht gespeichert werden'),
+    onError: (e) => setError(e instanceof Error ? e.message : 'Could not be saved'),
   });
 
   if (detail.isLoading || submissions.isLoading) return <Loading />;
   if (!detail.data || !theirs) {
-    return <Empty text="Das Ergebnis des Gegners ist noch nicht sichtbar." />;
+    return <Empty text="Your opponent's result is not visible yet." />;
   }
 
   const { match, bout } = detail.data;
@@ -91,9 +91,9 @@ export default function ConfirmScreen() {
       contentContainerStyle={{ paddingHorizontal: t.space.xl, paddingBottom: t.space.xxl }}
     >
       <Kicker>
-        Serie {bout.index} · gemeldet am {formatDateTime(theirs.shot_at)}
+        Series {bout.index} · reported {formatDateTime(theirs.shot_at)}
       </Kicker>
-      <LargeTitle>Stimmt das?</LargeTitle>
+      <LargeTitle>Does this match?</LargeTitle>
 
       {error ? <Note tone="error">{error}</Note> : null}
 
@@ -104,13 +104,13 @@ export default function ConfirmScreen() {
             <Text style={[t.text.name, { color: t.colors.ink }]} numberOfLines={1}>
               {opponent.display_name}
             </Text>
-            <Meta>hat gemeldet</Meta>
+            <Meta>reported</Meta>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
             <Text style={[t.text.scoreSm, { color: t.colors.ink }]}>
               {formatScore(theirs.total, mode)}
             </Text>
-            <Meta>{theirs.tens} Zehner</Meta>
+            {theirs.inner_tens != null ? <Meta>{theirs.inner_tens} inner tens</Meta> : null}
           </View>
         </View>
       </Card>
@@ -140,7 +140,7 @@ export default function ConfirmScreen() {
           }}
         >
           <Text style={{ color: t.colors.inkFaint, fontSize: 14 }}>
-            Foto konnte nicht geladen werden.
+            Photo could not be loaded.
           </Text>
         </View>
       )}
@@ -148,14 +148,14 @@ export default function ConfirmScreen() {
       {disputing ? (
         <View>
           <Text style={[t.text.label, { color: t.colors.inkFaint, marginBottom: 7 }]}>
-            Was stimmt nicht?
+            What is wrong?
           </Text>
           <TextInput
             value={reason}
             onChangeText={setReason}
             multiline
             numberOfLines={4}
-            placeholder="Auf dem Foto steht 98,4, gemeldet wurden 104,4."
+            placeholder="The photo shows 98.4 but 104.4 was reported."
             placeholderTextColor={t.colors.inkFaint}
             style={{
               backgroundColor: t.colors.surfaceAlt,
@@ -168,29 +168,28 @@ export default function ConfirmScreen() {
             }}
           />
           <Button
-            label="Schiedsrichter rufen"
+            label="Call a referee"
             onPress={() => decide.mutate(false)}
             disabled={reason.trim().length < 10}
             busy={decide.isPending}
           />
-          <Button label="Doch nicht" variant="text" onPress={() => setDisputing(false)} />
+          <Button label="Never mind" variant="text" onPress={() => setDisputing(false)} />
         </View>
       ) : (
         <View>
           <Button
-            label="Passt"
+            label="Looks right"
             variant="positive"
             onPress={() => decide.mutate(true)}
             busy={decide.isPending}
           />
           <Button
-            label="Stimmt nicht — Schiedsrichter"
+            label="Does not match — call a referee"
             variant="quiet"
             onPress={() => setDisputing(true)}
           />
           <Hint center>
-            Ohne Antwort gilt es nach 48 Stunden als bestätigt, zählt dann aber nicht als deine
-            Prüfung.
+            Without a reply it counts as confirmed after 48 hours, but not as your check.
           </Hint>
         </View>
       )}

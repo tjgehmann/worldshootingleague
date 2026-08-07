@@ -30,8 +30,8 @@ select m.state, count(b.*) as bouts, min(b.state::text) as bout_state
   from public.matches m join public.bouts b on b.match_id = m.id
  group by m.id, m.state;
 
--- Play the first match. Both shooters report two numbers and a photo, which is
--- the everyday path: no shot array, no OCR.
+-- Play the first match. AR10ET is scored in tenths, so inner tens are not
+-- asked for: one number and a photo, which is the everyday path.
 do $$
 declare
   v_match public.matches%rowtype;
@@ -40,15 +40,15 @@ begin
   select * into v_match from public.matches order by id limit 1;
 
   for v_bout in select * from public.bouts where match_id = v_match.id order by index loop
-    -- A reports 104.4 with 8 tens, B reports 102.7 with 6 -> A wins every bout
-    insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
-      values (v_bout.id, v_match.shooter_a, 104.4, 8, now(), v_bout.id::text || '/a/shot.jpg');
+    -- A reports 104.4, B reports 102.7 -> A wins every bout
+    insert into public.submissions (bout_id, shooter_id, total, shot_at, photo_path)
+      values (v_bout.id, v_match.shooter_a, 104.4, now(), v_bout.id::text || '/a/shot.jpg');
 
     raise notice 'after A submits bout %: bout state=%',
       v_bout.index, (select state from public.bouts where id = v_bout.id);
 
-    insert into public.submissions (bout_id, shooter_id, total, tens, shot_at, photo_path)
-      values (v_bout.id, v_match.shooter_b, 102.7, 6, now(), v_bout.id::text || '/b/shot.jpg');
+    insert into public.submissions (bout_id, shooter_id, total, shot_at, photo_path)
+      values (v_bout.id, v_match.shooter_b, 102.7, now(), v_bout.id::text || '/b/shot.jpg');
 
     exit when (select state from public.matches where id = v_match.id) <> 'live';
   end loop;
@@ -93,15 +93,36 @@ select d.id, f.id, '33333333-3333-3333-3333-333333333333', '44444444-4444-4444-4
        'live', now() - interval '1 hour', now() + interval '7 days'
   from public.disciplines d, public.formats f where d.code='AR10ET' and f.code='single_10';
 
-insert into public.submissions (bout_id, shooter_id, total, tens, shots, shot_at, photo_path, source)
-select b.id, m.shooter_a, 100.4, 8,
+insert into public.submissions (bout_id, shooter_id, total, shots, shot_at, photo_path, source)
+select b.id, m.shooter_a, 100.4,
        array[10.5,10.4,10.3,10.6,10.2,10.5,10.4,9.8,10.7,7.0], now(),
        b.id::text || '/c/export.jpg', 'file_export'
   from public.bouts b join public.matches m on m.id = b.match_id
  where m.shooter_a = '33333333-3333-3333-3333-333333333333'
    and m.format_id = (select id from public.formats where code = 'single_10');
 
-select 'file export accepted, total ' || total || ' / tens ' || tens || ' / source ' || source
+select 'file export accepted, total ' || total || ' / source ' || source
   from public.submissions where source = 'file_export';
+
+-- Pistol is scored in whole rings, so inner tens are mandatory there.
+insert into public.matches (discipline_id, format_id, shooter_a, shooter_b, state, opens_at, closes_at)
+select d.id, f.id, '11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222',
+       'live', now() - interval '1 hour', now() + interval '7 days'
+  from public.disciplines d, public.formats f where d.code='AP10ET' and f.code='single_10';
+
+insert into public.submissions (bout_id, shooter_id, total, inner_tens, shot_at, photo_path)
+select b.id, m.shooter_a, 95, 4, now(), b.id::text || '/a/p.jpg'
+  from public.bouts b join public.matches m on m.id = b.match_id
+ where m.discipline_id = (select id from public.disciplines where code='AP10ET');
+
+insert into public.submissions (bout_id, shooter_id, total, inner_tens, shot_at, photo_path)
+select b.id, m.shooter_b, 95, 2, now(), b.id::text || '/b/p.jpg'
+  from public.bouts b join public.matches m on m.id = b.match_id
+ where m.discipline_id = (select id from public.disciplines where code='AP10ET');
+
+select 'pistol tie 95:95 decided by ' || decided_by || ', winner has more inner tens: '
+       || (winner_id = '11111111-1111-1111-1111-111111111111')::text
+  from public.matches
+ where discipline_id = (select id from public.disciplines where code='AP10ET');
 
 rollback;
