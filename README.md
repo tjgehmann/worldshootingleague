@@ -158,9 +158,120 @@ Details in [`mobile/README.md`](mobile/README.md).
 
 ## Next steps
 
-1. Push notifications: a table for device tokens, a trigger on reveal and
-   before deadlines. In turn-based play this is the retention engine.
-2. Joining a season from the app instead of inserting into `season_entries`
-   by hand.
-3. A referee view for the case queue.
-4. CSV import for SIUS exports (`source = 'file_export'`).
+What exists today is one complete loop: get paired, shoot, report, reveal,
+check, get rated. That is enough to run a closed pilot and not enough to run a
+league. What follows is ordered by what actually decides whether a league lives,
+drawn from how the established platforms solve the same problems.
+
+Three things decide it. Everything else is downstream.
+
+### 1. Liquidity — nobody plays an empty ladder
+
+A challenge needs an opponent in the same discipline at a similar level. Spread
+a few hundred shooters over four disciplines and every ladder looks abandoned.
+[FACEIT](https://support.faceit.com/hc/en-us/articles/14996562458268-FACEIT-Beginners-Guide)
+solves this two ways: hubs, where a known community plays among itself, and
+ladders grouped by level range so each one stays relevant. Both apply here.
+
+- [ ] **Clubs as a first-class entity.** Shooting is already organised in clubs,
+      which makes a club the natural unit to onboard twenty people at once
+      instead of one at a time. A club-only season is the equivalent of a FACEIT
+      hub, and it works at a scale where a global ladder would not.
+- [ ] **Club vs club team matches.** German league shooting is team-based
+      already, so this is not a new format to teach — it is the one the audience
+      knows. Aggregate of N shooters against N shooters.
+- [ ] **Join a season from inside the app**, with an invite link a club official
+      can send round. Today entrants are inserted into `season_entries` by hand.
+- [ ] **A free challenge queue** so somebody who joins mid-season has something
+      to do before the next round pairs. The schema already allows a match with
+      no round.
+
+### 2. The loop — turn-based play needs a reason to come back
+
+- [ ] **Push notifications.** A table for device tokens plus triggers on reveal,
+      on a confirmation waiting, and before a deadline. In turn-based play this
+      is the retention engine and nothing substitutes for it.
+- [ ] **Divisions with promotion and relegation.** One table for everyone is
+      demotivating for everyone outside the top ten. FACEIT splits its ladders by
+      level range for exactly this reason; ESEA and ESL run divisions. Glicko-2
+      already provides the number to split on.
+- [ ] **A weekly challenge.** A single shared task — "10 shots kneeling this
+      week" — gives a reason to open the app without needing an opponent to
+      respond. FACEIT calls these missions.
+- [ ] **Streaks, personal bests and awards.** Cheap to build, and the 2016
+      mockups already had "NEW PERSONAL BEST" and a medal.
+- [ ] **The activity feed** from the original design: results, awards, comments.
+      Worth building once the competitive loop is busy, not before.
+
+### 3. Trust at scale — the ranking is the product
+
+Peer confirmation works while everyone knows each other. It does not survive
+growth, and it is exactly where the online chess platforms invested.
+[Chess.com](https://www.chess.com/cheating) scores over a hundred factors and
+auto-flags performances that are statistically improbable; Lichess pairs
+statistics with human moderators and quietly separates offenders rather than
+announcing bans.
+
+- [ ] **Statistical fair-play flagging.** The equivalent signal here is a
+      shooter's own distribution over time. A submission far outside their
+      history, or a sudden step change in level, should open a case by itself
+      instead of waiting for an opponent to notice. `rating_events` and the
+      submission history already hold the data.
+- [ ] **A referee console.** A case queue, both photos side by side, a decision
+      with a reason. Disputes can be raised today but not worked.
+- [ ] **A sanction ladder and an appeal path.** Warning, voided result, rating
+      rollback, suspension — with the reason recorded and the shooter able to
+      respond.
+- [ ] **Heavier verification where the stakes are.** A witness signature or a
+      short video for promotion into the top division and for qualifying to a
+      final. The rule the subscription leagues follow: verification scales with
+      what is at stake, not uniformly.
+- [ ] **Sandbagging detection.** Deliberately shooting low to farm an easier
+      division becomes worth doing the moment divisions exist. Chess.com detects
+      it explicitly; so should this.
+
+### Competition structure
+
+- [ ] Cups and knockout brackets alongside the ladder — a season is a long
+      commitment, a weekend cup is not.
+- [ ] **A season final on site.** The reason the whole thing exists: the online
+      league qualifies, the title is decided in a hall. It also settles the trust
+      question — manipulating an online ladder is embarrassing when the final is
+      shot in front of people.
+- [ ] Categories: junior, senior, and the equipment classes shooters expect to
+      be separated by.
+- [ ] An optional handicap mode so a club can run a mixed-ability internal
+      ladder.
+
+### Reach
+
+- [ ] **Public web pages** for seasons, tables and finished matches. Everything
+      is behind a login today, which means none of it is findable, linkable or
+      shareable.
+- [ ] Shareable match cards for social, and live results during an on-site
+      final.
+
+### Operations, and two things that block a public launch
+
+- [ ] An admin console: create seasons, manage the catalog, work the moderation
+      queue.
+- [ ] **Minors.** A large share of ISSF shooters are juniors. Age gate, guardian
+      consent, and restraint on photos and public profiles for under-16s. This is
+      a launch blocker, not a feature.
+- [ ] **Prize money is a legal question before it is a product question.** An
+      entry fee plus a cash prize can fall under German gambling law; skill-based
+      competition helps but is not a blanket exemption. Keep prizes attached to
+      the on-site final and take advice before money moves.
+- [ ] App store review: firearms content policies are real. Sport shooting apps
+      exist, but affiliate links to weapons or ammunition are a rejection risk.
+- [ ] GDPR: data export and deletion, and a retention rule for evidence photos.
+
+### Integrations
+
+- [ ] CSV import for SIUS exports (`source = 'file_export'`), which already has
+      a place in the schema.
+- [ ] DISAG's QR path, where a range already publishes results digitally.
+- [ ] A manufacturer API once there is leverage to ask for one. Platforms like
+      Challengermode report results automatically and never ask for a screenshot;
+      that is the end state, and it is worth reaching only from a position where
+      the manufacturers want the distribution.
