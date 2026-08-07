@@ -23,6 +23,21 @@ Short formats, deliberately:
 Disciplines in the seed: `AR10ET` (air rifle 10 m standing), `AP10ET` (air
 pistol 10 m), `SBR10ET` (smallbore 50 m prone), `SBP10ET` (sport pistol 25 m).
 
+## Screens
+
+The sign-in screen, captured from the running web build in both themes:
+
+<p>
+  <img src="docs/screenshots/sign-in-dark.png" alt="Sign-in screen, dark theme" width="300">
+  <img src="docs/screenshots/sign-in-light.png" alt="Sign-in screen, light theme" width="300">
+</p>
+
+Every screen — matches, the blind reveal before and after, reporting, checking a
+photo, rankings and profile — is laid out in
+[`docs/mockups.html`](docs/mockups.html); open it in a browser. Colours, spacing
+and type there come from `mobile/lib/theme.ts` and the wording is what the app
+renders. Only the data is invented.
+
 ## Layout
 
 ```
@@ -36,6 +51,8 @@ scripts/
   verify-deploy.sql  check a live project after db push
 docs/
   data-model.md      entities, state machine, design decisions
+  mockups.html       every screen, annotated
+  screenshots/       captures from the running build
 ```
 
 Migrations:

@@ -1,0 +1,1317 @@
+<title>World Shooting League -- Screens</title>
+
+<style>
+  /* ============================================================== PAGE ====
+     Gallery chrome. Cool near-black biased toward the app's indigo, so the
+     device frames sit in their own world rather than on a neutral backdrop. */
+  :root {
+    --p-ground:  #F7F8FC;
+    --p-surf:    #FFFFFF;
+    --p-sunken:  #ECEEF5;
+    --p-ink:     #0C0E14;
+    --p-ink2:    #586074;
+    --p-line:    #E1E4EE;
+    --p-accent:  #4B4DE0;
+    --p-accent2: #EDEDFC;
+    --p-shadow:  0 2px 4px rgba(12,14,20,.05), 0 22px 50px rgba(12,14,20,.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --p-ground:  #0A0C11;
+      --p-surf:    #13161F;
+      --p-sunken:  #070910;
+      --p-ink:     #F2F4FA;
+      --p-ink2:    #8B93A8;
+      --p-line:    #232936;
+      --p-accent:  #8788FF;
+      --p-accent2: #1B1D33;
+      --p-shadow:  0 2px 4px rgba(0,0,0,.5), 0 24px 56px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --p-ground:  #0A0C11;
+    --p-surf:    #13161F;
+    --p-sunken:  #070910;
+    --p-ink:     #F2F4FA;
+    --p-ink2:    #8B93A8;
+    --p-line:    #232936;
+    --p-accent:  #8788FF;
+    --p-accent2: #1B1D33;
+    --p-shadow:  0 2px 4px rgba(0,0,0,.5), 0 24px 56px rgba(0,0,0,.6);
+  }
+
+  :root {
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--p-ground);
+    color: var(--p-ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1340px; margin: 0 auto; padding: 60px 24px 100px; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    color: var(--p-ink2);
+    margin: 0 0 16px;
+  }
+  h1 {
+    font-size: clamp(32px, 4.6vw, 50px);
+    line-height: 1.06;
+    letter-spacing: -.028em;
+    font-weight: 700;
+    margin: 0 0 20px;
+    text-wrap: balance;
+  }
+  .lede { max-width: 64ch; color: var(--p-ink2); font-size: 17.5px; margin: 0 0 14px; }
+  .lede strong { color: var(--p-ink); font-weight: 600; }
+
+  .section { margin-top: 84px; }
+  .section-head { border-top: 1px solid var(--p-line); padding-top: 24px; margin-bottom: 34px; }
+  h2 {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--p-accent);
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+  .section-note { max-width: 64ch; color: var(--p-ink2); margin: 0; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 380px));
+    gap: 44px 34px;
+    justify-content: start;
+  }
+
+  figure { margin: 0; display: flex; flex-direction: column; gap: 16px; }
+  figcaption { display: flex; flex-direction: column; gap: 6px; max-width: 380px; }
+  .route {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--p-accent);
+    background: var(--p-accent2);
+    padding: 3px 8px;
+    border-radius: 5px;
+    align-self: flex-start;
+  }
+  .cap-title { font-weight: 650; font-size: 15.5px; }
+  .cap-note { font-size: 14px; color: var(--p-ink2); line-height: 1.55; }
+  .cap-note code { font-family: var(--mono); font-size: 12.5px; }
+
+  /* Change log: what moved and why. Information, not ornament. */
+  .changes { border-collapse: collapse; width: 100%; max-width: 900px; font-size: 15px; }
+  .changes th, .changes td { text-align: left; padding: 12px 16px 12px 0; vertical-align: top; border-bottom: 1px solid var(--p-line); }
+  .changes th { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--p-ink2); font-weight: 600; }
+  .changes td:first-child { color: var(--p-ink2); width: 30%; }
+  .changes td:last-child { color: var(--p-ink); width: 70%; }
+  .changes-scroll { overflow-x: auto; }
+
+  .pair-note {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 14px;
+    background: var(--p-surf);
+    border: 1px solid var(--p-line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    max-width: 794px;
+  }
+  .pair-note .k {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--p-accent); white-space: nowrap; padding-top: 4px;
+  }
+  .pair-note p { margin: 0; font-size: 14.5px; color: var(--p-ink2); line-height: 1.6; }
+  .pair-note strong { color: var(--p-ink); font-weight: 600; }
+
+  footer {
+    margin-top: 90px; border-top: 1px solid var(--p-line); padding-top: 26px;
+    color: var(--p-ink2); font-size: 14.5px; max-width: 64ch;
+  }
+  footer code { font-family: var(--mono); font-size: 13px; background: var(--p-sunken); padding: 1px 5px; border-radius: 4px; }
+  a { color: var(--p-accent); }
+  :focus-visible { outline: 2px solid var(--p-accent); outline-offset: 3px; }
+
+  /* ============================================================ DEVICE ==== */
+  .device {
+    width: 380px; max-width: 100%;
+    border-radius: 42px;
+    padding: 8px;
+    background: #05070C;
+    box-shadow: var(--p-shadow);
+  }
+  .screen {
+    position: relative;
+    height: 760px;
+    border-radius: 35px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    font-size: 15px;
+    line-height: 1.42;
+  }
+  .screen[data-clip]::after {
+    content: "";
+    position: absolute; left: 0; right: 0; bottom: 0; height: 90px;
+    pointer-events: none;
+    background: linear-gradient(to top, var(--ground), transparent);
+  }
+
+  /* ================================================= APP . DARK (default) = */
+  .app {
+    --ground:   #0B0D13;
+    --surf:     #161A25;
+    --surf-2:   #1F2432;
+    --hair:     #272D3C;
+    --ink:      #F4F6FB;
+    --ink-2:    #939BB0;
+    --ink-3:    #656D80;
+    --accent:   #8788FF;
+    --accent-solid: #5250E8;
+    --accent-tint:  #1D1F3A;
+    --pos:      #34D399;
+    --pos-tint: #0F2A21;
+    --warn:     #FBBF4A;
+    --warn-tint:#2E2413;
+    --neg:      #FF6B7A;
+    --neg-tint: #331A1F;
+    --on-solid: #FFFFFF;
+    background: var(--ground);
+    color: var(--ink);
+  }
+  .app.light {
+    --ground:   #F7F8FB;
+    --surf:     #FFFFFF;
+    --surf-2:   #EFF1F7;
+    --hair:     #E3E6EF;
+    --ink:      #0B0D13;
+    --ink-2:    #5B6377;
+    --ink-3:    #838B9E;
+    --accent:   #4B4DE0;
+    --accent-solid: #4B4DE0;
+    --accent-tint:  #ECECFB;
+    --pos:      #0E9F6E;
+    --pos-tint: #E3F7EF;
+    --warn:     #B4740A;
+    --warn-tint:#FCF1DE;
+    --neg:      #DC3B4C;
+    --neg-tint: #FCE9EB;
+    --on-solid: #FFFFFF;
+  }
+
+  /* status bar -- no coloured chrome, it sits on the content ground */
+  .sb {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 26px 2px;
+    font-size: 14px; font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    flex: 0 0 auto;
+  }
+  .sb svg { display: block; }
+
+  .nav {
+    display: flex; align-items: center; gap: 12px;
+    padding: 6px 20px 2px;
+    flex: 0 0 auto;
+  }
+  .nav .chev { color: var(--accent); font-size: 26px; line-height: 1; margin-top: -4px; }
+  .nav .nav-t { font-size: 15px; font-weight: 600; color: var(--ink-2); }
+
+  .scroll { flex: 1; overflow: hidden; padding: 0 20px; }
+  .scroll.flush { padding: 0; }
+
+  .kicker {
+    font-size: 11px; letter-spacing: .13em; text-transform: uppercase;
+    color: var(--ink-3); font-weight: 650; margin: 14px 0 5px;
+  }
+  .large-title {
+    font-size: 30px; font-weight: 730; letter-spacing: -.028em;
+    line-height: 1.12; margin: 0 0 18px;
+  }
+  .sub { color: var(--ink-2); font-size: 14.5px; }
+
+  .card {
+    background: var(--surf);
+    border-radius: 18px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+  }
+  .app.light .card { box-shadow: 0 1px 2px rgba(11,13,19,.05), 0 1px 0 rgba(11,13,19,.02); }
+
+  /* avatar */
+  .av {
+    width: 38px; height: 38px; border-radius: 12px;
+    background: var(--surf-2); color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; letter-spacing: .01em;
+    flex: 0 0 auto;
+  }
+
+  .row { display: flex; align-items: center; }
+  .row.between { justify-content: space-between; }
+  .gap-sm { gap: 10px; }
+  .gap-md { gap: 14px; }
+  .grow { flex: 1; min-width: 0; }
+
+  .name { font-size: 16px; font-weight: 620; letter-spacing: -.01em; }
+  .meta { font-size: 12.5px; color: var(--ink-3); }
+
+  /* status pill -- urgency belongs to the match, not to every segment */
+  .pill {
+    font-size: 10.5px; font-weight: 700; letter-spacing: .07em;
+    text-transform: uppercase; padding: 5px 10px; border-radius: 999px;
+    white-space: nowrap;
+  }
+  .pill.turn { background: var(--warn-tint); color: var(--warn); }
+  .pill.wait { background: var(--surf-2); color: var(--ink-3); }
+  .pill.won  { background: var(--pos-tint); color: var(--pos); }
+  .pill.lost { background: var(--neg-tint); color: var(--neg); }
+
+  /* segmented series bar */
+  .seg { display: flex; gap: 4px; }
+  .seg i { flex: 1; height: 5px; border-radius: 3px; background: var(--surf-2); display: block; }
+  .app.light .seg i { background: var(--hair); }
+  .seg i.won  { background: var(--pos); }
+  .seg i.lost { background: var(--neg); }
+  .seg i.tie  { background: var(--ink-3); }
+  .seg i.void { opacity: .35; }
+
+  /* the scoreboard: the app is about two numbers facing each other */
+  .h2h { display: flex; align-items: stretch; margin: 4px 0 2px; }
+  .h2h .col { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .h2h .col.right { align-items: flex-end; text-align: right; }
+  .h2h .rule { width: 1px; background: var(--hair); margin: 4px 16px; flex: 0 0 auto; }
+  .num {
+    font-size: 40px; font-weight: 700; letter-spacing: -.035em;
+    font-variant-numeric: tabular-nums; line-height: 1.05;
+    color: var(--ink);
+  }
+  .num.sm { font-size: 30px; }
+  .num.dim { color: var(--ink-3); }
+  .num.pos { color: var(--pos); }
+  .num.blind { color: var(--ink-3); letter-spacing: .12em; font-size: 34px; }
+  .lbl { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); font-weight: 650; }
+  .tens { font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+  .points {
+    font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+  }
+
+  .hair { height: 1px; background: var(--hair); margin: 14px 0; }
+
+  /* buttons */
+  .btn {
+    height: 52px; border-radius: 15px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-size: 16px; font-weight: 620; letter-spacing: -.01em;
+    background: var(--accent-solid); color: var(--on-solid);
+    margin-top: 10px;
+  }
+  .btn.quiet { background: var(--surf-2); color: var(--ink); }
+  .btn.pos { background: var(--pos); color: #04150F; }
+  .app.light .btn.pos { color: #FFFFFF; }
+  .btn.text { background: none; color: var(--accent); height: 46px; }
+  .btn.sm { height: 44px; font-size: 15px; border-radius: 13px; margin-top: 8px; }
+
+  /* inputs */
+  .field { margin-bottom: 14px; }
+  .field .lbl { display: block; margin-bottom: 7px; }
+  .input {
+    background: var(--surf-2); border-radius: 15px;
+    padding: 14px 16px; font-size: 21px; font-weight: 620;
+    font-variant-numeric: tabular-nums; letter-spacing: -.01em;
+  }
+  .input.text { font-size: 16px; font-weight: 500; }
+  .input.ph { color: var(--ink-3); font-weight: 500; }
+  .hint { font-size: 12.5px; color: var(--ink-3); margin-top: 6px; }
+
+  .note {
+    border-radius: 15px; padding: 14px 16px; font-size: 14px; line-height: 1.5;
+    background: var(--surf); color: var(--ink-2);
+  }
+  .note.warn { background: var(--warn-tint); color: var(--warn); }
+  .note.warn b { color: var(--warn); }
+  .note b { color: var(--ink); font-weight: 620; }
+
+  /* photo */
+  .photo {
+    border-radius: 16px; overflow: hidden; background: var(--surf-2);
+    display: flex; align-items: center; justify-content: center;
+    height: 190px;
+  }
+  .photo.tall { height: 262px; }
+  .photo svg { height: 100%; width: auto; }
+  .photo.empty { border: 1.5px dashed var(--hair); background: none; }
+
+  /* leaderboard */
+  .chips { display: flex; gap: 8px; padding: 4px 20px 16px; overflow: hidden; }
+  .chip {
+    padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 620;
+    background: var(--surf); color: var(--ink-2); white-space: nowrap;
+  }
+  .chip.on { background: var(--accent-solid); color: var(--on-solid); }
+
+  .lb { display: flex; align-items: center; gap: 12px; padding: 11px 0; }
+  .lb + .lb { border-top: 1px solid var(--hair); }
+  .lb .pos {
+    width: 24px; font-size: 14px; font-weight: 700; color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+  .lb.top .pos { color: var(--accent); }
+  .lb .r { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .lb .wl { font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; width: 34px; text-align: right; }
+  .prov {
+    font-size: 9.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--ink-3); background: var(--surf-2); padding: 2px 6px; border-radius: 5px;
+  }
+
+  /* stat strip */
+  .stats { display: flex; gap: 10px; }
+  .stat { flex: 1; background: var(--surf-2); border-radius: 14px; padding: 12px 10px; text-align: center; }
+  .stat b { display: block; font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .stat span { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 650; }
+
+  /* meter for the confirmation rate */
+  .meter { height: 6px; border-radius: 3px; background: var(--surf-2); overflow: hidden; margin-top: 10px; }
+  .meter i { display: block; height: 100%; background: var(--pos); border-radius: 3px; }
+
+  /* floating tab bar */
+  .tabs {
+    flex: 0 0 auto;
+    margin: 0 16px 14px;
+    background: var(--surf);
+    border-radius: 22px;
+    padding: 9px 8px 8px;
+    display: flex;
+    position: relative;
+    z-index: 2;
+  }
+  .app.light .tabs { box-shadow: 0 4px 20px rgba(11,13,19,.10); }
+  .tabs .t { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .tabs .t span { font-size: 10px; font-weight: 620; color: var(--ink-3); letter-spacing: .01em; }
+  .tabs .t.on span { color: var(--accent); }
+
+  @media (max-width: 480px) {
+    .wrap { padding: 36px 14px 70px; }
+    .device { width: 100%; }
+  }
+</style>
+<div class="wrap">
+
+  <p class="eyebrow">Sample data &#183; real design tokens</p>
+  <h1>The app, screen by screen</h1>
+  <p class="lede">
+    Every colour, spacing step and type size below comes from
+    <code style="font-family:var(--mono);font-size:15px">mobile/lib/theme.ts</code>, and the
+    wording is what the screens actually render. <strong>The design is in the code</strong> &#8212;
+    what is invented here is only the sample data.
+  </p>
+  <p class="lede">
+    Dark is the default, because ranges are dim. Light is built separately rather than
+    inverted, and the app follows the system setting.
+  </p>
+
+  <div class="section">
+    <div class="changes-scroll">
+      <table class="changes">
+        <thead>
+          <tr><th>Decision</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>No coloured header bar</td>
+            <td>It cost 80 points of height and carried no information. Screens open
+                with a large title on the content ground.</td>
+          </tr>
+          <tr>
+            <td>Two 40pt figures across a hairline</td>
+            <td>Comparing two numbers is the whole product. It is legible at arm's
+                length, in a dim hall, through shooting glasses.</td>
+          </tr>
+          <tr>
+            <td>One slim series bar, one status pill</td>
+            <td>Urgency belongs to the match, not repeated five times over.</td>
+          </tr>
+          <tr>
+            <td>52pt buttons, 16pt body text</td>
+            <td>Cold hands, gloves, bad light. Deliberately against the current
+                fashion for thin, low-contrast type.</td>
+          </tr>
+          <tr>
+            <td>Inner tens only for pistol</td>
+            <td>ISSF breaks a tied full-ring score on inner tens. Decimal scores
+                break their own ties, so rifle shooters type one number.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============================================== 01 getting in ======= -->
+  <section class="section">
+    <div class="section-head">
+      <h2>01 &#8212; Getting in</h2>
+      <p class="section-note">
+        What a shooter sees on opening the app. Left dark, right light &#8212; the same screen,
+        so both sides can be judged.
+      </p>
+    </div>
+
+    <div class="grid">
+
+      <figure>
+        <div class="device">
+          <div class="screen app" data-clip>
+            <div class="sb">
+              <span>9:41</span>
+              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
+                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
+                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
+                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
+                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
+                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
+              </svg>
+            </div>
+            <div class="scroll">
+              <p class="kicker" style="color:var(--accent)">Challenging shooters</p>
+              <h1 class="large-title">World Shooting League</h1>
+
+              <div class="field">
+                <span class="lbl">Email</span>
+                <div class="input text ph">you@club.org</div>
+              </div>
+              <div class="field">
+                <span class="lbl">Password</span>
+                <div class="input text ph">at least 6 characters</div>
+              </div>
+
+              <div class="btn">Sign in</div>
+              <div class="btn text">New here? Create an account</div>
+
+              <p class="hint" style="margin-top:28px;line-height:1.5">
+                After every series you report your score with a photo of the display.
+                Your opponent's result stays hidden until you have both submitted.
+              </p>
+            </div>
+          </div>
+        </div>
+        <figcaption>
+          <span class="route">(auth)/sign-in</span>
+          <span class="cap-title">Sign in</span>
+          <span class="cap-note">
+            Email and password. Signing up adds handle, display name and country, which
+            travel as metadata and create the profile row.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="device">
+          <div class="screen app" data-clip>
+            <div class="sb">
+              <span>9:41</span>
+              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
+                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
+                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
+                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
+                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
+                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
+              </svg>
+            </div>
+            <div class="scroll">
+              <p class="kicker">Current season</p>
+              <h1 class="large-title">My matches</h1>
+
+              <div class="card">
+                <div class="row gap-md">
+                  <div class="av">SB</div>
+                  <div class="grow">
+                    <div class="name">Stefan Br&#228;uer</div>
+                    <div class="meta">Air Rifle 10 m &#183; 3 days left</div>
+                  </div>
+                  <div class="pill turn">Your turn</div>
+                </div>
+                <div class="hair"></div>
+                <div class="row between">
+                  <div class="points">2 : 0</div>
+                  <div class="meta">Series 3 of 5</div>
+                </div>
+                <div class="seg" style="margin-top:12px">
+                  <i class="won"></i><i class="won"></i><i></i><i></i><i></i>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="row gap-md">
+                  <div class="av">AW</div>
+                  <div class="grow">
+                    <div class="name">Alina Weber</div>
+                    <div class="meta">Air Rifle 10 m &#183; 5 days left</div>
+                  </div>
+                  <div class="pill wait">Waiting</div>
+                </div>
+                <div class="hair"></div>
+                <div class="row between">
+                  <div class="points">1 : 1</div>
+                  <div class="meta">Series 3 of 5</div>
+                </div>
+                <div class="seg" style="margin-top:12px">
+                  <i class="won"></i><i class="lost"></i><i></i><i></i><i></i>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="row gap-md">
+                  <div class="av">MF</div>
+                  <div class="grow">
+                    <div class="name">Manuel Frei</div>
+                    <div class="meta">Air Pistol 10 m &#183; finished</div>
+                  </div>
+                  <div class="pill won">Won</div>
+                </div>
+                <div class="hair"></div>
+                <div class="row between">
+                  <div class="points">3 : 0</div>
+                  <div class="meta">+31 rating</div>
+                </div>
+                <div class="seg" style="margin-top:12px">
+                  <i class="won"></i><i class="won"></i><i class="won"></i><i class="void"></i><i class="void"></i>
+                </div>
+              </div>
+
+            </div>
+            <div class="tabs">
+              <div class="t on">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="#8788FF" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>
+                <span>Matches</span>
+              </div>
+              <div class="t">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="#656D80" aria-hidden="true"><rect x="3" y="5" width="18" height="2.4" rx="1.2"/><rect x="3" y="10.8" width="18" height="2.4" rx="1.2"/><rect x="3" y="16.6" width="18" height="2.4" rx="1.2"/></svg>
+                <span>Rankings</span>
+              </div>
+              <div class="t">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="#656D80" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>
+                <span>Profile</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>
+          <span class="route">(tabs)/index &#183; dark</span>
+          <span class="cap-title">My matches</span>
+          <span class="cap-note">
+            One slim bar per series, and the score is the largest thing on the card.
+            "Your turn" is the only place urgency appears.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="device">
+          <div class="screen app light" data-clip>
+            <div class="sb">
+              <span>9:41</span>
+              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
+                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
+                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
+                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
+                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
+                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
+              </svg>
+            </div>
+            <div class="scroll">
+              <p class="kicker">Current season</p>
+              <h1 class="large-title">My matches</h1>
+
+              <div class="card">
+                <div class="row gap-md">
+                  <div class="av">SB</div>
+                  <div class="grow">
+                    <div class="name">Stefan Br&#228;uer</div>
+                    <div class="meta">Air Rifle 10 m &#183; 3 days left</div>
+                  </div>
+                  <div class="pill turn">Your turn</div>
+                </div>
+                <div class="hair"></div>
+                <div class="row between">
+                  <div class="points">2 : 0</div>
+                  <div class="meta">Series 3 of 5</div>
+                </div>
+                <div class="seg" style="margin-top:12px">
+                  <i class="won"></i><i class="won"></i><i></i><i></i><i></i>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="row gap-md">
+                  <div class="av">AW</div>
+                  <div class="grow">
+                    <div class="name">Alina Weber</div>
+                    <div class="meta">Air Rifle 10 m &#183; 5 days left</div>
+                  </div>
+                  <div class="pill wait">Waiting</div>
+                </div>
+                <div class="hair"></div>
+                <div class="row between">
+                  <div class="points">1 : 1</div>
+                  <div class="meta">Series 3 of 5</div>
+                </div>
+                <div class="seg" style="margin-top:12px">
+                  <i class="won"></i><i class="lost"></i><i></i><i></i><i></i>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="row gap-md">
+                  <div class="av">MF</div>
+                  <div class="grow">
+                    <div class="name">Manuel Frei</div>
+                    <div class="meta">Air Pistol 10 m &#183; finished</div>
+                  </div>
+                  <div class="pill won">Won</div>
+                </div>
+                <div class="hair"></div>
+                <div class="row between">
+                  <div class="points">3 : 0</div>
+                  <div class="meta">+31 rating</div>
+                </div>
+                <div class="seg" style="margin-top:12px">
+                  <i class="won"></i><i class="won"></i><i class="won"></i><i class="void"></i><i class="void"></i>
+                </div>
+              </div>
+
+            </div>
+            <div class="tabs">
+              <div class="t on">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="#4B4DE0" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>
+                <span>Matches</span>
+              </div>
+              <div class="t">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="#838B9E" aria-hidden="true"><rect x="3" y="5" width="18" height="2.4" rx="1.2"/><rect x="3" y="10.8" width="18" height="2.4" rx="1.2"/><rect x="3" y="16.6" width="18" height="2.4" rx="1.2"/></svg>
+                <span>Rankings</span>
+              </div>
+              <div class="t">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="#838B9E" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>
+                <span>Profile</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>
+          <span class="route">(tabs)/index &#183; light</span>
+          <span class="cap-title">The same, light</span>
+          <span class="cap-note">
+            Not inverted: cards carry a shadow instead of a lift in brightness, and green
+            and amber move darker so they stay legible on white.
+          </span>
+        </figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <!-- ============================================== 02 blind reveal ===== -->
+  <section class="section">
+    <div class="section-head">
+      <h2>02 &#8212; The blind reveal</h2>
+      <p class="section-note">
+        The same screen before and after the opponent reports. Air rifle is scored in
+        tenths, so no inner ten count appears anywhere here.
+      </p>
+    </div>
+
+    <div class="grid">
+
+      <figure>
+        <div class="device">
+          <div class="screen app" data-clip>
+            <div class="sb">
+              <span>9:41</span>
+              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
+                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
+                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
+                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
+                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
+                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
+              </svg>
+            </div>
+            <div class="nav"><span class="chev">&#8249;</span><span class="nav-t">Matches</span></div>
+            <div class="scroll">
+              <p class="kicker">Air Rifle 10 m &#183; Best of 5</p>
+              <h1 class="large-title">vs Stefan Br&#228;uer</h1>
+
+              <div class="card">
+                <div class="row between" style="margin-bottom:12px">
+                  <span class="lbl">Series 1</span>
+                  <span class="pill won">Won</span>
+                </div>
+                <div class="h2h">
+                  <div class="col">
+                    <span class="lbl">You</span>
+                    <span class="num pos">104.4</span>
+                  </div>
+                  <div class="rule"></div>
+                  <div class="col right">
+                    <span class="lbl">Stefan</span>
+                    <span class="num dim">102.7</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="row between" style="margin-bottom:12px">
+                  <span class="lbl">Series 2</span>
+                  <span class="pill wait">Waiting for Stefan</span>
+                </div>
+                <div class="h2h">
+                  <div class="col">
+                    <span class="lbl">You</span>
+                    <span class="num">103.1</span>
+                  </div>
+                  <div class="rule"></div>
+                  <div class="col right">
+                    <span class="lbl">Stefan</span>
+                    <span class="num blind">&#183;&#183;&#183;</span>
+                    <span class="tens">hidden until Stefan submits</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="row between" style="margin-bottom:12px">
+                  <span class="lbl">Series 3</span>
+                  <span class="pill turn">Your turn</span>
+                </div>
+                <div class="btn">Report result</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>
+          <span class="route">match/[id] &#183; before the reveal</span>
+          <span class="cap-title">Series 2 is hidden</span>
+          <span class="cap-note">
+            The state is named rather than left blank. The row does not arrive from the
+            server at all, so the client needs no code for this.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="device">
+          <div class="screen app" data-clip>
+            <div class="sb">
+              <span>9:41</span>
+              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
+                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
+                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
+                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
+                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
+                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
+              </svg>
+            </div>
+            <div class="nav"><span class="chev">&#8249;</span><span class="nav-t">Matches</span></div>
+            <div class="scroll">
+              <p class="kicker">Air Rifle 10 m &#183; Best of 5</p>
+              <h1 class="large-title">vs Stefan Br&#228;uer</h1>
+
+              <div class="card" style="background:var(--pos-tint)">
+                <div class="row between">
+                  <div>
+                    <div class="lbl" style="color:var(--pos)">Match won</div>
+                    <div class="num sm pos" style="margin-top:4px">3 : 0</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div class="tens">Rating</div>
+                    <div class="points" style="color:var(--pos)">+31</div>
+                  </div>
+                </div>
+                <div class="hair" style="background:rgba(52,211,153,.22)"></div>
+                <div class="tens" style="color:var(--pos)">
+                  Rated once the dispute window closes &#8212; 22 hrs left.
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="row between" style="margin-bottom:12px">
+                  <span class="lbl">Series 2</span>
+                  <span class="pill won">Won</span>
+                </div>
+                <div class="h2h">
+                  <div class="col">
+                    <span class="lbl">You</span>
+                    <span class="num pos">103.1</span>
+                  </div>
+                  <div class="rule"></div>
+                  <div class="col right">
+                    <span class="lbl">Stefan</span>
+                    <span class="num dim">99.8</span>
+                  </div>
+                </div>
+                <div class="btn quiet sm">Check Stefan's photo</div>
+              </div>
+
+              <div class="card">
+                <div class="row between">
+                  <span class="lbl">Series 4&#8211;5</span>
+                  <span class="pill wait">Dropped</span>
+                </div>
+                <div class="tens" style="margin-top:8px">
+                  Not needed &#8212; the match was already decided.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>
+          <span class="route">match/[id] &#183; after the reveal</span>
+          <span class="cap-title">Decided, not yet rated</span>
+          <span class="cap-note">
+            The outcome sits at the top as its own card with the rating effect and the
+            time left to dispute. Series 4 and 5 collapse into one line.
+          </span>
+        </figcaption>
+      </figure>
+
+      <div class="pair-note">
+        <span class="k">Unchanged</span>
+        <p>
+          The difference between these two screens is not display logic but a row that
+          does not exist in one of them. <strong>The database withholds the opponent's
+          report until both have submitted</strong> &#8212; taking the app apart finds nothing.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================== 03 report/check ===== -->
+  <section class="section">
+    <div class="section-head">
+      <h2>03 &#8212; Reporting and checking</h2>
+      <p class="section-note">
+        What a shooter does after each series, and how the opponent confirms it. This is
+        the step that replaces automated scoring.
+      </p>
+    </div>
+
+    <div class="grid">
+
+      <figure>
+        <div class="device">
+          <div class="screen app" data-clip>
+            <div class="sb">
+              <span>9:41</span>
+              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
+                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
+                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
+                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
+                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
+                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
+              </svg>
+            </div>
+            <div class="nav"><span class="chev">&#8249;</span><span class="nav-t">Cancel</span></div>
+            <div class="scroll">
+              <p class="kicker">Series 3 &#183; 10 shots</p>
+              <h1 class="large-title">Report result</h1>
+
+              <div class="card">
+                <div class="field" style="margin:0">
+                  <span class="lbl">Total</span>
+                  <div class="input">104.4</div>
+                </div>
+                <div class="hint">At most 109.0 &#183; decimal scoring breaks its own ties</div>
+              </div>
+
+              <div class="note warn" style="margin-bottom:12px">
+                <b>6.2 above your average.</b> Your last 10 series sit at 98.2. If that is
+                right, carry on. If not, now is the moment.
+              </div>
+
+              <div class="photo" style="margin-bottom:12px">
+                <svg viewBox="0 0 150 200" role="img" aria-label="Photo of an air rifle result slip">
+                  <rect width="150" height="200" fill="#EFEADF"/>
+                  <rect x="10" y="10" width="130" height="180" fill="#F7F4EC" stroke="#DCD5C6"/>
+                  <text x="18" y="26" font-family="ui-monospace, monospace" font-size="7" fill="#3A3630">LG 10 - Wertung</text>
+                  <line x1="18" y1="31" x2="132" y2="31" stroke="#C9C1B0"/>
+                  <circle cx="112" cy="52" r="17" fill="#FFF" stroke="#7A7366"/>
+                  <circle cx="112" cy="52" r="11" fill="#2A2723"/>
+                  <circle cx="112" cy="52" r="5" fill="#FFF" stroke="#7A7366" stroke-width=".6"/>
+                  <g fill="#0E0D0B">
+                    <circle cx="110" cy="50" r="2.1"/><circle cx="114" cy="53" r="2.1"/>
+                    <circle cx="111" cy="55" r="2.1"/><circle cx="115" cy="49" r="2.1"/>
+                    <circle cx="108" cy="53" r="2.1"/>
+                  </g>
+                  <g font-family="ui-monospace, monospace" font-size="6.4" fill="#3A3630">
+                    <text x="18" y="44">1  10.5</text><text x="18" y="55">2  10.4</text>
+                    <text x="18" y="66">3  10.3</text><text x="18" y="77">4  10.6</text>
+                    <text x="18" y="88">5  10.2</text><text x="18" y="99">6  10.5</text>
+                    <text x="18" y="110">7  10.4</text><text x="18" y="121">8   9.8</text>
+                    <text x="18" y="132">9  10.7</text><text x="18" y="143">10 11.0</text>
+                  </g>
+                  <line x1="18" y1="150" x2="132" y2="150" stroke="#C9C1B0"/>
+                  <text x="18" y="164" font-family="ui-monospace, monospace" font-size="8.5" fill="#1E1C18">Ges. 104.4</text>
+                  <text x="18" y="176" font-family="ui-monospace, monospace" font-size="6.4" fill="#3A3630">10er 8</text>
+                  <text x="18" y="186" font-family="ui-monospace, monospace" font-size="5.6" fill="#6B6357">07.08.2026 19:14</text>
+                </svg>
+              </div>
+              <div class="row gap-sm">
+                <div class="btn quiet sm grow">Retake</div>
+                <div class="btn quiet sm grow">Library</div>
+              </div>
+
+              <div class="btn" style="margin-top:16px">Submit</div>
+              <p class="hint" style="text-align:center">Cannot be changed afterwards.</p>
+            </div>
+          </div>
+        </div>
+        <figcaption>
+          <span class="route">bout/[id]/report &#183; rifle</span>
+          <span class="cap-title">One number and a photo</span>
+          <span class="cap-note">
+            Air rifle is scored in tenths, so this is the whole form. On pistol a second
+            field for inner tens appears beside the total &#8212; the ISSF tiebreak for
+            full-ring scores.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="device">
+          <div class="screen app" data-clip>
+            <div class="sb">
+              <span>9:41</span>
+              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
+                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
+                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
+                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
+                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
+                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
+              </svg>
+            </div>
+            <div class="nav"><span class="chev">&#8249;</span><span class="nav-t">Match</span></div>
+            <div class="scroll">
+              <p class="kicker">Series 2 &#183; reported 06 Aug, 19:17</p>
+              <h1 class="large-title">Does this match?</h1>
+
+              <div class="card">
+                <div class="row gap-md">
+                  <div class="av">SB</div>
+                  <div class="grow">
+                    <div class="name">Stefan Br&#228;uer</div>
+                    <div class="meta">reported</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div class="num sm">95</div>
+                    <div class="tens">2 inner tens</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="photo tall" style="margin-bottom:12px">
+                <svg viewBox="0 0 150 200" role="img" aria-label="Photo of an air pistol result slip">
+                  <rect width="150" height="200" fill="#EFEADF"/>
+                  <rect x="10" y="10" width="130" height="180" fill="#F7F4EC" stroke="#DCD5C6"/>
+                  <text x="18" y="26" font-family="ui-monospace, monospace" font-size="7" fill="#3A3630">AP 10 - MATCH</text>
+                  <line x1="18" y1="31" x2="132" y2="31" stroke="#C9C1B0"/>
+                  <circle cx="112" cy="52" r="17" fill="#FFF" stroke="#7A7366"/>
+                  <circle cx="112" cy="52" r="11" fill="#2A2723"/>
+                  <circle cx="112" cy="52" r="5.5" fill="none" stroke="#F7F4EC" stroke-width=".7"/>
+                  <g fill="#0E0D0B">
+                    <circle cx="111" cy="51" r="2.1"/><circle cx="114" cy="54" r="2.1"/>
+                    <circle cx="108" cy="49" r="2.1"/><circle cx="117" cy="57" r="2.1"/>
+                    <circle cx="105" cy="57" r="2.1"/>
+                  </g>
+                  <g font-family="ui-monospace, monospace" font-size="6.4" fill="#3A3630">
+                    <text x="18" y="44">1  10</text><text x="18" y="55">2  10</text>
+                    <text x="18" y="66">3   9</text><text x="18" y="77">4  10</text>
+                    <text x="18" y="88">5   9</text><text x="18" y="99">6  10</text>
+                    <text x="18" y="110">7   9</text><text x="18" y="121">8   9</text>
+                    <text x="18" y="132">9  10</text><text x="18" y="143">10  9</text>
+                  </g>
+                  <line x1="18" y1="150" x2="132" y2="150" stroke="#C9C1B0"/>
+                  <text x="18" y="164" font-family="ui-monospace, monospace" font-size="8.5" fill="#1E1C18">Total 95</text>
+                  <text x="18" y="176" font-family="ui-monospace, monospace" font-size="6.4" fill="#3A3630">Inner 10s  2</text>
+                  <text x="18" y="186" font-family="ui-monospace, monospace" font-size="5.6" fill="#6B6357">06 Aug 2026  19:17</text>
+                </svg>
+              </div>
+
+              <div class="btn pos">Looks right</div>
+              <div class="btn quiet">Does not match &#8212; call a referee</div>
+              <p class="hint" style="text-align:center">
+                Without a reply it counts as confirmed after 48 hours, but not as your
+                check.
+              </p>
+            </div>
+          </div>
+        </div>
+        <figcaption>
+          <span class="route">bout/[id]/confirm &#183; pistol</span>
+          <span class="cap-title">Check the opponent's photo</span>
+          <span class="cap-note">
+            A pistol series, so the inner ten count is shown alongside the total. Both
+            figures have to agree with the slip in the photo.
+          </span>
+        </figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <!-- ============================================== 04 table/profile ==== -->
+  <section class="section">
+    <div class="section-head">
+      <h2>04 &#8212; Table and profile</h2>
+      <p class="section-note">
+        Where a shooter goes to see whether the last few weeks paid off.
+      </p>
+    </div>
+
+    <div class="grid">
+
+      <figure>
+        <div class="device">
+          <div class="screen app" data-clip>
+            <div class="sb">
+              <span>9:41</span>
+              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
+                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
+                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
+                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
+                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
+                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
+              </svg>
+            </div>
+            <div class="scroll flush">
+              <div style="padding:0 20px">
+                <p class="kicker">Current season</p>
+                <h1 class="large-title">Rankings</h1>
+              </div>
+              <div class="chips">
+                <div class="chip on">Air Rifle 10 m</div>
+                <div class="chip">Air Pistol</div>
+                <div class="chip">Smallbore</div>
+              </div>
+              <div style="padding:0 20px">
+                <div class="lb top">
+                  <span class="pos">1</span>
+                  <div class="av">TG</div>
+                  <div class="grow">
+                    <div class="name">Thomas Gehmann</div>
+                    <div class="meta">DE &#183; Air Rifle 10 m</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div class="r">1662</div>
+                    <div class="wl" style="width:auto">4 / 0</div>
+                  </div>
+                </div>
+                <div class="lb">
+                  <span class="pos">2</span>
+                  <div class="av">AW</div>
+                  <div class="grow">
+                    <div class="name">Alina Weber</div>
+                    <div class="meta">AT &#183; Air Rifle 10 m</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div class="r">1588</div>
+                    <div class="wl" style="width:auto">3 / 1</div>
+                  </div>
+                </div>
+                <div class="lb">
+                  <span class="pos">3</span>
+                  <div class="av">SB</div>
+                  <div class="grow">
+                    <div class="name">Stefan Br&#228;uer</div>
+                    <div class="meta">DE &#183; Air Rifle 10 m</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div class="r">1521</div>
+                    <div class="wl" style="width:auto">2 / 2</div>
+                  </div>
+                </div>
+                <div class="lb">
+                  <span class="pos">4</span>
+                  <div class="av">JK</div>
+                  <div class="grow">
+                    <div class="row gap-sm">
+                      <span class="name">Jonas Keller</span>
+                      <span class="prov">provisional</span>
+                    </div>
+                    <div class="meta">DE &#183; Air Rifle 10 m</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div class="r">1500</div>
+                    <div class="wl" style="width:auto">1 / 1</div>
+                  </div>
+                </div>
+                <div class="lb">
+                  <span class="pos">5</span>
+                  <div class="av">MF</div>
+                  <div class="grow">
+                    <div class="row gap-sm">
+                      <span class="name">Manuel Frei</span>
+                      <span class="prov">provisional</span>
+                    </div>
+                    <div class="meta">CH &#183; Air Rifle 10 m</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div class="r">1463</div>
+                    <div class="wl" style="width:auto">1 / 2</div>
+                  </div>
+                </div>
+                <p class="hint" style="margin-top:14px">
+                  "Provisional" means too few matches so far for a settled rating.
+                </p>
+              </div>
+            </div>
+            <div class="tabs">
+              <div class="t">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="#656D80" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>
+                <span>Matches</span>
+              </div>
+              <div class="t on">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="#8788FF" aria-hidden="true"><rect x="3" y="5" width="18" height="2.4" rx="1.2"/><rect x="3" y="10.8" width="18" height="2.4" rx="1.2"/><rect x="3" y="16.6" width="18" height="2.4" rx="1.2"/></svg>
+                <span>Rankings</span>
+              </div>
+              <div class="t">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="#656D80" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>
+                <span>Profile</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>
+          <span class="route">(tabs)/leaderboard</span>
+          <span class="cap-title">Rankings</span>
+          <span class="cap-note">
+            Glicko-2 rather than Elo, and disciplines spelled out rather than coded. The
+            top place sits in the accent colour.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="device">
+          <div class="screen app" data-clip>
+            <div class="sb">
+              <span>9:41</span>
+              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
+                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
+                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
+                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
+                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
+                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
+              </svg>
+            </div>
+            <div class="scroll">
+              <div class="row gap-md" style="margin:14px 0 20px">
+                <div class="av" style="width:56px;height:56px;border-radius:18px;font-size:19px">TG</div>
+                <div class="grow">
+                  <div style="font-size:22px;font-weight:700;letter-spacing:-.02em">Thomas Gehmann</div>
+                  <div class="meta">DE &#183; SV Karlsruhe</div>
+                </div>
+              </div>
+
+              <p class="kicker">AR10ET</p>
+              <div class="card">
+                <div class="row between" style="align-items:flex-end;margin-bottom:14px">
+                  <div>
+                    <div class="lbl">Rating</div>
+                    <div class="num sm">1662</div>
+                  </div>
+                </div>
+                <div class="stats">
+                  <div class="stat"><b>4</b><span>Matches</span></div>
+                  <div class="stat"><b>4/0/0</b><span>W/D/L</span></div>
+                  <div class="stat"><b>&#177;118</b><span>Deviation</span></div>
+                </div>
+              </div>
+
+              <p class="kicker">AP10ET</p>
+              <div class="card">
+                <div class="row between" style="align-items:flex-end;margin-bottom:14px">
+                  <div>
+                    <div class="lbl">Rating</div>
+                    <div class="num sm">1519</div>
+                  </div>
+                  <div class="pill wait">Provisional</div>
+                </div>
+                <div class="stats">
+                  <div class="stat"><b>2</b><span>Matches</span></div>
+                  <div class="stat"><b>1/0/1</b><span>W/D/L</span></div>
+                  <div class="stat"><b>&#177;186</b><span>Deviation</span></div>
+                </div>
+              </div>
+
+              <p class="kicker">Reliability</p>
+              <div class="card">
+                <div class="row between">
+                  <span class="tens">Checked yourself</span>
+                  <span class="points" style="color:var(--pos)">86%</span>
+                </div>
+                <div class="meter"><i style="width:86%"></i></div>
+                <p class="hint" style="margin-top:10px">
+                  You confirmed 6 of 7 opponent results yourself.
+                </p>
+              </div>
+            </div>
+            <div class="tabs">
+              <div class="t">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="#656D80" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>
+                <span>Matches</span>
+              </div>
+              <div class="t">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="#656D80" aria-hidden="true"><rect x="3" y="5" width="18" height="2.4" rx="1.2"/><rect x="3" y="10.8" width="18" height="2.4" rx="1.2"/><rect x="3" y="16.6" width="18" height="2.4" rx="1.2"/></svg>
+                <span>Rankings</span>
+              </div>
+              <div class="t on">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="#8788FF" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>
+                <span>Profile</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>
+          <span class="route">(tabs)/profile</span>
+          <span class="cap-title">Profile</span>
+          <span class="cap-note">
+            One block per discipline with the rating as the headline figure. The
+            confirmation rate gets a bar &#8212; in a league without automated scoring it says
+            something about you.
+          </span>
+        </figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      Colours, spacing, radii and type sizes are read from
+      <code>mobile/lib/theme.ts</code>; the wording is what the screens render. What is
+      invented is the sample data and the result slips in the photos, which are drawn
+      rather than photographed.
+    </p>
+    <p>
+      Screens taller than the device fade out at the bottom &#8212; that is where the app
+      scrolls.
+    </p>
+  </footer>
+
+</div>
