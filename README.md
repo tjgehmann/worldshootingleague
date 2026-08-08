@@ -66,15 +66,24 @@ compares the two.
   <img src="docs/screenshots/confirm-light.png" alt="Checking the opponent's photo" width="240">
 </p>
 
-**Getting in, and settling a dispute.** Signing up records an age and a consent
-you have to reach for. When two shooters disagree, a referee gets both photos
-and four ways to end it.
+**Getting in.** Signing up records an age and a consent you have to reach for.
+A shooter enters a season themselves; a club is entered by one of its officials,
+and the entry says whether the club can actually field a team. Both pages carry
+the link a captain pastes into a chat group.
 
 <p>
   <img src="docs/screenshots/sign-up-light.png" alt="Creating an account" width="240">
   <img src="docs/screenshots/season-join-light.png" alt="Entering a season" width="240">
+  <img src="docs/screenshots/season-team-join-light.png" alt="An official entering their club" width="240">
+</p>
+
+**Settling a disagreement.** When two shooters cannot agree, a referee gets both
+photos and four ways to end it.
+
+<p>
   <img src="docs/screenshots/referee-queue-light.png" alt="The referee's case queue" width="240">
   <img src="docs/screenshots/referee-case-light.png" alt="A case: both reports and both photos" width="240">
+  <img src="docs/screenshots/referee-decision-light.png" alt="The four ways a case can end" width="240">
 </p>
 
 **Without reception, and in the dark.** A report shot in a basement range waits
@@ -152,9 +161,10 @@ Migrations:
 | `..._notifications.sql` | the outbox, its triggers and the deadline sweep |
 | `..._public_views.sql` | what a signed-out visitor may read |
 | `..._referee.sql` | the case queue and the four ways to end one |
-| `..._joining.sql` | entering and leaving a season from the app |
+| `..._joining.sql` | a shooter entering and leaving a season from the app |
 | `..._accounts.sql` | age gate, recorded consent, export and deletion |
 | `..._beta_metrics.sql` | the numbers the beta is judged on |
+| `..._club_entry.sql` | a club official entering the club in a team season |
 
 Edge functions:
 
@@ -203,6 +213,10 @@ What is covered:
   awarded, a series voided leaving a decider to be shot; the reported number
   staying readable beside the correction; a case that cannot be decided twice
   and a decision that needs a reason.
+* **`70_joining.sql`** — joining a season that is already running, joining
+  twice being the same entry, leaving and coming back, a national ladder
+  refusing the wrong country, a team season refusing an individual and vice
+  versa, and a club that only an official may enter.
 * **`60_accounts.sql`** — an adult gets in and a minor does not, consent is
   recorded, the export carries what it should, and deletion removes the name
   while the results survive; the beta's own metrics, admin-only.

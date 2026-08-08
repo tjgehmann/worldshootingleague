@@ -44,7 +44,7 @@ select 'submissions write: ' ||
  where schemaname = 'public' and tablename = 'submissions';
 
 select 'functions:         ' ||
-       case when count(*) = 21 then 'OK (21)' else 'MISSING — found ' || count(*) end
+       case when count(*) = 25 then 'OK (25)' else 'MISSING — found ' || count(*) end
   from pg_proc p
   join pg_namespace n on n.oid = p.pronamespace
  where n.nspname = 'public'
@@ -55,8 +55,10 @@ select 'functions:         ' ||
      'advance_team_match','enqueue_deadline_reminders',
      -- the referee console
      'claim_dispute','decide_dispute','submission_effective_inner_tens',
-     -- joining a season from the app
+     -- joining a season from the app, as a shooter or as a club
      'join_season','leave_season','my_season_entry',
+     'enter_club_in_season','withdraw_club_from_season','my_club_season_entries',
+     'club_eligible_count',
      -- accounts, consent and deletion
      'is_adult','request_account_deletion','export_my_data',
      -- what the beta is measured by

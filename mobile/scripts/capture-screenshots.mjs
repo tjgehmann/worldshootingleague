@@ -73,6 +73,9 @@ function build() {
       // The fixtures answer for this host; nothing is sent to a real project.
       EXPO_PUBLIC_SUPABASE_URL: `https://${SUPABASE_HOST}`,
       EXPO_PUBLIC_SUPABASE_ANON_KEY: 'fixture-anon-key',
+      // So the invite link in the screenshots reads like a link somebody would
+      // paste, rather than the local server this run happens to use.
+      EXPO_PUBLIC_SITE_URL: 'https://league.example.org',
     },
   });
 }
@@ -380,6 +383,7 @@ async function contextFor(browser, { theme, signedIn, offline, outbox, asReferee
       if (fn === 'shooter_recent_form') return json(fixtures.recentForm);
       if (fn === 'my_season_entry')
         return json([{ joined: false, joined_at: null, entrants: 148 }]);
+      if (fn === 'my_club_season_entries') return json(fixtures.clubSeasonEntries);
       return json(null);
     }
 
@@ -464,6 +468,12 @@ const shots = [
       await page.getByText('I accept the').click();
       await page.waitForTimeout(300);
     },
+  },
+  {
+    name: 'season-team-join',
+    path: '/season/club-cup-2026',
+    signedIn: true,
+    note: 'A club competition: an official enters the club.',
   },
   {
     name: 'season-join',

@@ -486,6 +486,43 @@ export async function fetchMySeasonEntry(slug: string): Promise<SeasonEntry> {
   return rows[0] ?? { joined: false, joined_at: null, entrants: 0 };
 }
 
+// A club is entered by an official, not by its members one at a time. The
+// helper returns one row per club the shooter belongs to, so the season page
+// can show a button instead of guessing.
+export interface ClubSeasonEntry {
+  club_id: string;
+  club_name: string;
+  short_name: string | null;
+  is_official: boolean;
+  entered: boolean;
+  /** Members who compete for this club, i.e. who could be fielded. */
+  eligible: number;
+  team_size: number | null;
+  clubs_entered: number;
+}
+
+export async function fetchMyClubSeasonEntries(slug: string): Promise<ClubSeasonEntry[]> {
+  const { data, error } = await supabase.rpc('my_club_season_entries', { p_slug: slug });
+  if (error) throw error;
+  return (data ?? []) as unknown as ClubSeasonEntry[];
+}
+
+export async function enterClubInSeason(slug: string, clubId: string): Promise<void> {
+  const { error } = await supabase.rpc('enter_club_in_season', {
+    p_slug: slug,
+    p_club_id: clubId,
+  });
+  if (error) throw error;
+}
+
+export async function withdrawClubFromSeason(slug: string, clubId: string): Promise<void> {
+  const { error } = await supabase.rpc('withdraw_club_from_season', {
+    p_slug: slug,
+    p_club_id: clubId,
+  });
+  if (error) throw error;
+}
+
 export async function fetchSeasonStandings(seasonId: string): Promise<SeasonStanding[]> {
   const { data, error } = await supabase
     .from('season_standings')

@@ -89,6 +89,28 @@ The photographs are readable to a referee exactly while a case on that series is
 open. That falls out of the storage policy rather than being enforced in the
 client, so a closed case shows the decision and no evidence.
 
+## Entering a season
+
+Two paths, because they answer different questions. A shooter enters an
+individual ladder themselves (`join_season`); a club is entered into a team
+competition by one of its officials (`enter_club_in_season`), and its members
+do not enter one at a time.
+
+Both accept entries while the season is **already running**. A ladder that turns
+people away between rounds has nothing to say to whoever hears about it in week
+three — they are simply paired from the next round.
+
+The club entry shows how many members actually compete for the club, because
+`pair_team_round()` skips a club that cannot field a full team and it skips it
+silently. Without that number an official would enter, never be paired, and have
+no way to find out why.
+
+`lib/links.ts` builds the link a captain pastes into a chat group. It prefers
+the hosted web app (`EXPO_PUBLIC_SITE_URL`), falls back to the origin the web
+build is served from, and finally to the `public-pages` edge function — which
+always exists and renders real HTML, so the link survives being pasted
+somewhere that builds a preview.
+
 ## Signed out
 
 The root is a fork, not a login wall: signed out you land on the public league.

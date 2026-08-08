@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, Share, Text, View } from 'react-native';
 
 import {
   Avatar,
@@ -17,13 +17,18 @@ import {
   Pill,
 } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
+import { seasonUrl } from '@/lib/links';
 import {
+  enterClubInSeason,
   fetchClubStandings,
+  fetchMyClubSeasonEntries,
   fetchMySeasonEntry,
   fetchSeasonBySlug,
   fetchSeasonStandings,
   joinSeason,
   leaveSeason,
+  withdrawClubFromSeason,
+  type ClubSeasonEntry,
 } from '@/lib/queries';
 import { useTheme } from '@/lib/theme';
 
@@ -49,7 +54,24 @@ export default function PublicSeasonScreen() {
   const entry = useQuery({
     queryKey: ['season-entry', slug, session?.user.id],
     queryFn: () => fetchMySeasonEntry(slug),
-    enabled: !!session,
+    enabled: !!session && !isTeam,
+  });
+
+  const clubEntries = useQuery({
+    queryKey: ['club-season-entries', slug, session?.user.id],
+    queryFn: () => fetchMyClubSeasonEntries(slug),
+    enabled: !!session && isTeam,
+  });
+
+  const clubEntry = useMutation({
+    mutationFn: ({ clubId, leaving }: { clubId: string; leaving: boolean }) =>
+      leaving ? withdrawClubFromSeason(slug, clubId) : enterClubInSeason(slug, clubId),
+    onSuccess: async () => {
+      setError(null);
+      await queryClient.invalidateQueries({ queryKey: ['club-season-entries', slug] });
+      await queryClient.invalidateQueries({ queryKey: ['season', slug] });
+    },
+    onError: (e) => setError(e instanceof Error ? e.message : 'That did not work'),
   });
 
   const join = useMutation({
@@ -113,14 +135,25 @@ export default function PublicSeasonScreen() {
 
       {error ? <Note tone="error">{error}</Note> : null}
 
-      <Entry
-        state={s.state}
-        isTeam={isTeam}
-        signedIn={!!session}
-        joined={entry.data?.joined ?? false}
-        pending={join.isPending}
-        onPress={(leaving) => join.mutate(leaving)}
-      />
+      {isTeam ? (
+        <ClubEntry
+          state={s.state}
+          signedIn={!!session}
+          clubs={clubEntries.data ?? []}
+          pending={clubEntry.isPending}
+          onPress={(clubId, leaving) => clubEntry.mutate({ clubId, leaving })}
+        />
+      ) : (
+        <Entry
+          state={s.state}
+          signedIn={!!session}
+          joined={entry.data?.joined ?? false}
+          pending={join.isPending}
+          onPress={(leaving) => join.mutate(leaving)}
+        />
+      )}
+
+      <ShareLink slug={slug} name={s.name} />
 
       <Kicker>Table</Kicker>
       {loading ? (
@@ -208,32 +241,18 @@ export default function PublicSeasonScreen() {
  */
 function Entry({
   state,
-  isTeam,
   signedIn,
   joined,
   pending,
   onPress,
 }: {
   state: string;
-  isTeam: boolean;
   signedIn: boolean;
   joined: boolean;
   pending: boolean;
   onPress: (leaving: boolean) => void;
 }) {
   const open = state === 'registration' || state === 'running';
-
-  if (isTeam) {
-    return (
-      <Card>
-        <Meta>
-          This is a club competition. A club official enters the club, and picks the lineup
-          for each fixture.
-        </Meta>
-      </Card>
-    );
-  }
-
   if (!open) return null;
 
   if (!signedIn) {
@@ -272,3 +291,177 @@ function Entry({
 }
 
 
+
+/**
+ * A club is entered by an official, not by its members one at a time.
+ *
+ * The eligible count is shown because pair_team_round() skips a club that
+ * cannot field a full team, and it skips it silently — a club that entered and
+ * is then never paired would have no way of knowing why.
+ */
+function ClubEntry({
+  state,
+  signedIn,
+  clubs,
+  pending,
+  onPress,
+}: {
+  state: string;
+  signedIn: boolean;
+  clubs: ClubSeasonEntry[];
+  pending: boolean;
+  onPress: (clubId: string, leaving: boolean) => void;
+}) {
+  const open = state === 'registration' || state === 'running';
+
+  if (!signedIn) {
+    return (
+      <Card>
+        <Meta>
+          A club competition: an official enters the club and its lineup is picked by
+          rating.
+        </Meta>
+        <Link href="/(auth)/sign-in" asChild>
+          <Button label="Sign in" onPress={() => {}} />
+        </Link>
+      </Card>
+    );
+  }
+
+  if (!open) return null;
+
+  if (clubs.length === 0) {
+    return (
+      <Card>
+        <Meta>
+          Club against club. You are not in a club yet — join one, or start one, and an
+          official can enter it here.
+        </Meta>
+        <Link href="/club/join" asChild>
+          <Button label="Join or start a club" onPress={() => {}} />
+        </Link>
+      </Card>
+    );
+  }
+
+  return (
+    <View>
+      {clubs.map((club) => (
+        <ClubRow key={club.club_id} club={club} pending={pending} onPress={onPress} state={state} />
+      ))}
+    </View>
+  );
+}
+
+function ClubRow({
+  club,
+  pending,
+  onPress,
+  state,
+}: {
+  club: ClubSeasonEntry;
+  pending: boolean;
+  onPress: (clubId: string, leaving: boolean) => void;
+  state: string;
+}) {
+  const t = useTheme();
+  const size = club.team_size ?? 0;
+  const short = club.eligible < size;
+
+  return (
+    <Card tone={club.entered ? 'positive' : undefined}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space.md }}>
+        <Avatar name={club.short_name ?? club.club_name} size={40} />
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={[t.text.name, { color: t.colors.ink }]} numberOfLines={1}>
+            {club.club_name}
+          </Text>
+          <Meta>
+            {club.eligible} shooting for the club
+            {size ? ` · ${size} to a team` : ''}
+          </Meta>
+        </View>
+        {club.entered ? <Pill tone="won">Entered</Pill> : null}
+      </View>
+
+      {short ? (
+        <Hint>
+          {`Only ${club.eligible} of the ${size} a team needs compete for this club. Until that
+            changes the club is skipped when rounds are paired — members have to pick it as
+            the club they shoot for in their profile.`}
+        </Hint>
+      ) : null}
+
+      {!club.is_official ? (
+        <Hint>An official of the club enters it. Ask one of them.</Hint>
+      ) : club.entered ? (
+        <Button
+          label="Withdraw the club"
+          variant="text"
+          size="sm"
+          busy={pending}
+          onPress={() => onPress(club.club_id, true)}
+        />
+      ) : (
+        <>
+          <Button
+            label={`Enter ${club.short_name ?? club.club_name}`}
+            busy={pending}
+            onPress={() => onPress(club.club_id, false)}
+          />
+          {state === 'running' ? (
+            <Hint center>Already running — your club is paired from the next round.</Hint>
+          ) : null}
+        </>
+      )}
+    </Card>
+  );
+}
+
+/**
+ * The link a club captain pastes into a chat group.
+ *
+ * Recruiting happens in WhatsApp, not in an app store, so this has to be one
+ * tap. Where the link points is decided in lib/links.ts; the important part is
+ * that it always points at something a person without the app can read.
+ */
+function ShareLink({ slug, name }: { slug: string; name: string }) {
+  const t = useTheme();
+  const [copied, setCopied] = useState(false);
+  const url = seasonUrl(slug);
+
+  async function share() {
+    const message = `${name} — ${url}`;
+
+    if (Platform.OS === 'web') {
+      const nav = typeof navigator === 'undefined' ? undefined : navigator;
+      if (nav?.share) {
+        await nav.share({ title: name, url }).catch(() => {});
+        return;
+      }
+      await nav?.clipboard?.writeText(url).catch(() => {});
+      setCopied(true);
+      return;
+    }
+
+    await Share.share({ message }).catch(() => {});
+  }
+
+  return (
+    <Pressable onPress={share} accessibilityRole="button">
+      <Card>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space.md }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={[t.text.name, { color: t.colors.ink }]}>
+              {copied ? 'Link copied' : 'Invite shooters'}
+            </Text>
+            <Meta numberOfLines={1}>{url}</Meta>
+          </View>
+          <Text style={{ color: t.colors.accent, fontSize: 15, fontWeight: '600' }}>
+            {copied ? 'Copied' : 'Share'}
+          </Text>
+        </View>
+      </Card>
+    </Pressable>
+  );
+}

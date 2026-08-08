@@ -546,6 +546,19 @@ const confirmations = [{ submission_id: 'eeee0001-0000-4000-8000-000000000002' }
 
 export const fixtures = {
   people,
+  /** One row per club the viewer belongs to, as my_club_season_entries() returns. */
+  clubSeasonEntries: [
+    {
+      club_id: KARLSRUHE.id,
+      club_name: KARLSRUHE.name,
+      short_name: KARLSRUHE.short_name,
+      is_official: true,
+      entered: false,
+      eligible: 6,
+      team_size: 4,
+      clubs_entered: 24,
+    },
+  ],
   confirmations,
   disputes,
   caseSubmissions,
