@@ -25,18 +25,42 @@ pistol 10 m), `SBR10ET` (smallbore 50 m prone), `SBP10ET` (sport pistol 25 m).
 
 ## Screens
 
-The sign-in screen, captured from the running web build in both themes:
+What a visitor without an account lands on, and the sign-in behind it. Both
+captured from the running web build:
 
 <p>
-  <img src="docs/screenshots/sign-in-dark.png" alt="Sign-in screen, dark theme" width="300">
-  <img src="docs/screenshots/sign-in-light.png" alt="Sign-in screen, light theme" width="300">
+  <img src="docs/screenshots/public-home-dark.png" alt="Public league page, dark theme" width="290">
+  <img src="docs/screenshots/public-home-light.png" alt="Public league page, light theme" width="290">
+  <img src="docs/screenshots/sign-in-dark.png" alt="Sign-in screen, dark theme" width="290">
 </p>
+
+The two "could not reach the league" cards are honest: these captures run
+against no project, so the queries time out and the page says so instead of
+spinning forever.
 
 Every screen — matches, the blind reveal before and after, reporting, checking a
 photo, rankings and profile — is laid out in
 [`docs/mockups.html`](docs/mockups.html); open it in a browser. Colours, spacing
 and type there come from `mobile/lib/theme.ts` and the wording is what the app
 renders. Only the data is invented.
+
+## Who can see what
+
+Results nobody can link to might as well not exist, so the league reads without
+an account:
+
+| Open to anyone | Behind a sign-in |
+|---|---|
+| Seasons and their tables | Reporting a result |
+| Club pages and rosters | Checking an opponent's photo |
+| Finished matches, series by series | Any match still in progress |
+| Rankings | Target photos, disputes, notifications |
+
+That split is enforced in the database, not the client. Spectators read views
+that run with the owner's rights and expose settled results only
+(`match_scorecard`, `season_summary`, `season_standings`, `club_profile`); the
+tables underneath are not granted to `anon` at all. A match in progress is
+exactly what the blind reveal protects, so it appears on no public surface.
 
 ## Layout
 
@@ -75,6 +99,7 @@ Migrations:
 | `..._clubs.sql` | clubs, membership, invites |
 | `..._team_competition.sql` | club-vs-club fixtures and the league table |
 | `..._notifications.sql` | the outbox, its triggers and the deadline sweep |
+| `..._public_views.sql` | what a signed-out visitor may read |
 
 Edge functions:
 
@@ -256,9 +281,13 @@ announcing bans.
 
 ### Reach
 
-- [ ] **Public web pages** for seasons, tables and finished matches. Everything
-      is behind a login today, which means none of it is findable, linkable or
-      shareable.
+- [x] **Public pages** for seasons, tables, clubs and finished matches. Done: a
+      `(public)` route group that works signed out, backed by views that expose
+      settled results only.
+- [ ] **Server-rendered HTML** so a crawler sees those pages. The routes are
+      linkable today but the web build is a single-page app, so a search engine
+      that does not run JavaScript sees an empty shell. This is the remaining
+      half of "findable".
 - [ ] Shareable match cards for social, and live results during an on-site
       final.
 

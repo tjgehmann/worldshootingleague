@@ -28,10 +28,15 @@ function AuthGate() {
   useEffect(() => {
     if (loading) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
-    if (!session && !inAuthGroup) {
+    // Seasons, tables and finished matches are readable without an account —
+    // results nobody can link to might as well not exist. Only the parts that
+    // act on someone's behalf need a session.
+    const group = segments[0];
+    const isOpen = group === '(auth)' || group === '(public)' || group === 'match' || !group;
+
+    if (!session && !isOpen) {
       router.replace('/(auth)/sign-in');
-    } else if (session && inAuthGroup) {
+    } else if (session && group === '(auth)') {
       router.replace('/(tabs)');
     }
   }, [session, loading, segments, router]);
@@ -60,6 +65,8 @@ function AuthGate() {
         contentStyle: { backgroundColor: t.colors.ground },
       }}
     >
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="(public)" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="match/[id]" options={{ headerBackTitle: 'Matches' }} />

@@ -245,10 +245,30 @@ That keeps matches close, and close matches get finished.
 
 ## Public views
 
-`match_results`, `leaderboard` and `shooter_reliability` run with
-`security_invoker = false`, so they can expose settled scores without exposing
-the submission rows themselves. Spectators see points and rankings, but no
-photos and no matches in progress.
+Results nobody can link to might as well not exist, so a signed-out visitor can
+read seasons, tables, club pages and finished matches.
+
+Every public surface is a view running with `security_invoker = false`, which is
+what lets it expose settled scores without exposing the rows behind them. The
+tables underneath are not granted to `anon` at all — reading `submissions`,
+`disputes`, `notifications` or `device_tokens` as a spectator fails on
+permission, not on a row filter.
+
+| View | Shows |
+|---|---|
+| `match_results` | finished matches: who, what discipline, final points |
+| `match_scorecard` | those matches series by series, both sides |
+| `season_summary` | a season with its discipline, format and entrant counts |
+| `season_standings` | the individual table of one season |
+| `club_standings` | the club table of a team season |
+| `club_profile` | a club, its size and its fixture record |
+| `leaderboard` | the global per-discipline rating table |
+| `shooter_reliability` | how reliably someone checks their opponents |
+
+One rule runs through all of them: **settled matches only**. A match in progress
+is exactly what the blind reveal exists to protect, and putting it on a public
+surface would hand anyone a way around it — read the opponent's score from the
+spectator page, then go and shoot to beat it.
 
 ## Maintenance
 

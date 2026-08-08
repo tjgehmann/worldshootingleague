@@ -161,3 +161,35 @@ select public.enqueue_notification(
   'a1111111-0000-0000-0000-000000000001', 'your_turn', 'x', 'y');
 select 'opted out, so nothing queued: ' || count(*)
   from public.notifications where shooter_id = 'a1111111-0000-0000-0000-000000000001';
+
+-- ============================================ 5. what a spectator can see ===
+-- anon must reach results without reaching the machinery behind them.
+set role anon;
+
+select 'anon sees ' || count(*) || ' season(s) in season_summary' from public.season_summary;
+select 'anon sees standings for ' || count(*) || ' club(s)' from public.club_standings;
+select 'anon sees ' || count(*) || ' scorecard row(s)' from public.match_scorecard;
+select 'anon sees a real score: ' || (total_a is not null and total_b is not null)
+  from public.match_scorecard limit 1;
+select 'anon sees ' || count(*) || ' club profile(s)' from public.club_profile;
+select 'anon sees ' || count(*) || ' finished match(es)' from public.match_results;
+
+-- A match still in progress must not appear on any public surface.
+select 'scorecard only covers finished matches: ' || bool_and(m.state in ('settled','finalized'))
+  from public.match_scorecard sc join public.matches m on m.id = sc.match_id;
+
+-- ...and nothing behind the results is reachable at all. These are not "zero
+-- rows" checks: the tables are not granted to anon in the first place.
+\set ON_ERROR_STOP off
+\echo '-- anon reading submissions (expect failure)'
+select count(*) from public.submissions;
+\echo '-- anon reading notifications (expect failure)'
+select count(*) from public.notifications;
+\echo '-- anon reading device tokens (expect failure)'
+select count(*) from public.device_tokens;
+\echo '-- anon reading disputes (expect failure)'
+select count(*) from public.disputes;
+\echo '-- anon reading bout confirmations (expect failure)'
+select count(*) from public.bout_confirmations;
+
+reset role;

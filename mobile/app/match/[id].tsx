@@ -17,11 +17,12 @@ import {
   type PillTone,
 } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
-import { formatPoints, formatScore, timeLeft } from '@/lib/format';
+import { formatDateTime, formatPoints, formatScore, timeLeft } from '@/lib/format';
 import {
   fetchBoutSubmissions,
   fetchConfirmedSubmissionIds,
   fetchMatch,
+  fetchScorecard,
   type MatchDetail,
 } from '@/lib/queries';
 import { useTheme } from '@/lib/theme';
@@ -47,7 +48,14 @@ export default function MatchScreen() {
   });
 
   if (match.isLoading) return <Loading />;
-  if (!match.data || !userId) return <Empty text="Match not found." />;
+  if (!match.data) return <Empty text="Match not found." />;
+
+  // Signed out, or signed in but not a participant: this is a spectator. They
+  // get the scorecard of a finished match and nothing else — no photos, and
+  // nothing at all while a match is still running.
+  if (!userId || (match.data.shooter_a !== userId && match.data.shooter_b !== userId)) {
+    return <SpectatorMatch match={match.data} />;
+  }
 
   const m = match.data;
   const isA = m.shooter_a === userId;
@@ -147,6 +155,100 @@ export default function MatchScreen() {
           </Meta>
         </Card>
       ) : null}
+    </ScrollView>
+  );
+}
+
+/**
+ * What anyone with the link sees. Reads public.match_scorecard, which exposes
+ * settled matches only, so a match in progress shows nothing to give away.
+ */
+function SpectatorMatch({ match }: { match: MatchDetail }) {
+  const t = useTheme();
+  const decided = match.state === 'settled' || match.state === 'finalized';
+
+  const scorecard = useQuery({
+    queryKey: ['scorecard', match.id],
+    queryFn: () => fetchScorecard(match.id),
+    enabled: decided,
+  });
+
+  if (!decided) {
+    return (
+      <Empty text="This match is still being shot. Results appear once both shooters have submitted." />
+    );
+  }
+
+  const mode = match.discipline.scoring_mode;
+  const aWon = match.winner_id === match.shooter_a;
+  const bWon = match.winner_id === match.shooter_b;
+
+  return (
+    <ScrollView
+      style={{ backgroundColor: t.colors.ground }}
+      contentContainerStyle={{ paddingHorizontal: t.space.xl, paddingBottom: t.space.xxl }}
+    >
+      <Kicker>
+        {match.discipline.name}
+        {match.settled_at ? ` · ${formatDateTime(match.settled_at)}` : ''}
+      </Kicker>
+      <LargeTitle>
+        {match.profile_a.display_name} v {match.profile_b.display_name}
+      </LargeTitle>
+
+      <Card>
+        <HeadToHead
+          leftLabel={match.profile_a.display_name}
+          leftValue={formatPoints(match.points_a)}
+          leftWon={aWon}
+          rightLabel={match.profile_b.display_name}
+          rightValue={formatPoints(match.points_b)}
+          rightWon={bWon}
+        />
+        <Meta style={{ marginTop: t.space.md }}>
+          {match.decided_by === 'forfeit'
+            ? 'Decided by walkover.'
+            : match.decided_by === 'tiebreak'
+              ? 'Decided on a tiebreak.'
+              : 'Decided on series won.'}
+        </Meta>
+      </Card>
+
+      <Kicker>Scorecard</Kicker>
+      {scorecard.isLoading ? (
+        <Loading />
+      ) : (
+        (scorecard.data ?? []).map((row) => (
+          <Card key={row.bout}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: t.space.md,
+              }}
+            >
+              <Label>Series {row.bout}</Label>
+              {row.is_tie ? <Pill tone="wait">Tied</Pill> : null}
+            </View>
+            <HeadToHead
+              leftLabel={match.profile_a.display_name.split(' ')[0]}
+              leftValue={formatScore(row.total_a, mode)}
+              leftMeta={row.inner_tens_a != null ? `${row.inner_tens_a} inner tens` : undefined}
+              leftWon={row.winner_id === match.shooter_a}
+              rightLabel={match.profile_b.display_name.split(' ')[0]}
+              rightValue={formatScore(row.total_b, mode)}
+              rightMeta={row.inner_tens_b != null ? `${row.inner_tens_b} inner tens` : undefined}
+              rightWon={row.winner_id === match.shooter_b}
+            />
+          </Card>
+        ))
+      )}
+
+      <Hint>
+        Photos stay with the two shooters and the referee. What you see here is the
+        result they both confirmed.
+      </Hint>
     </ScrollView>
   );
 }

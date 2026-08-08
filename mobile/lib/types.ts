@@ -142,6 +142,7 @@ export interface Match {
   points_b: number;
   winner_id: string | null;
   decided_by: string | null;
+  settled_at: string | null;
   dispute_closes_at: string | null;
   finalized_at: string | null;
 }
@@ -190,4 +191,84 @@ export interface Reliability {
   confirmations_due: number;
   confirmations_given: number;
   confirmation_rate_pct: number | null;
+}
+
+// -------------------------------------------------- public spectator views --
+
+export interface SeasonSummary {
+  id: string;
+  slug: string;
+  name: string;
+  state: SeasonState;
+  competition_type: 'individual' | 'team';
+  team_size: number | null;
+  country_code: string | null;
+  starts_at: string;
+  ends_at: string;
+  round_count: number;
+  discipline_code: string;
+  discipline_name: string;
+  format_code: string;
+  format_name: string;
+  shooters_entered: number;
+  clubs_entered: number;
+  rounds_paired: number;
+}
+
+export type SeasonState = 'registration' | 'running' | 'finished' | 'archived';
+
+export interface SeasonStanding {
+  season_id: string;
+  shooter_id: string;
+  handle: string;
+  display_name: string;
+  country_code: string;
+  club_name: string | null;
+  matches_played: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  points: number;
+  position: number;
+}
+
+export interface ClubProfile {
+  id: string;
+  slug: string;
+  name: string;
+  short_name: string | null;
+  country_code: string;
+  city: string | null;
+  shooters: number;
+  fixtures_played: number;
+  fixtures_won: number;
+}
+
+/** One line of a finished match, visible to anyone. */
+export interface ScorecardRow {
+  match_id: string;
+  bout: number;
+  bout_state: BoutState;
+  is_tie: boolean;
+  winner_id: string | null;
+  shooter_a: string;
+  shooter_b: string;
+  total_a: number | null;
+  inner_tens_a: number | null;
+  total_b: number | null;
+  inner_tens_b: number | null;
+}
+
+export interface PublicMatchResult {
+  match_id: string;
+  season_id: string | null;
+  discipline: string;
+  format: string;
+  shooter_a: string;
+  shooter_b: string;
+  points_a: number;
+  points_b: number;
+  winner_id: string | null;
+  decided_by: string | null;
+  settled_at: string;
 }

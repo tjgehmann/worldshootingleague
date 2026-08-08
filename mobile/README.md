@@ -40,6 +40,10 @@ npm start
 
 ```
 app/
+  index.tsx               fork: signed in to matches, signed out to the league
+  (public)/index.tsx      the league without an account
+  (public)/season/[slug]  a season table
+  (public)/club/[slug]    a club page and its roster
   (auth)/sign-in.tsx      sign in and create an account
   (tabs)/index.tsx        my matches
   (tabs)/leaderboard.tsx  rankings per discipline
@@ -49,6 +53,16 @@ app/
   bout/[id]/confirm.tsx   check the opponent's photo
   club/join.tsx           join by invite code, or start a club
 ```
+
+## Signed out
+
+The root is a fork, not a login wall: signed out you land on the public league.
+The auth gate lets the `(public)` group and `match/[id]` through, and everything
+that acts on someone's behalf stays behind a session.
+
+`match/[id]` serves both. A participant gets the full screen; anyone else gets a
+spectator view built from `match_scorecard`, which carries finished matches
+only. A match still being shot shows a line saying so and nothing else.
 
 ## Clubs and team matches
 
@@ -100,6 +114,10 @@ library stays available but is recorded as such.
 `npm run typecheck` is clean and the Metro bundles for Android and web both
 build. The web build was additionally loaded in a browser and captured in both
 themes — the app renders with no runtime errors.
+
+Requests time out after ten seconds rather than hanging. A range hall is a
+concrete box with poor reception, and a socket that never answers would leave
+the screen spinning; failing lets the page say so.
 
 Not verified: a run against a live Supabase instance.
 

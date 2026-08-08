@@ -13,6 +13,11 @@ import type {
   Rating,
   RecentForm,
   Reliability,
+  ClubProfile,
+  PublicMatchResult,
+  ScorecardRow,
+  SeasonStanding,
+  SeasonSummary,
   Submission,
   TeamMatch,
 } from './types';
@@ -384,4 +389,93 @@ export async function setPushEnabled(userId: string, enabled: boolean): Promise<
     .update({ notify_push: enabled })
     .eq('id', userId);
   if (error) throw error;
+}
+
+// ----------------------------------------------------------- spectator ------
+// Everything below reads views that a signed-out visitor may query. The tables
+// underneath stay closed — see supabase/migrations/..._public_views.sql.
+
+export async function fetchSeasons(): Promise<SeasonSummary[]> {
+  const { data, error } = await supabase
+    .from('season_summary')
+    .select('*')
+    .in('state', ['registration', 'running', 'finished'])
+    .order('starts_at', { ascending: false })
+    .returns<SeasonSummary[]>();
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchSeasonBySlug(slug: string): Promise<SeasonSummary> {
+  const { data, error } = await supabase
+    .from('season_summary')
+    .select('*')
+    .eq('slug', slug)
+    .single<SeasonSummary>();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchSeasonStandings(seasonId: string): Promise<SeasonStanding[]> {
+  const { data, error } = await supabase
+    .from('season_standings')
+    .select('*')
+    .eq('season_id', seasonId)
+    .order('position', { ascending: true })
+    .returns<SeasonStanding[]>();
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchClubBySlug(slug: string): Promise<ClubProfile> {
+  const { data, error } = await supabase
+    .from('club_profile')
+    .select('*')
+    .eq('slug', slug)
+    .single<ClubProfile>();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchScorecard(matchId: string): Promise<ScorecardRow[]> {
+  const { data, error } = await supabase
+    .from('match_scorecard')
+    .select('*')
+    .eq('match_id', matchId)
+    .order('bout', { ascending: true })
+    .returns<ScorecardRow[]>();
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchRecentResults(limit = 20): Promise<PublicMatchResult[]> {
+  const { data, error } = await supabase
+    .from('match_results')
+    .select('*')
+    .not('settled_at', 'is', null)
+    .order('settled_at', { ascending: false })
+    .limit(limit)
+    .returns<PublicMatchResult[]>();
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Display names for a set of shooters, for screens that only have their ids. */
+export async function fetchShooterNames(ids: string[]): Promise<Map<string, string>> {
+  if (ids.length === 0) return new Map();
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, display_name')
+    .in('id', [...new Set(ids)])
+    .returns<{ id: string; display_name: string }[]>();
+
+  if (error) throw error;
+  return new Map((data ?? []).map((row) => [row.id, row.display_name]));
 }
