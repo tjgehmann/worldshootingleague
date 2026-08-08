@@ -41,6 +41,7 @@ import {
   BOUT_PISTOL,
   BOUT_TO_CONFIRM,
   MATCH_DONE,
+  DISPUTE,
   MATCH_LIVE,
   ME,
   outboxEntry,
@@ -115,7 +116,7 @@ function serve() {
 const nameOf = (id) => fixtures.people[id];
 
 /** Answers one PostgREST read. `wantsObject` is .single()'s Accept header. */
-function restResponse(pathname, search, wantsObject) {
+function restResponse(pathname, search, wantsObject, { asReferee = false } = {}) {
   const table = pathname.replace('/rest/v1/', '').split('?')[0];
   const params = new URLSearchParams(search);
 
@@ -154,12 +155,24 @@ function restResponse(pathname, search, wantsObject) {
             .filter((b) => b.revealed_at)
             .map((b) => b.id),
         );
-        return fixtures.submissions.filter(
-          (s) => ids.includes(s.bout_id) && (s.shooter_id === ME || revealed.has(s.bout_id)),
+        // A referee sees both reports on a bout with an open case — the same
+        // widening is_assigned_referee() does in the database.
+        const underReview = new Set(fixtures.disputes.map((d) => d.bout_id));
+
+        return [...fixtures.submissions, ...fixtures.caseSubmissions].filter(
+          (s) =>
+            ids.includes(s.bout_id) &&
+            (s.shooter_id === ME || revealed.has(s.bout_id) || underReview.has(s.bout_id)),
         );
       }
       case 'bout_confirmations':
         return fixtures.confirmations;
+      case 'dispute_queue': {
+        const id = params.get('dispute_id');
+        return id
+          ? fixtures.disputes.filter((d) => id === `eq.${d.dispute_id}`)
+          : fixtures.disputes;
+      }
       case 'leaderboard': {
         const code = params.get('discipline');
         return code
@@ -170,7 +183,10 @@ function restResponse(pathname, search, wantsObject) {
         return fixtures.disciplines;
       case 'profiles': {
         const id = params.get('id') ?? '';
-        if (id.startsWith('eq.')) return [fixtures.profile];
+        // The case queue is a tab only for a referee, so the role has to come
+        // back different for the two referee screenshots.
+        if (id.startsWith('eq.'))
+          return [asReferee ? { ...fixtures.profile, role: 'referee' } : fixtures.profile];
         const ids = id.replace('in.(', '').replace(')', '').split(',');
         return ids.map(nameOf).filter(Boolean);
       }
@@ -222,11 +238,19 @@ function session() {
  */
 async function targetPhoto(browser, kind) {
   const decimal = kind === 'rifle';
-  // Rifle: Stefan's series 3, ten decimal shots adding up to 104.4.
-  // Pistol: the series being reported, 95 rings with 4 inner tens.
-  const shots = decimal
-    ? [10.4, 10.7, 10.2, 9.8, 10.9, 10.6, 10.3, 10.5, 10.1, 10.9]
-    : [10, 9, 10, 10, 9, 10, 10, 9, 9, 9];
+  // Every display has to agree with the number the fixture says was reported —
+  // except the one the open case is about, where disagreeing is the point.
+  const shots = {
+    // Stefan's series 3: ten decimal shots adding up to 104.4.
+    rifle: [10.4, 10.7, 10.2, 9.8, 10.9, 10.6, 10.3, 10.5, 10.1, 10.9],
+    // The series being reported on the report screen: 95 with 4 inner tens.
+    pistol: [10, 9, 10, 10, 9, 10, 10, 9, 9, 9],
+    // Manuel's report in the open case: 92, and the display says 3 inner tens.
+    'case-a': [10, 9, 9, 10, 9, 9, 10, 9, 9, 8],
+    // Jonas reported 94 with eleven inner tens. The display says four.
+    'case-b': [10, 10, 9, 10, 9, 10, 9, 9, 9, 9],
+  }[kind];
+  const innerTens = { rifle: null, pistol: 4, 'case-a': 3, 'case-b': 4 }[kind];
 
   const page = await browser.newPage({ viewport: { width: 640, height: 400 } });
   await page.setContent(`
@@ -281,7 +305,9 @@ async function targetPhoto(browser, kind) {
               ? shots.reduce((a, b) => a + b, 0).toFixed(1)
               : shots.reduce((a, b) => a + b, 0)
           }</div>
-          <div class="sub">${decimal ? '10 shots &#183; decimal' : 'Inner tens 4 &#183; 10 shots'}</div>
+          <div class="sub">${
+            decimal ? '10 shots &#183; decimal' : `Inner tens ${innerTens} &#183; 10 shots`
+          }</div>
         </div>
       </div>
     </div>
@@ -297,7 +323,7 @@ async function targetPhoto(browser, kind) {
  * One context per shot: a fresh storage state is the only reliable way to
  * switch between "signed in" and "a visitor with no account".
  */
-async function contextFor(browser, { theme, signedIn, offline, outbox }, photo) {
+async function contextFor(browser, { theme, signedIn, offline, outbox, asReferee }, photos) {
   const context = await browser.newContext({
     viewport: VIEWPORT,
     deviceScaleFactor: 2,
@@ -352,12 +378,14 @@ async function contextFor(browser, { theme, signedIn, offline, outbox }, photo) 
     if (url.pathname.startsWith('/rest/v1/rpc/')) {
       const fn = url.pathname.split('/').pop();
       if (fn === 'shooter_recent_form') return json(fixtures.recentForm);
+      if (fn === 'my_season_entry')
+        return json([{ joined: false, joined_at: null, entrants: 148 }]);
       return json(null);
     }
 
     if (url.pathname.startsWith('/rest/v1/')) {
       const wantsObject = (route.request().headers()['accept'] ?? '').includes('pgrst.object');
-      return json(restResponse(url.pathname, url.search, wantsObject));
+      return json(restResponse(url.pathname, url.search, wantsObject, { asReferee }));
     }
 
     if (url.pathname.startsWith('/storage/v1/object/sign/')) {
@@ -365,7 +393,12 @@ async function contextFor(browser, { theme, signedIn, offline, outbox }, photo) 
         const rest = url.pathname.replace('/storage/v1', '');
         return json({ signedURL: `${rest}?token=fixture` });
       }
-      return route.fulfill({ status: 200, contentType: 'image/png', body: photo });
+      const owner = Object.keys(photos).find((id) => url.pathname.includes(id));
+      return route.fulfill({
+        status: 200,
+        contentType: 'image/png',
+        body: photos[owner ?? 'default'],
+      });
     }
 
     // Uploads have nowhere to go in a screenshot run.
@@ -416,6 +449,28 @@ const shots = [
     note: 'A finished match, series by series, without photos.',
   },
   { name: 'sign-in', path: '/sign-in', signedIn: false, note: 'Sign in or create an account.' },
+  {
+    name: 'sign-up',
+    path: '/sign-in',
+    signedIn: false,
+    note: 'Creating an account: age, and consent you have to reach for.',
+    async act(page) {
+      await page.getByText('New here? Create an account').click();
+      await page.waitForTimeout(400);
+      await page.getByPlaceholder('you@club.org').fill('stefan@sv-karlsruhe.de');
+      await page.getByPlaceholder('thomas', { exact: true }).fill('sbraeuer');
+      await page.getByPlaceholder('Thomas Gehmann').fill('Stefan Bräuer');
+      await page.getByPlaceholder('1990-05-14').fill('1994-11-02');
+      await page.getByText('I accept the').click();
+      await page.waitForTimeout(300);
+    },
+  },
+  {
+    name: 'season-join',
+    path: `/season/${SEASON_SLUG}`,
+    signedIn: true,
+    note: 'Entering a season from the app, including one already running.',
+  },
   { name: 'matches', path: '/', signedIn: true, note: 'Your matches.' },
   {
     name: 'matches-offline',
@@ -462,6 +517,32 @@ const shots = [
     note: 'Checking the opponent’s photo against the number they reported.',
   },
   { name: 'rankings', path: '/leaderboard', signedIn: true, note: 'Glicko-2 rankings.' },
+  {
+    name: 'referee-queue',
+    path: '/cases',
+    signedIn: true,
+    asReferee: true,
+    note: 'What is left when two shooters disagree.',
+  },
+  {
+    name: 'referee-case',
+    path: `/case/${DISPUTE}`,
+    signedIn: true,
+    asReferee: true,
+    note: 'The complaint, and the evidence it is about.',
+  },
+  {
+    name: 'referee-decision',
+    path: `/case/${DISPUTE}`,
+    signedIn: true,
+    asReferee: true,
+    note: 'The four endings a case can have.',
+    async act(page) {
+      await page.getByText('Correct a score').click();
+      await page.getByText('Void the series').scrollIntoViewIfNeeded();
+      await page.waitForTimeout(400);
+    },
+  },
   { name: 'profile', path: '/profile', signedIn: true, note: 'Club, ratings, reliability, push.' },
 ];
 
@@ -478,9 +559,13 @@ async function main() {
   const browser = await chromium.launch({
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
   });
-  // The rifle display is served for the opponent's stored photo; the pistol one
-  // is what gets attached on the report screen.
-  const photo = await targetPhoto(browser, 'rifle');
+  // One display per shooter whose photo any screen asks for. The path carries
+  // the shooter id, so the route below can hand back the right one.
+  const photos = {
+    default: await targetPhoto(browser, 'rifle'),
+    [fixtures.MANUEL]: await targetPhoto(browser, 'case-a'),
+    [fixtures.JONAS]: await targetPhoto(browser, 'case-b'),
+  };
   const photoPath = join(tmpdir(), 'wsl-target-photo.png');
   writeFileSync(photoPath, await targetPhoto(browser, 'pistol'));
 
@@ -489,8 +574,14 @@ async function main() {
       for (const theme of shot.name && ALSO_DARK.has(shot.name) ? ['light', 'dark'] : ['light']) {
         const context = await contextFor(
           browser,
-          { theme, signedIn: shot.signedIn, offline: shot.offline, outbox: shot.outbox },
-          photo,
+          {
+            theme,
+            signedIn: shot.signedIn,
+            offline: shot.offline,
+            outbox: shot.outbox,
+            asReferee: shot.asReferee,
+          },
+          photos,
         );
         const page = await context.newPage();
         const failures = [];

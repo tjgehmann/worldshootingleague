@@ -2,9 +2,9 @@
 \pset tuples_only on
 
 insert into auth.users (id, email, raw_user_meta_data) values
-  ('11111111-1111-1111-1111-111111111111','a@x.de','{"handle":"thomas","display_name":"Thomas"}'),
-  ('22222222-2222-2222-2222-222222222222','b@x.de','{"handle":"stefan","display_name":"Stefan"}'),
-  ('33333333-3333-3333-3333-333333333333','c@x.de','{"handle":"alina","display_name":"Alina"}');
+  ('11111111-1111-1111-1111-111111111111','a@x.de','{"handle":"thomas","display_name":"Thomas","date_of_birth":"1990-05-14"}'),
+  ('22222222-2222-2222-2222-222222222222','b@x.de','{"handle":"stefan","display_name":"Stefan","date_of_birth":"1990-05-14"}'),
+  ('33333333-3333-3333-3333-333333333333','c@x.de','{"handle":"alina","display_name":"Alina","date_of_birth":"1990-05-14"}');
 
 insert into public.matches (discipline_id, format_id, shooter_a, shooter_b, state, opens_at, closes_at)
 select d.id, f.id,

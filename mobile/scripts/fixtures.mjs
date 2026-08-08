@@ -37,6 +37,10 @@ export const BOUT_PISTOL = 'bbbb0003-0000-4000-8000-000000000001';
 /** Revealed: Stefan's result is visible and still unchecked. */
 export const BOUT_TO_CONFIRM = 'bbbb0001-0000-4000-8000-000000000003';
 
+/** The disputed series, on a match nobody else in these screenshots is in. */
+export const CASE_BOUT = 'bbbb0005-0000-4000-8000-000000000001';
+const CASE_MATCH = 'aaaa0009-0000-4000-8000-000000000009';
+
 export const SEASON_SLUG = 'air-rifle-spring-2026';
 
 const disciplines = {
@@ -442,12 +446,111 @@ export const outboxEntry = [
   },
 ];
 
+/**
+ * The referee's queue. Two cases: one plausible, one that reads like a typo —
+ * which is what most of them will be.
+ */
+export const DISPUTE = 'dddd0001-0000-4000-8000-000000000001';
+
+const disputes = [
+  {
+    dispute_id: DISPUTE,
+    state: 'open',
+    reason:
+      'Reported 94 with 11 inner tens. There are ten shots in a series, so eleven of them '
+      + 'cannot be inner tens — and the display in the photo says four.',
+    created_at: new Date(Date.now() - 19 * 3_600_000).toISOString(),
+    referee_id: null,
+    assigned_at: null,
+    outcome: null,
+    resolution_note: null,
+    resolved_at: null,
+    bout_id: CASE_BOUT,
+    bout_index: 1,
+    bout_state: 'disputed',
+    match_id: CASE_MATCH,
+    match_state: 'awaiting_review',
+    shooter_a: MANUEL,
+    shooter_b: JONAS,
+    shooter_a_name: 'Manuel Frei',
+    shooter_b_name: 'Jonas Keller',
+    raised_by: MANUEL,
+    raised_by_name: 'Manuel Frei',
+    discipline_code: 'AP10ET',
+    discipline_name: 'Air Pistol 10 m',
+    scoring_mode: 'integer',
+    requires_inner_tens: true,
+    waiting_hours: 19,
+  },
+  {
+    dispute_id: 'dddd0002-0000-4000-8000-000000000002',
+    state: 'assigned',
+    reason:
+      'The photo is of a different lane. The number on it does not belong to my opponent\u2019s '
+      + 'series at all.',
+    created_at: new Date(Date.now() - 50 * 3_600_000).toISOString(),
+    referee_id: null,
+    assigned_at: new Date(Date.now() - 2 * 3_600_000).toISOString(),
+    outcome: null,
+    resolution_note: null,
+    resolved_at: null,
+    bout_id: BOUT_PISTOL,
+    bout_index: 2,
+    bout_state: 'disputed',
+    match_id: MATCH_BOARD,
+    match_state: 'awaiting_review',
+    shooter_a: PAULA,
+    shooter_b: LARS,
+    shooter_a_name: 'Paula Nov\u00e1k',
+    shooter_b_name: 'Lars Madsen',
+    raised_by: LARS,
+    raised_by_name: 'Lars Madsen',
+    discipline_code: 'SBR10ET',
+    discipline_name: 'Smallbore Rifle 50 m prone',
+    scoring_mode: 'decimal',
+    requires_inner_tens: false,
+    waiting_hours: 50,
+  },
+];
+
+/** The two reports the open case is about. */
+const caseSubmissions = [
+  {
+    id: 'eeee0009-0000-4000-8000-000000000001',
+    bout_id: CASE_BOUT,
+    shooter_id: MANUEL,
+    total: 92,
+    inner_tens: 3,
+    adjusted_total: null,
+    adjusted_inner_tens: null,
+    photo_path: `${CASE_BOUT}/${MANUEL}/target.jpg`,
+    shot_at: new Date(Date.now() - 26 * 3_600_000).toISOString(),
+    submitted_at: new Date(Date.now() - 25 * 3_600_000).toISOString(),
+  },
+  {
+    id: 'eeee0009-0000-4000-8000-000000000002',
+    bout_id: CASE_BOUT,
+    shooter_id: JONAS,
+    total: 94,
+    inner_tens: 11,
+    adjusted_total: null,
+    adjusted_inner_tens: null,
+    photo_path: `${CASE_BOUT}/${JONAS}/target.jpg`,
+    shot_at: new Date(Date.now() - 22 * 3_600_000).toISOString(),
+    submitted_at: new Date(Date.now() - 21 * 3_600_000).toISOString(),
+  },
+];
+
 /** Series 1 has been checked; series 3 is what the app still asks about. */
 const confirmations = [{ submission_id: 'eeee0001-0000-4000-8000-000000000002' }];
 
 export const fixtures = {
   people,
   confirmations,
+  disputes,
+  caseSubmissions,
+  JONAS,
+  MANUEL,
   disciplines: Object.values(disciplines),
   matches,
   submissions,

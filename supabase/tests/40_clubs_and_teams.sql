@@ -3,13 +3,13 @@
 
 -- Six shooters, three per club.
 insert into auth.users (id, email, raw_user_meta_data) values
-  ('a1111111-0000-0000-0000-000000000001','ka1@x.de','{"handle":"ka_one","display_name":"Anna Bauer"}'),
-  ('a1111111-0000-0000-0000-000000000002','ka2@x.de','{"handle":"ka_two","display_name":"Ben Fischer"}'),
-  ('a1111111-0000-0000-0000-000000000003','ka3@x.de','{"handle":"ka_three","display_name":"Clara Wolf"}'),
-  ('b2222222-0000-0000-0000-000000000001','mu1@x.de','{"handle":"mu_one","display_name":"Dirk Hoffmann"}'),
-  ('b2222222-0000-0000-0000-000000000002','mu2@x.de','{"handle":"mu_two","display_name":"Eva Krause"}'),
-  ('b2222222-0000-0000-0000-000000000003','mu3@x.de','{"handle":"mu_three","display_name":"Felix Lang"}'),
-  ('c3333333-0000-0000-0000-000000000001','out@x.de','{"handle":"outsider","display_name":"Gerd Ohne"}');
+  ('a1111111-0000-0000-0000-000000000001','ka1@x.de','{"handle":"ka_one","display_name":"Anna Bauer","date_of_birth":"1990-05-14"}'),
+  ('a1111111-0000-0000-0000-000000000002','ka2@x.de','{"handle":"ka_two","display_name":"Ben Fischer","date_of_birth":"1990-05-14"}'),
+  ('a1111111-0000-0000-0000-000000000003','ka3@x.de','{"handle":"ka_three","display_name":"Clara Wolf","date_of_birth":"1990-05-14"}'),
+  ('b2222222-0000-0000-0000-000000000001','mu1@x.de','{"handle":"mu_one","display_name":"Dirk Hoffmann","date_of_birth":"1990-05-14"}'),
+  ('b2222222-0000-0000-0000-000000000002','mu2@x.de','{"handle":"mu_two","display_name":"Eva Krause","date_of_birth":"1990-05-14"}'),
+  ('b2222222-0000-0000-0000-000000000003','mu3@x.de','{"handle":"mu_three","display_name":"Felix Lang","date_of_birth":"1990-05-14"}'),
+  ('c3333333-0000-0000-0000-000000000001','out@x.de','{"handle":"outsider","display_name":"Gerd Ohne","date_of_birth":"1990-05-14"}');
 
 -- ================================================= 1. founding a club ======
 set request.jwt.claim.sub = 'a1111111-0000-0000-0000-000000000001';

@@ -210,7 +210,16 @@ export default function MatchesScreen() {
           </View>
         }
         ListEmptyComponent={
-          <Empty text="No matches yet. Join a season and you will be paired." />
+          <Card>
+            <Text style={[t.text.name, { color: t.colors.ink }]}>Nothing to shoot yet</Text>
+            <Hint>
+              Enter a season and the next round pairs you with somebody at your level. You
+              can join one that is already running.
+            </Hint>
+            <Link href="/(public)" asChild>
+              <Button label="Find a season" onPress={() => {}} />
+            </Link>
+          </Card>
         }
         renderItem={({ item }) => (
           <MatchRow

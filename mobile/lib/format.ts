@@ -30,3 +30,21 @@ export function formatDateTime(iso: string): string {
     minute: '2-digit',
   });
 }
+
+/**
+ * Old enough to hold an account, from an ISO date the shooter typed.
+ *
+ * Mirrors public.is_adult() in the database, and exists so somebody too young
+ * finds out before they have made an account that cannot be used rather than
+ * after. The database is still the one that decides.
+ */
+export function isAdult(isoDate: string, on = new Date()): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return false;
+
+  const born = new Date(`${isoDate}T00:00:00Z`);
+  if (Number.isNaN(born.getTime())) return false;
+
+  const eighteenth = new Date(born);
+  eighteenth.setUTCFullYear(born.getUTCFullYear() + 18);
+  return eighteenth <= on;
+}

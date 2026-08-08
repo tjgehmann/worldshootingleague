@@ -2,12 +2,12 @@
 \pset tuples_only on
 
 insert into auth.users (id, email, raw_user_meta_data) values
-  ('aaaaaaaa-0000-0000-0000-000000000001','f1@x.de','{"handle":"forf_a","display_name":"ForfA"}'),
-  ('aaaaaaaa-0000-0000-0000-000000000002','f2@x.de','{"handle":"forf_b","display_name":"ForfB"}'),
-  ('bbbbbbbb-0000-0000-0000-000000000001','t1@x.de','{"handle":"tie_a","display_name":"TieA"}'),
-  ('bbbbbbbb-0000-0000-0000-000000000002','t2@x.de','{"handle":"tie_b","display_name":"TieB"}'),
-  ('cccccccc-0000-0000-0000-000000000001','d1@x.de','{"handle":"dead_a","display_name":"DeadA"}'),
-  ('cccccccc-0000-0000-0000-000000000002','d2@x.de','{"handle":"dead_b","display_name":"DeadB"}');
+  ('aaaaaaaa-0000-0000-0000-000000000001','f1@x.de','{"handle":"forf_a","display_name":"ForfA","date_of_birth":"1990-05-14"}'),
+  ('aaaaaaaa-0000-0000-0000-000000000002','f2@x.de','{"handle":"forf_b","display_name":"ForfB","date_of_birth":"1990-05-14"}'),
+  ('bbbbbbbb-0000-0000-0000-000000000001','t1@x.de','{"handle":"tie_a","display_name":"TieA","date_of_birth":"1990-05-14"}'),
+  ('bbbbbbbb-0000-0000-0000-000000000002','t2@x.de','{"handle":"tie_b","display_name":"TieB","date_of_birth":"1990-05-14"}'),
+  ('cccccccc-0000-0000-0000-000000000001','d1@x.de','{"handle":"dead_a","display_name":"DeadA","date_of_birth":"1990-05-14"}'),
+  ('cccccccc-0000-0000-0000-000000000002','d2@x.de','{"handle":"dead_b","display_name":"DeadB","date_of_birth":"1990-05-14"}');
 
 -- ============================================ 1. forfeit on a missed window ==
 insert into public.matches (discipline_id, format_id, shooter_a, shooter_b, state, opens_at, closes_at)

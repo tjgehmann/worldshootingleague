@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'expo-router';
-import { ScrollView, Switch, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Platform, ScrollView, Share, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
@@ -18,11 +19,14 @@ import {
 } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { registerForPush } from '@/lib/notifications';
+import { LEGAL_LIST } from '@/lib/legal';
 import {
+  exportMyData,
   fetchMyClubs,
   fetchProfile,
   fetchRatings,
   fetchReliability,
+  requestAccountDeletion,
   setPushEnabled,
 } from '@/lib/queries';
 import { TAB_BAR_CLEARANCE, useTheme } from '@/lib/theme';
@@ -218,8 +222,97 @@ export default function ProfileScreen() {
           </Hint>
         </Card>
 
+        <Kicker>Your data</Kicker>
+        <AccountData onDeleted={signOut} />
+
+        <Kicker>The small print</Kicker>
+        <Card>
+          {LEGAL_LIST.map((doc) => (
+            <Link key={doc.slug} href={{ pathname: '/legal/[doc]', params: { doc: doc.slug } }} asChild>
+              <Button label={doc.title} variant="text" size="sm" onPress={() => {}} />
+            </Link>
+          ))}
+        </Card>
+
         <Button label="Sign out" variant="text" onPress={signOut} />
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+/**
+ * The two rights that are buttons rather than an email address: a copy of
+ * everything, and deletion. Deleting asks twice, because it cannot be undone
+ * and because the second tap is where the consequence is spelled out.
+ */
+function AccountData({ onDeleted }: { onDeleted: () => void }) {
+  const t = useTheme();
+  const [confirming, setConfirming] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+
+  const exporting = useMutation({
+    mutationFn: exportMyData,
+    onSuccess: async (data) => {
+      const text = JSON.stringify(data, null, 2);
+      if (Platform.OS === 'web') {
+        // Share is not available in every browser; the clipboard always is.
+        await navigator.clipboard?.writeText(text).catch(() => {});
+        setNote('Your data is on the clipboard as JSON.');
+      } else {
+        await Share.share({ message: text });
+      }
+    },
+    onError: () => setNote('The export could not be built. Try again later.'),
+  });
+
+  const deleting = useMutation({
+    mutationFn: () => requestAccountDeletion(),
+    onSuccess: onDeleted,
+    onError: () => setNote('The deletion could not be recorded. Try again later.'),
+  });
+
+  return (
+    <Card>
+      {note ? <Meta>{note}</Meta> : null}
+
+      <Button
+        label="Download my data"
+        variant="quiet"
+        size="sm"
+        busy={exporting.isPending}
+        onPress={() => exporting.mutate()}
+      />
+
+      {confirming ? (
+        <>
+          <Hint>
+            Your name, handle, date of birth and profile go immediately. Results you have
+            already shot stay, because a match is your opponent's record too — they will
+            no longer carry your name. This cannot be undone.
+          </Hint>
+          <Button
+            label="Yes, delete my account"
+            variant="quiet"
+            size="sm"
+            busy={deleting.isPending}
+            onPress={() => deleting.mutate()}
+            style={{ backgroundColor: t.colors.negativeTint }}
+          />
+          <Button
+            label="Keep it"
+            variant="text"
+            size="sm"
+            onPress={() => setConfirming(false)}
+          />
+        </>
+      ) : (
+        <Button
+          label="Delete my account"
+          variant="text"
+          size="sm"
+          onPress={() => setConfirming(true)}
+        />
+      )}
+    </Card>
   );
 }

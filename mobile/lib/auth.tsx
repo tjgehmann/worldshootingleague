@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { TERMS_VERSION } from './legal';
 import { registerForPush, unregisterPush } from './notifications';
 import { supabase } from './supabase';
 
@@ -19,6 +20,8 @@ export interface SignUpInput {
   handle: string;
   displayName: string;
   countryCode: string;
+  /** ISO date. The signup trigger refuses anyone under 18. */
+  dateOfBirth: string;
 }
 
 const AuthContext = createContext<AuthValue | null>(null);
@@ -54,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       },
-      async signUp({ email, password, handle, displayName, countryCode }) {
+      async signUp({ email, password, handle, displayName, countryCode, dateOfBirth }) {
         // handle_new_user() reads this metadata to create the profile row.
         const { error } = await supabase.auth.signUp({
           email,
@@ -64,6 +67,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               handle: handle.trim().toLowerCase(),
               display_name: displayName.trim(),
               country_code: countryCode.trim().toUpperCase(),
+              date_of_birth: dateOfBirth,
+              terms_version: TERMS_VERSION,
             },
           },
         });

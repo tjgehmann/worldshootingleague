@@ -1,10 +1,25 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
 import { Tabs } from 'expo-router';
 
+import { useAuth } from '@/lib/auth';
+import { fetchProfile } from '@/lib/queries';
 import { useTheme } from '@/lib/theme';
 
 export default function TabsLayout() {
   const t = useTheme();
+  const { userId } = useAuth();
+
+  // The case queue is a tab rather than a corner of the profile, because a
+  // referee who has to go looking for it will not work it. It is hidden for
+  // everyone else — and hiding it is cosmetic only: decide_dispute() checks the
+  // role itself, so the screen being reachable would not make it usable.
+  const profile = useQuery({
+    queryKey: ['profile', userId],
+    queryFn: () => fetchProfile(userId!),
+    enabled: !!userId,
+  });
+  const isReferee = profile.data?.role === 'referee' || profile.data?.role === 'admin';
 
   return (
     <Tabs
@@ -47,6 +62,16 @@ export default function TabsLayout() {
         options={{
           title: 'Rankings',
           tabBarIcon: ({ color, size }) => <Ionicons name="list" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="cases"
+        options={{
+          title: 'Cases',
+          href: isReferee ? undefined : null,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="shield-checkmark" color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen

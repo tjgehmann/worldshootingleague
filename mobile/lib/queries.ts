@@ -5,6 +5,8 @@ import type {
   ClubMembership,
   ClubStanding,
   Discipline,
+  DisputeCase,
+  DisputeOutcome,
   LeaderboardRow,
   Match,
   Profile,
@@ -99,7 +101,8 @@ export async function fetchBoutSubmissions(boutIds: string[]): Promise<Submissio
   const { data, error } = await supabase
     .from('submissions')
     .select(
-      'id, bout_id, shooter_id, total, inner_tens, adjusted_total, photo_path, shot_at, submitted_at',
+      'id, bout_id, shooter_id, total, inner_tens, adjusted_total, adjusted_inner_tens, ' +
+        'photo_path, shot_at, submitted_at',
     )
     .in('bout_id', boutIds)
     .returns<Submission[]>();
@@ -348,6 +351,85 @@ export async function setPushEnabled(userId: string, enabled: boolean): Promise<
   if (error) throw error;
 }
 
+// -------------------------------------------------------------- account ----
+
+/** Everything the service holds about the signed-in shooter, as one object. */
+export async function exportMyData(): Promise<unknown> {
+  const { data, error } = await supabase.rpc('export_my_data');
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Deletion, as far as it goes: the name, handle, date of birth and profile go
+ * at once; results stay because they are the opponent's record too. The auth
+ * row and the photographs are queued for an operator.
+ */
+export async function requestAccountDeletion(reason?: string): Promise<void> {
+  const { error } = await supabase.rpc('request_account_deletion', {
+    p_reason: reason ?? null,
+  });
+  if (error) throw error;
+}
+
+// ------------------------------------------------------------- referee ------
+// The queue view runs with the caller's rights, so this returns every open case
+// to a referee and only their own to a shooter. The photos come with it: the
+// storage policy opens a bout's folder to a referee exactly while a case on it
+// is open, and closes it again when the case is decided.
+
+export async function fetchDisputeQueue(includeClosed = false): Promise<DisputeCase[]> {
+  let query = supabase.from('dispute_queue').select('*').order('created_at', { ascending: true });
+  if (!includeClosed) query = query.in('state', ['open', 'assigned']);
+
+  const { data, error } = await query.returns<DisputeCase[]>();
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchDisputeCase(disputeId: string): Promise<DisputeCase> {
+  const { data, error } = await supabase
+    .from('dispute_queue')
+    .select('*')
+    .eq('dispute_id', disputeId)
+    .single<DisputeCase>();
+
+  if (error) throw error;
+  return data;
+}
+
+/** Taking a case, so two referees do not work the same one. */
+export async function claimDispute(disputeId: string): Promise<void> {
+  const { error } = await supabase.rpc('claim_dispute', { p_dispute_id: disputeId });
+  if (error) throw error;
+}
+
+export interface Decision {
+  disputeId: string;
+  outcome: DisputeOutcome;
+  /** Read by both shooters, so it has to say why. */
+  note: string;
+  /** 'corrected': whose row, and what the photo actually shows. */
+  submissionId?: string;
+  total?: number;
+  innerTens?: number | null;
+  /** 'forfeited': who keeps the series. */
+  winnerId?: string;
+}
+
+export async function decideDispute(d: Decision): Promise<void> {
+  const { error } = await supabase.rpc('decide_dispute', {
+    p_dispute_id: d.disputeId,
+    p_outcome: d.outcome,
+    p_note: d.note,
+    p_submission_id: d.submissionId ?? null,
+    p_total: d.total ?? null,
+    p_inner_tens: d.innerTens ?? null,
+    p_winner_id: d.winnerId ?? null,
+  });
+  if (error) throw error;
+}
+
 // ----------------------------------------------------------- spectator ------
 // Everything below reads views that a signed-out visitor may query. The tables
 // underneath stay closed — see supabase/migrations/..._public_views.sql.
@@ -373,6 +455,35 @@ export async function fetchSeasonBySlug(slug: string): Promise<SeasonSummary> {
 
   if (error) throw error;
   return data;
+}
+
+/**
+ * Joining and leaving. Both go through a function rather than an insert: the
+ * seed rating has to be read server-side, and joining a season that is already
+ * running is deliberately allowed, which the insert policy does not cover.
+ */
+export async function joinSeason(slug: string): Promise<string> {
+  const { data, error } = await supabase.rpc('join_season', { p_slug: slug });
+  if (error) throw error;
+  return data as unknown as string;
+}
+
+export async function leaveSeason(slug: string): Promise<void> {
+  const { error } = await supabase.rpc('leave_season', { p_slug: slug });
+  if (error) throw error;
+}
+
+export interface SeasonEntry {
+  joined: boolean;
+  joined_at: string | null;
+  entrants: number;
+}
+
+export async function fetchMySeasonEntry(slug: string): Promise<SeasonEntry> {
+  const { data, error } = await supabase.rpc('my_season_entry', { p_slug: slug });
+  if (error) throw error;
+  const rows = (data ?? []) as unknown as SeasonEntry[];
+  return rows[0] ?? { joined: false, joined_at: null, entrants: 0 };
 }
 
 export async function fetchSeasonStandings(seasonId: string): Promise<SeasonStanding[]> {

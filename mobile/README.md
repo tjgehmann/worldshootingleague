@@ -52,6 +52,9 @@ app/
   bout/[id]/report.tsx    report a result: score + photo
   bout/[id]/confirm.tsx   check the opponent's photo
   club/join.tsx           join by invite code, or start a club
+  case/[id].tsx           a referee's case: both photos, and how it ends
+  (tabs)/cases.tsx        the case queue — a tab only for referees
+  (public)/legal/[doc]    imprint, privacy, terms
 ```
 
 Pictures of all of them are in [`../docs/screenshots/`](../docs/screenshots),
@@ -68,6 +71,23 @@ fixtures use the row shapes the app actually reads, including what row level
 security would and would not return — the opponent's submission is absent before
 the reveal, so the screenshot of a blind series is blind for the real reason.
 Nothing in the run can reach the network.
+
+## Referee
+
+`(tabs)/cases.tsx` and `case/[id].tsx`. The tab is hidden for everybody else,
+which is cosmetic only: `decide_dispute()` checks the role itself, so reaching
+the screen would not make it usable.
+
+A case ends in exactly one of four ways — the report stands, a score is
+corrected, the series is awarded, the series is voided — and every one of them
+needs a sentence that both shooters read. A correction never overwrites: the
+reported number stays on the row and the correction sits beside it, so the
+screen can show both. Afterwards the match is settled again from scratch, which
+means a correction can change who won it.
+
+The photographs are readable to a referee exactly while a case on that series is
+open. That falls out of the storage policy rather than being enforced in the
+client, so a closed case shows the decision and no evidence.
 
 ## Signed out
 
@@ -168,3 +188,6 @@ Not verified: a run against a live Supabase instance.
 * No referee view. Disputes can be raised but not worked.
 * The camera path cannot be exercised on web, so the screenshot run attaches the
   proof through the library picker instead.
+* Deleting an account anonymises the profile and queues the auth row and the
+  photographs for an operator — Supabase will not let the client remove either.
+* The legal documents in `lib/legal.ts` are drafts with placeholders.

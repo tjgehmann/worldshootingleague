@@ -119,6 +119,8 @@ export interface Submission {
   /** ISSF tiebreak for full-ring scores; null where scoring is decimal. */
   inner_tens: number | null;
   adjusted_total: number | null;
+  /** Set when a referee corrected the inner ten count. */
+  adjusted_inner_tens: number | null;
   photo_path: string | null;
   shot_at: string;
   submitted_at: string;
@@ -191,6 +193,45 @@ export interface Reliability {
   confirmations_due: number;
   confirmations_given: number;
   confirmation_rate_pct: number | null;
+}
+
+// --------------------------------------------------------------- referee ---
+
+export type DisputeState = 'open' | 'assigned' | 'resolved' | 'withdrawn';
+
+/**
+ * The four endings a case can have. Anything beyond these is a sanction on a
+ * person rather than a decision on one series, and has no home yet.
+ */
+export type DisputeOutcome = 'unchanged' | 'corrected' | 'forfeited' | 'voided';
+
+/** One row of public.dispute_queue. */
+export interface DisputeCase {
+  dispute_id: string;
+  state: DisputeState;
+  reason: string;
+  created_at: string;
+  referee_id: string | null;
+  assigned_at: string | null;
+  outcome: DisputeOutcome | null;
+  resolution_note: string | null;
+  resolved_at: string | null;
+  bout_id: string;
+  bout_index: number;
+  bout_state: BoutState;
+  match_id: string;
+  match_state: MatchState;
+  shooter_a: string;
+  shooter_b: string;
+  shooter_a_name: string;
+  shooter_b_name: string;
+  raised_by: string;
+  raised_by_name: string;
+  discipline_code: string;
+  discipline_name: string;
+  scoring_mode: ScoringMode;
+  requires_inner_tens: boolean;
+  waiting_hours: number;
 }
 
 // -------------------------------------------------- public spectator views --

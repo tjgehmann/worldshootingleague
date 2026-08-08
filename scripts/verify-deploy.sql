@@ -9,7 +9,7 @@
 \pset tuples_only on
 
 select 'tables:            ' ||
-       case when count(*) = 20 then 'OK (20)' else 'MISSING — found ' || count(*) end
+       case when count(*) = 21 then 'OK (21)' else 'MISSING — found ' || count(*) end
   from pg_tables
  where schemaname = 'public'
    and tablename in (
@@ -17,7 +17,7 @@ select 'tables:            ' ||
      'matches','bouts','submissions','bout_confirmations','disputes',
      'ratings','rating_events',
      'clubs','club_members','club_invites','club_season_entries','team_matches',
-     'device_tokens','notifications');
+     'device_tokens','notifications','deletion_requests');
 
 select 'rls enabled:       ' ||
        case when count(*) = 0 then 'OK' else 'FAIL — unprotected: ' || string_agg(relname, ', ') end
@@ -44,7 +44,7 @@ select 'submissions write: ' ||
  where schemaname = 'public' and tablename = 'submissions';
 
 select 'functions:         ' ||
-       case when count(*) = 14 then 'OK (14)' else 'MISSING — found ' || count(*) end
+       case when count(*) = 21 then 'OK (21)' else 'MISSING — found ' || count(*) end
   from pg_proc p
   join pg_namespace n on n.oid = p.pronamespace
  where n.nspname = 'public'
@@ -52,13 +52,22 @@ select 'functions:         ' ||
      'advance_match','finalize_match','glicko2_update','pair_round',
      'expire_bouts','expire_confirmations','run_league_tick','shooter_recent_form',
      'create_club','redeem_club_invite','club_lineup','pair_team_round',
-     'advance_team_match','enqueue_deadline_reminders');
+     'advance_team_match','enqueue_deadline_reminders',
+     -- the referee console
+     'claim_dispute','decide_dispute','submission_effective_inner_tens',
+     -- joining a season from the app
+     'join_season','leave_season','my_season_entry',
+     -- accounts, consent and deletion
+     'is_adult','request_account_deletion','export_my_data',
+     -- what the beta is measured by
+     'beta_health','beta_backlog');
 
 select 'views:             ' ||
-       case when count(*) = 4 then 'OK (4)' else 'MISSING — found ' || count(*) end
+       case when count(*) = 5 then 'OK (5)' else 'MISSING — found ' || count(*) end
   from pg_views
  where schemaname = 'public'
-   and viewname in ('leaderboard','match_results','shooter_reliability','club_standings');
+   and viewname in ('leaderboard','match_results','shooter_reliability','club_standings',
+                    'dispute_queue');
 
 select 'notification dedupe:' ||
        case when count(*) = 1 then ' OK'

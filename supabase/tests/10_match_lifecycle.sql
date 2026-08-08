@@ -3,10 +3,10 @@ begin;
 
 -- four shooters
 insert into auth.users (id, email, raw_user_meta_data) values
-  ('11111111-1111-1111-1111-111111111111','a@x.de','{"handle":"thomas","display_name":"Thomas","country_code":"DE"}'),
-  ('22222222-2222-2222-2222-222222222222','b@x.de','{"handle":"stefan","display_name":"Stefan","country_code":"DE"}'),
-  ('33333333-3333-3333-3333-333333333333','c@x.de','{"handle":"alina","display_name":"Alina","country_code":"AT"}'),
-  ('44444444-4444-4444-4444-444444444444','d@x.de','{"handle":"manuel","display_name":"Manuel","country_code":"CH"}');
+  ('11111111-1111-1111-1111-111111111111','a@x.de','{"handle":"thomas","display_name":"Thomas","country_code":"DE","date_of_birth":"1990-05-14"}'),
+  ('22222222-2222-2222-2222-222222222222','b@x.de','{"handle":"stefan","display_name":"Stefan","country_code":"DE","date_of_birth":"1990-05-14"}'),
+  ('33333333-3333-3333-3333-333333333333','c@x.de','{"handle":"alina","display_name":"Alina","country_code":"AT","date_of_birth":"1990-05-14"}'),
+  ('44444444-4444-4444-4444-444444444444','d@x.de','{"handle":"manuel","display_name":"Manuel","country_code":"CH","date_of_birth":"1990-05-14"}');
 
 select count(*) as profiles_created from public.profiles;
 

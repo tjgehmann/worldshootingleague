@@ -66,6 +66,17 @@ compares the two.
   <img src="docs/screenshots/confirm-light.png" alt="Checking the opponent's photo" width="240">
 </p>
 
+**Getting in, and settling a dispute.** Signing up records an age and a consent
+you have to reach for. When two shooters disagree, a referee gets both photos
+and four ways to end it.
+
+<p>
+  <img src="docs/screenshots/sign-up-light.png" alt="Creating an account" width="240">
+  <img src="docs/screenshots/season-join-light.png" alt="Entering a season" width="240">
+  <img src="docs/screenshots/referee-queue-light.png" alt="The referee's case queue" width="240">
+  <img src="docs/screenshots/referee-case-light.png" alt="A case: both reports and both photos" width="240">
+</p>
+
 **Without reception, and in the dark.** A report shot in a basement range waits
 on the phone and sends itself. The right-hand pair is the same app on a phone
 set to dark — the two palettes are built separately, not inverted.
@@ -111,7 +122,9 @@ mobile/              Expo client (see mobile/README.md)
 scripts/
   test-local.sh      apply migrations and run the tests
   verify-deploy.sql  check a live project after db push
+  ops.sql            what an operator does: seasons, rounds, roles, deletions
 docs/
+  beta-checklist.md  what has to happen before real people sign up
   data-model.md      entities, state machine, design decisions
   mockups.html       every screen, annotated
   screenshots/       captures from the running build
@@ -138,6 +151,10 @@ Migrations:
 | `..._team_competition.sql` | club-vs-club fixtures and the league table |
 | `..._notifications.sql` | the outbox, its triggers and the deadline sweep |
 | `..._public_views.sql` | what a signed-out visitor may read |
+| `..._referee.sql` | the case queue and the four ways to end one |
+| `..._joining.sql` | entering and leaving a season from the app |
+| `..._accounts.sql` | age gate, recorded consent, export and deletion |
+| `..._beta_metrics.sql` | the numbers the beta is judged on |
 
 Edge functions:
 
@@ -181,11 +198,50 @@ What is covered:
   impossible totals, missing inner tens where the discipline requires them,
   more inner tens than shots, tenths in a full-ring discipline, a shot array
   that disagrees with the total, backdated series and missing photos.
+* **`50_referee.sql`** — a shooter cannot decide their own case; a report
+  upheld, a score corrected so that it flips who won the match, a series
+  awarded, a series voided leaving a decider to be shot; the reported number
+  staying readable beside the correction; a case that cannot be decided twice
+  and a decision that needs a reason.
+* **`60_accounts.sql`** — an adult gets in and a minor does not, consent is
+  recorded, the export carries what it should, and deletion removes the name
+  while the results survive; the beta's own metrics, admin-only.
 * **`40_clubs_and_teams.sql`** — founding a club and joining by invite code, a
   lineup that excludes a member who competes for someone else, a team round
   paired board by board, aggregation into a 2:1 fixture win, the league table,
   the notifications each step produces, the deadline sweep deduplicating on a
   second run, and opting out stopping the queue at the source.
+
+## Going into beta
+
+The loop is complete: get paired, shoot, report, reveal, check, get rated — and
+now also enter a season from the app, and have a referee end a disagreement.
+[`docs/beta-checklist.md`](docs/beta-checklist.md) is the ordered list of what
+still has to happen once, from pushing the schema to writing the invitation,
+including how the beta should be shaped so that the ladder is not empty.
+
+The beta ships as a **web app**, not through the stores: no app review, and a
+club official can send a link instead of an invitation to install something.
+
+```bash
+cd mobile && npm run build:web    # dist/, ready for any static host
+```
+
+Four things are worth knowing before the invitations go out:
+
+* **The age gate is real.** The signup trigger refuses anyone under 18, because
+  guardian consent and the protections a junior account needs are not built. A
+  large share of ISSF shooters are juniors, so this is a deliberate hole in the
+  market, not an oversight.
+* **The documents are drafts.** `mobile/lib/legal.ts` has an imprint, a privacy
+  notice and terms with `<angle brackets>` where the operator's details go. They
+  need reading by someone qualified.
+* **Deletion works from the app** and leaves results behind on purpose: a match
+  is the opponent's record too. What goes immediately is the name, the handle,
+  the date of birth and the profile.
+* **`beta_health()` and `beta_backlog()` are the point of the beta.** Six
+  numbers with a decision attached to each, and four things that should never
+  be growing.
 
 ## Applying to a Supabase project
 
