@@ -10,11 +10,11 @@ app changes nothing.
 
 ## Design
 
-Dark by default, light as an equal partner; the app follows the system setting
-(`userInterfaceStyle: "automatic"`). Both palettes live in `lib/theme.ts` and are
-built separately rather than inverted: in light, cards carry a shadow instead of
-a lift in brightness, and green, amber and red move darker so they stay legible
-on white.
+Light by default, dark as an equal partner; the app follows the system setting
+(`userInterfaceStyle: "automatic"`), so a phone set to dark gets the dark
+palette. Both live in `lib/theme.ts` and are built separately rather than
+inverted: in light, cards carry a shadow instead of a lift in brightness, and
+green, amber and red move darker so they stay legible on white.
 
 Components read the active palette through `useTheme()`. There is no global
 `StyleSheet.create` with fixed colours — styles that depend on the palette are
@@ -53,6 +53,21 @@ app/
   bout/[id]/confirm.tsx   check the opponent's photo
   club/join.tsx           join by invite code, or start a club
 ```
+
+Pictures of all of them are in [`../docs/screenshots/`](../docs/screenshots),
+captured from this build:
+
+```bash
+npm i -D playwright && npx playwright install chromium   # once
+npm run screenshots
+```
+
+That exports the web build, serves it locally and drives it in a phone-sized
+Chromium with every Supabase request answered from `scripts/fixtures.mjs`. The
+fixtures use the row shapes the app actually reads, including what row level
+security would and would not return — the opponent's submission is absent before
+the reveal, so the screenshot of a blind series is blind for the real reason.
+Nothing in the run can reach the network.
 
 ## Signed out
 
@@ -132,8 +147,9 @@ library stays available but is recorded as such.
 ## Verified
 
 `npm run typecheck` is clean and the Metro bundles for Android and web both
-build. The web build was additionally loaded in a browser and captured in both
-themes — the app renders with no runtime errors.
+build. Every screen in `docs/screenshots/` was rendered by the capture run with
+no page errors, in both themes — which is a stronger statement than a build
+passing: the components mounted, fetched, and laid out with real data.
 
 Requests time out after ten seconds rather than hanging. A range hall is a
 concrete box with poor reception, and a socket that never answers would leave
@@ -143,11 +159,12 @@ Not verified: a run against a live Supabase instance.
 
 ## Known simplifications
 
-* `shot_at` is set to the moment of reporting. That holds as long as shooters
-  report right after shooting; a field of its own is still missing.
-* No push notifications. In turn-based play they are the retention engine and
-  should come next — that needs a table for device tokens and a trigger on
-  reveal.
+* `shot_at` is the moment the photo was taken, which is close enough to the
+  moment the series was fired. A field the shooter can correct is still missing.
+* Push needs an EAS `projectId` in `app.json` before tokens can be issued; the
+  outbox and the edge function are in place.
 * No joining a season from inside the app; entrants are still inserted into
   `season_entries` directly.
 * No referee view. Disputes can be raised but not worked.
+* The camera path cannot be exercised on web, so the screenshot run attaches the
+  proof through the library picker instead.

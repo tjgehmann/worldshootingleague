@@ -36,7 +36,7 @@ const season: SeasonRow = {
   name: 'Club League AR10ET 2026',
   state: 'running',
   competition_type: 'team',
-  discipline_name: 'Air Rifle 10 shots, 10 m, standing',
+  discipline_name: 'Air Rifle 10 m',
   format_name: 'Single series, 10 shots',
   shooters_entered: 0,
   clubs_entered: 2,

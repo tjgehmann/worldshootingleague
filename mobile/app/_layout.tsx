@@ -90,7 +90,7 @@ function AuthGate() {
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="match/[id]" options={{ headerBackTitle: 'Matches' }} />
-      <Stack.Screen name="bout/[id]/report" options={{ headerBackTitle: 'Abbrechen' }} />
+      <Stack.Screen name="bout/[id]/report" options={{ headerBackTitle: 'Cancel' }} />
       <Stack.Screen name="bout/[id]/confirm" options={{ headerBackTitle: 'Match' }} />
       <Stack.Screen name="club/join" options={{ headerBackTitle: 'Profile' }} />
     </Stack>

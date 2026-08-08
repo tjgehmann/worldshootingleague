@@ -4,10 +4,10 @@ import type { TextStyle } from 'react-native';
 /**
  * Two palettes, not one inverted.
  *
- * Dark is the default: ranges are dim, and the app is used standing at a firing
- * point rather than at a desk. Light is built separately — cards there carry a
- * shadow instead of a lift in brightness, and the semantic colours move darker
- * so they stay legible on white.
+ * Light is the default; dark follows the system setting when it asks for it.
+ * The two are built separately rather than derived from each other — light
+ * cards carry a shadow instead of a lift in brightness, and the semantic
+ * colours sit darker there so they stay legible on white.
  *
  * The accent descends from the federation navy of the original mockups
  * (#2E3180), pushed up in lightness until it holds on a near-black ground.
@@ -173,9 +173,13 @@ export interface Theme {
 const darkTheme: Theme = { colors: darkPalette, space, radius, text, dark: true };
 const lightTheme: Theme = { colors: lightPalette, space, radius, text, dark: false };
 
-/** Follows the OS setting; the app declares userInterfaceStyle "automatic". */
+/**
+ * Follows the OS setting, defaulting to light when it does not say. The app
+ * declares userInterfaceStyle "automatic", so a device set to dark still gets
+ * the dark palette.
+ */
 export function useTheme(): Theme {
-  return useColorScheme() === 'light' ? lightTheme : darkTheme;
+  return useColorScheme() === 'dark' ? darkTheme : lightTheme;
 }
 
 /** Height the floating tab bar occupies, so lists can clear it. */

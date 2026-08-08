@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0B0D13"
+      "backgroundColor": "#F7F8FB"
     },
     "ios": {
       "supportsTablet": true,
@@ -24,7 +24,7 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png",
-        "backgroundColor": "#0B0D13"
+        "backgroundColor": "#F7F8FB"
       },
       "edgeToEdgeEnabled": true,
       "userInterfaceStyle": "automatic"
@@ -39,7 +39,7 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "Die App braucht die Kamera, um ein Foto der Anzeige oder des Ausdrucks als Nachweis aufzunehmen."
+          "cameraPermission": "The app needs the camera to photograph the display or the printout as proof of a result."
         }
       ]
     ],

@@ -25,24 +25,59 @@ pistol 10 m), `SBR10ET` (smallbore 50 m prone), `SBP10ET` (sport pistol 25 m).
 
 ## Screens
 
-What a visitor without an account lands on, and the sign-in behind it. Both
-captured from the running web build:
+These are captures of the running build, not drawings of it.
+`mobile/scripts/capture-screenshots.mjs` exports the web build, answers every
+Supabase request from a fixture file and photographs the screens in a
+phone-sized browser. Only the league behind them is invented — the layout, the
+type and the wording are whatever the components currently render, so a
+regression shows up in the pictures.
+
+```bash
+cd mobile && npm run screenshots     # needs playwright, see mobile/README.md
+```
+
+**Without an account.** Seasons, tables and finished matches are readable by
+anyone; a match still being shot is not.
 
 <p>
-  <img src="docs/screenshots/public-home-dark.png" alt="Public league page, dark theme" width="290">
-  <img src="docs/screenshots/public-home-light.png" alt="Public league page, light theme" width="290">
-  <img src="docs/screenshots/sign-in-dark.png" alt="Sign-in screen, dark theme" width="290">
+  <img src="docs/screenshots/public-home-light.png" alt="The public league page: seasons and recent results" width="240">
+  <img src="docs/screenshots/public-season-light.png" alt="A season table" width="240">
+  <img src="docs/screenshots/public-match-light.png" alt="A finished match, series by series" width="240">
+  <img src="docs/screenshots/sign-in-light.png" alt="Sign in or create an account" width="240">
 </p>
 
-The two "could not reach the league" cards are honest: these captures run
-against no project, so the queries time out and the page says so instead of
-spinning forever.
+**Competing.** Your matches, one of them running: series 1 decided, series 2
+reported by you and still hidden, series 4 waiting to be shot.
 
-Every screen — matches, the blind reveal before and after, reporting, checking a
-photo, rankings and profile — is laid out in
-[`docs/mockups.html`](docs/mockups.html); open it in a browser. Colours, spacing
-and type there come from `mobile/lib/theme.ts` and the wording is what the app
-renders. Only the data is invented.
+<p>
+  <img src="docs/screenshots/matches-light.png" alt="My matches" width="240">
+  <img src="docs/screenshots/match-light.png" alt="A running match with one series still blind" width="240">
+  <img src="docs/screenshots/rankings-light.png" alt="Rankings" width="240">
+  <img src="docs/screenshots/profile-light.png" alt="Profile: club, ratings, reliability" width="240">
+</p>
+
+**Reporting and checking.** One number, the inner tens where the discipline is
+scored in whole rings, and a photo of the display. Afterwards the opponent
+compares the two.
+
+<p>
+  <img src="docs/screenshots/report-light.png" alt="Reporting a result" width="240">
+  <img src="docs/screenshots/report-warning-light.png" alt="A total well above the shooter's own average" width="240">
+  <img src="docs/screenshots/confirm-light.png" alt="Checking the opponent's photo" width="240">
+</p>
+
+**Without reception, and in the dark.** A report shot in a basement range waits
+on the phone and sends itself. The right-hand pair is the same app on a phone
+set to dark — the two palettes are built separately, not inverted.
+
+<p>
+  <img src="docs/screenshots/matches-offline-light.png" alt="A report waiting for a connection" width="240">
+  <img src="docs/screenshots/matches-dark.png" alt="My matches, dark theme" width="240">
+  <img src="docs/screenshots/match-dark.png" alt="A running match, dark theme" width="240">
+</p>
+
+Every screen is also annotated, one design decision at a time, in
+[`docs/mockups.html`](docs/mockups.html) — open it in a browser.
 
 ## Who can see what
 
@@ -70,6 +105,9 @@ supabase/
   seed.sql           disciplines and formats
   tests/             SQL tests against a throwaway cluster
 mobile/              Expo client (see mobile/README.md)
+  scripts/
+    fixtures.mjs             a sample league, in the shapes the app reads
+    capture-screenshots.mjs  regenerates docs/screenshots/
 scripts/
   test-local.sh      apply migrations and run the tests
   verify-deploy.sql  check a live project after db push

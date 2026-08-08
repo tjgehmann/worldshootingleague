@@ -43,9 +43,21 @@ export function Label({ children }: { children: ReactNode }) {
   return <Text style={[t.text.label, { color: t.colors.inkFaint }]}>{children}</Text>;
 }
 
-export function Meta({ children, style }: { children: ReactNode; style?: ViewStyle }) {
+export function Meta({
+  children,
+  style,
+  numberOfLines,
+}: {
+  children: ReactNode;
+  style?: ViewStyle;
+  numberOfLines?: number;
+}) {
   const t = useTheme();
-  return <Text style={[t.text.meta, { color: t.colors.inkFaint }, style]}>{children}</Text>;
+  return (
+    <Text style={[t.text.meta, { color: t.colors.inkFaint }, style]} numberOfLines={numberOfLines}>
+      {children}
+    </Text>
+  );
 }
 
 export function Hint({ children, center }: { children: ReactNode; center?: boolean }) {
@@ -140,12 +152,18 @@ export function Avatar({ name, size = 38 }: { name: string; size?: number }) {
   );
 }
 
+/**
+ * Two characters, always: the first letters of the first two words, or the
+ * first two letters of a single word. Club short names ("SVK") are one word,
+ * and a lone "S" in a round grey tile reads as nothing at all.
+ */
 function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
+  const words = name.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return '';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return words
     .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
+    .map((part) => part[0].toUpperCase())
     .join('');
 }
 

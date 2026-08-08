@@ -36,7 +36,13 @@ export default function PublicHomeScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.ground }} edges={['top']}>
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: t.space.xl, paddingBottom: t.space.xxl }}
+        contentContainerStyle={{
+          paddingHorizontal: t.space.xl,
+          // Web and Android report no top inset, so the kicker would otherwise
+          // sit on the very edge of the screen.
+          paddingTop: t.space.md,
+          paddingBottom: t.space.xxl,
+        }}
       >
         <Kicker tone={t.colors.accent}>Challenging shooters</Kicker>
         <LargeTitle>World Shooting League</LargeTitle>

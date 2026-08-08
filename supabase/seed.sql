@@ -10,10 +10,10 @@ insert into public.disciplines
   (code, name, weapon_group, distance_m, position, shot_count, scoring_mode,
    max_shot_value, requires_inner_tens)
 values
-  ('AR10ET',  'Air Rifle 10 shots, 10 m, standing',    'rifle',  10, 'standing', 10, 'decimal', 10.9, false),
-  ('AP10ET',  'Air Pistol 10 shots, 10 m, standing',   'pistol', 10, 'standing', 10, 'integer', 10.0, true),
-  ('SBR10ET', 'Smallbore Rifle 10 shots, 50 m, prone', 'rifle',  50, 'prone',    10, 'decimal', 10.9, false),
-  ('SBP10ET', 'Sport Pistol 10 shots, 25 m, standing', 'pistol', 25, 'standing', 10, 'integer', 10.0, true)
+  ('AR10ET',  'Air Rifle 10 m',                  'rifle',  10, 'standing', 10, 'decimal', 10.9, false),
+  ('AP10ET',  'Air Pistol 10 m',                 'pistol', 10, 'standing', 10, 'integer', 10.0, true),
+  ('SBR10ET', 'Smallbore Rifle 50 m prone',      'rifle',  50, 'prone',    10, 'decimal', 10.9, false),
+  ('SBP10ET', 'Sport Pistol 25 m',               'pistol', 25, 'standing', 10, 'integer', 10.0, true)
 on conflict (code) do nothing;
 
 insert into public.formats

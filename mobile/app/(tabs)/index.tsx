@@ -81,7 +81,7 @@ function MatchRow({
               <Text style={[t.text.name, { color: t.colors.ink }]} numberOfLines={1}>
                 {opponent.display_name}
               </Text>
-              <Meta>
+              <Meta numberOfLines={1}>
                 {match.team_match
                   ? `Board ${match.board} · ${match.team_match.club_a.short_name ?? match.team_match.club_a.name} v ${match.team_match.club_b.short_name ?? match.team_match.club_b.name}`
                   : match.discipline.name}
