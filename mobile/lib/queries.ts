@@ -3,6 +3,9 @@ import { decode } from 'base64-arraybuffer';
 import { supabase, TARGET_PHOTOS_BUCKET, targetPhotoPath } from './supabase';
 import type {
   Bout,
+  Club,
+  ClubMembership,
+  ClubStanding,
   Discipline,
   LeaderboardRow,
   Match,
@@ -11,6 +14,7 @@ import type {
   RecentForm,
   Reliability,
   Submission,
+  TeamMatch,
 } from './types';
 
 /**
@@ -19,12 +23,19 @@ import type {
  * client-side filtering to get wrong.
  */
 
+const CLUB_FIELDS = 'id, slug, name, short_name, country_code, city';
+
 const MATCH_SELECT = `
   *,
   discipline:disciplines(id, code, name, shot_count, scoring_mode, max_shot_value, requires_inner_tens),
   bouts(*),
   profile_a:profiles!matches_shooter_a_fkey(id, handle, display_name, country_code),
-  profile_b:profiles!matches_shooter_b_fkey(id, handle, display_name, country_code)
+  profile_b:profiles!matches_shooter_b_fkey(id, handle, display_name, country_code),
+  team_match:team_matches(
+    id, season_id, round_id, state, opens_at, closes_at, points_a, points_b, winner_club_id,
+    club_a:clubs!team_matches_club_a_fkey(${CLUB_FIELDS}),
+    club_b:clubs!team_matches_club_b_fkey(${CLUB_FIELDS})
+  )
 `;
 
 type ProfileStub = Pick<Profile, 'id' | 'handle' | 'display_name' | 'country_code'>;
@@ -34,6 +45,8 @@ export interface MatchDetail extends Match {
   bouts: Bout[];
   profile_a: ProfileStub;
   profile_b: ProfileStub;
+  /** Present when this match is one board of a club fixture. */
+  team_match: TeamMatch | null;
 }
 
 function orderBouts(match: MatchDetail): MatchDetail {
@@ -132,7 +145,10 @@ export async function fetchDisciplines(): Promise<Discipline[]> {
 export async function fetchProfile(userId: string): Promise<Profile> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, handle, display_name, country_code, club, bio, equipment, role')
+    .select(
+      `id, handle, display_name, country_code, bio, equipment, role, primary_club_id,
+       notify_push, club:clubs(${CLUB_FIELDS})`,
+    )
     .eq('id', userId)
     .single<Profile>();
 
@@ -259,5 +275,113 @@ export async function raiseDispute(
     reason,
   });
 
+  if (error) throw error;
+}
+
+// --------------------------------------------------------------- clubs -----
+
+export async function fetchMyClubs(userId: string): Promise<ClubMembership[]> {
+  const { data, error } = await supabase
+    .from('club_members')
+    .select(`club_id, role, club:clubs(${CLUB_FIELDS})`)
+    .eq('shooter_id', userId)
+    .returns<ClubMembership[]>();
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchClub(clubId: string): Promise<Club> {
+  const { data, error } = await supabase
+    .from('clubs')
+    .select(CLUB_FIELDS)
+    .eq('id', clubId)
+    .single<Club>();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchClubRoster(clubId: string) {
+  const { data, error } = await supabase
+    .from('club_members')
+    .select('role, shooter:profiles!club_members_shooter_id_fkey(id, display_name, country_code)')
+    .eq('club_id', clubId)
+    .returns<{ role: string; shooter: { id: string; display_name: string; country_code: string } }[]>();
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Joining is server-side: the code has to be checked before membership exists. */
+export async function redeemClubInvite(code: string): Promise<string> {
+  const { data, error } = await supabase.rpc('redeem_club_invite', { p_code: code.toUpperCase() });
+  if (error) throw error;
+  return data as unknown as string;
+}
+
+export async function createClub(input: {
+  name: string;
+  slug: string;
+  countryCode: string;
+  shortName?: string;
+  city?: string;
+}): Promise<string> {
+  const { data, error } = await supabase.rpc('create_club', {
+    p_name: input.name,
+    p_slug: input.slug,
+    p_country_code: input.countryCode,
+    p_short_name: input.shortName ?? null,
+    p_city: input.city ?? null,
+  });
+  if (error) throw error;
+  return data as unknown as string;
+}
+
+export async function setPrimaryClub(userId: string, clubId: string | null): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ primary_club_id: clubId })
+    .eq('id', userId);
+  if (error) throw error;
+}
+
+// ----------------------------------------------------------- team league ---
+
+export async function fetchTeamMatches(clubId: string): Promise<TeamMatch[]> {
+  const { data, error } = await supabase
+    .from('team_matches')
+    .select(
+      `id, season_id, round_id, state, opens_at, closes_at, points_a, points_b, winner_club_id,
+       club_a:clubs!team_matches_club_a_fkey(${CLUB_FIELDS}),
+       club_b:clubs!team_matches_club_b_fkey(${CLUB_FIELDS})`,
+    )
+    .or(`club_a.eq.${clubId},club_b.eq.${clubId}`)
+    .order('closes_at', { ascending: false })
+    .returns<TeamMatch[]>();
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchClubStandings(seasonId: string): Promise<ClubStanding[]> {
+  const { data, error } = await supabase
+    .from('club_standings')
+    .select('*')
+    .eq('season_id', seasonId)
+    .order('position', { ascending: true })
+    .returns<ClubStanding[]>();
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+// -------------------------------------------------------- notifications ----
+
+export async function setPushEnabled(userId: string, enabled: boolean): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ notify_push: enabled })
+    .eq('id', userId);
   if (error) throw error;
 }

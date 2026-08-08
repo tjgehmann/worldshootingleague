@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -6,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Loading } from '@/components/ui';
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { routeFromNotification } from '@/lib/notifications';
 import { useTheme } from '@/lib/theme';
 
 const queryClient = new QueryClient({
@@ -34,6 +36,15 @@ function AuthGate() {
     }
   }, [session, loading, segments, router]);
 
+  // Tapping a notification jumps straight to the match it is about.
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const route = routeFromNotification(response);
+      if (route && session) router.push(route as never);
+    });
+    return () => sub.remove();
+  }, [router, session]);
+
   if (loading) return <Loading />;
 
   return (
@@ -54,6 +65,7 @@ function AuthGate() {
       <Stack.Screen name="match/[id]" options={{ headerBackTitle: 'Matches' }} />
       <Stack.Screen name="bout/[id]/report" options={{ headerBackTitle: 'Abbrechen' }} />
       <Stack.Screen name="bout/[id]/confirm" options={{ headerBackTitle: 'Match' }} />
+      <Stack.Screen name="club/join" options={{ headerBackTitle: 'Profile' }} />
     </Stack>
   );
 }

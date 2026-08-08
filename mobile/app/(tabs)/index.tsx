@@ -77,7 +77,9 @@ function MatchRow({
                 {opponent.display_name}
               </Text>
               <Meta>
-                {match.discipline.name}
+                {match.team_match
+                  ? `Board ${match.board} · ${match.team_match.club_a.short_name ?? match.team_match.club_a.name} v ${match.team_match.club_b.short_name ?? match.team_match.club_b.name}`
+                  : match.discipline.name}
                 {decided ? '' : ` · ${timeLeft(match.closes_at)}`}
               </Meta>
             </View>

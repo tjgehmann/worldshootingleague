@@ -18,7 +18,12 @@ import {
 } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { formatPoints, formatScore, timeLeft } from '@/lib/format';
-import { fetchBoutSubmissions, fetchConfirmedSubmissionIds, fetchMatch } from '@/lib/queries';
+import {
+  fetchBoutSubmissions,
+  fetchConfirmedSubmissionIds,
+  fetchMatch,
+  type MatchDetail,
+} from '@/lib/queries';
 import { useTheme } from '@/lib/theme';
 import type { Bout, ScoringMode, Submission } from '@/lib/types';
 
@@ -64,9 +69,13 @@ export default function MatchScreen() {
       contentContainerStyle={{ paddingHorizontal: t.space.xl, paddingBottom: t.space.xxl }}
     >
       <Kicker>
-        {m.discipline.name} · Best of {m.bouts.length}
+        {m.team_match
+          ? `${m.discipline.name} · Board ${m.board}`
+          : `${m.discipline.name} · Best of ${m.bouts.length}`}
       </Kicker>
       <LargeTitle>vs {opponent.display_name}</LargeTitle>
+
+      {m.team_match ? <TeamContext match={m} userId={userId} /> : null}
 
       {decided ? (
         <Card tone={won ? 'positive' : undefined}>
@@ -139,6 +148,51 @@ export default function MatchScreen() {
         </Card>
       ) : null}
     </ScrollView>
+  );
+}
+
+/**
+ * A board sits inside a club fixture. Showing the team score here is what makes
+ * the individual match feel like it counts for something beyond a rating.
+ */
+function TeamContext({ match, userId }: { match: MatchDetail; userId: string }) {
+  const t = useTheme();
+  const team = match.team_match!;
+  const mine = match.shooter_a === userId ? team.club_a : team.club_b;
+  const theirs = match.shooter_a === userId ? team.club_b : team.club_a;
+  const myPoints = match.shooter_a === userId ? team.points_a : team.points_b;
+  const theirPoints = match.shooter_a === userId ? team.points_b : team.points_a;
+  const decided = team.state === 'settled' || team.state === 'finalized';
+  const won = decided && team.winner_club_id === mine.id;
+
+  return (
+    <Card tone={won ? 'positive' : undefined}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Label>Club fixture</Label>
+          <Text style={[t.text.name, { color: t.colors.ink, marginTop: 2 }]} numberOfLines={1}>
+            {mine.short_name ?? mine.name} v {theirs.short_name ?? theirs.name}
+          </Text>
+        </View>
+        <Text
+          style={[
+            t.text.points,
+            { color: won ? t.colors.positive : t.colors.ink },
+          ]}
+        >
+          {formatPoints(myPoints)} : {formatPoints(theirPoints)}
+        </Text>
+      </View>
+      <Meta style={{ marginTop: t.space.sm }}>
+        {decided
+          ? won
+            ? 'Your club took the fixture.'
+            : team.winner_club_id === null
+              ? 'The fixture ended level.'
+              : 'Your club lost the fixture.'
+          : 'Board points so far. Every board still counts.'}
+      </Meta>
+    </Card>
   );
 }
 

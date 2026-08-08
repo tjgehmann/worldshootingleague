@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { registerForPush, unregisterPush } from './notifications';
 import { supabase } from './supabase';
 
 interface AuthValue {
@@ -34,6 +35,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next);
+      // Claim the device for whoever is signed in. Failing here must never
+      // block sign-in — push is an enhancement, not a precondition.
+      if (next?.user.id) {
+        registerForPush(next.user.id).catch(() => {});
+      }
     });
 
     return () => sub.subscription.unsubscribe();
@@ -64,6 +70,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) throw error;
       },
       async signOut() {
+        const uid = session?.user.id;
+        if (uid) await unregisterPush(uid).catch(() => {});
         await supabase.auth.signOut();
       },
     }),

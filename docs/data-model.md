@@ -12,6 +12,8 @@ The Postgres schema behind the World Shooting League on Supabase. Short formats:
 | **Round** | One round of the season ladder. Produces a match for every entrant. |
 | **Season** | A ladder over one discipline and one format, with a fixed number of rounds. |
 | **Submission** | What a shooter reports for a bout: total, photo, time of shooting, and inner tens where the discipline needs them. |
+| **Club** | The organisation a shooter competes for. The unit that onboards twenty people at once. |
+| **Team match** | A club-vs-club fixture. Its boards are ordinary matches. |
 
 ## Entities
 
@@ -151,6 +153,71 @@ when a report sits more than 5 rings above the shooter's own average.
 7. **Ratings only after the dispute window.** `finalize_match()` refuses while
    `dispute_closes_at` is in the future or a case is open.
 
+## Clubs, and club against club
+
+Shooting is already organised in clubs, which makes a club the answer to the
+cold start: it brings twenty people in at once instead of one at a time. It is
+the equivalent of a FACEIT hub — a known group playing among itself, which works
+at a size where a global ladder would look abandoned.
+
+A shooter can be a member of several clubs but competes for one:
+`profiles.primary_club_id` decides who can field them. Membership is created
+only through `redeem_club_invite()`, so the code is checked before a row exists;
+there is no insert policy on `club_members` for anyone else.
+
+**A team match is a container of individual matches, one per board.** Nothing
+about the blind reveal, submissions or settlement changes — board 2 is a normal
+match between two shooters, rated as one. Only the aggregation on top is new:
+
+```mermaid
+erDiagram
+    clubs        ||--o{ club_members : "has"
+    clubs        ||--o{ club_season_entries : "enters"
+    team_matches ||--o{ matches : "board 1..n"
+    profiles     }o--|| clubs : "competes for"
+```
+
+That shape is deliberate twice over. German league shooting already pairs
+position against position, so it is the format the audience knows; and reusing
+the individual machinery means there is exactly one settlement path to get
+right. `matches.shooter_a` always represents `club_a`, which is what lets
+`advance_team_match()` aggregate without a separate lineup table.
+
+The lineup is the club's strongest `team_size` members by rating
+(`club_lineup()`), restricted to those who actually compete for it. An official
+picking boards by hand is a later refinement.
+
+A board win is one board point, a drawn board splits it. Level on boards is
+broken by total rings across the whole team. `club_standings` keeps the league
+table on two points for a win and one for a draw, the convention the clubs
+already use.
+
+## Notifications
+
+In turn-based play this is the retention engine: a match where nobody is told it
+is their turn simply expires.
+
+The database decides *what* is worth telling someone and writes it to an outbox;
+`supabase/functions/send-notifications` drains the outbox and talks to Expo's
+push service. Nothing in SQL knows about HTTP, which is why the triggers are
+testable without a network and why a delivery outage loses nothing — unsent rows
+stay unsent.
+
+Trigger points: first submission (the opponent is told they are up, and
+deliberately **not** what the score was), reveal, settlement, pairing, disputes,
+and a deadline sweep from `run_league_tick()`.
+
+Two details carry more weight than they look:
+
+* **`notifications_dedupe`.** A unique index over
+  `(shooter_id, kind, coalesce(bout_id, match_id))`. Without it the deadline
+  sweep, running every ten minutes, would send the same reminder 144 times a day.
+* **`enqueue_notification()` returns whether it inserted**, so a sweeper reports
+  real work rather than the number of times it asked.
+
+Clients can mark a notification read. They cannot mark one sent — `sent_at`
+belongs to the edge function, which runs with the service role.
+
 ## Rating: Glicko-2
 
 One row in `ratings` per `(shooter, discipline)` with rating, RD and volatility.
@@ -192,7 +259,7 @@ returns a summary as JSON.
 
 ## Not included yet
 
-Deliberately left out of the MVP: a social feed, awards, premium tiers, team
-events, OCR and the manufacturer integration. `submissions.source` already knows
+Deliberately left out of the MVP: a social feed, awards, premium tiers, divisions
+with promotion and relegation, OCR and the manufacturer integration. `submissions.source` already knows
 `'file_export'` and `'device_api'` as values — nothing more is needed for that
 today.

@@ -72,6 +72,15 @@ Migrations:
 | `..._storage.sql` | buckets for target photos and avatars |
 | `..._pairing.sql` | round pairing |
 | `..._scheduling.sql` | `run_league_tick()` and the cron job |
+| `..._clubs.sql` | clubs, membership, invites |
+| `..._team_competition.sql` | club-vs-club fixtures and the league table |
+| `..._notifications.sql` | the outbox, its triggers and the deadline sweep |
+
+Edge functions:
+
+| Function | Purpose |
+|---|---|
+| `send-notifications` | drains the notification outbox to Expo's push service |
 
 ## Testing locally
 
@@ -102,6 +111,11 @@ What is covered:
   impossible totals, missing inner tens where the discipline requires them,
   more inner tens than shots, tenths in a full-ring discipline, a shot array
   that disagrees with the total, backdated series and missing photos.
+* **`40_clubs_and_teams.sql`** — founding a club and joining by invite code, a
+  lineup that excludes a member who competes for someone else, a team round
+  paired board by board, aggregation into a 2:1 fixture win, the league table,
+  the notifications each step produces, the deadline sweep deduplicating on a
+  second run, and opting out stopping the queue at the source.
 
 ## Applying to a Supabase project
 
@@ -173,13 +187,10 @@ a few hundred shooters over four disciplines and every ladder looks abandoned.
 solves this two ways: hubs, where a known community plays among itself, and
 ladders grouped by level range so each one stays relevant. Both apply here.
 
-- [ ] **Clubs as a first-class entity.** Shooting is already organised in clubs,
-      which makes a club the natural unit to onboard twenty people at once
-      instead of one at a time. A club-only season is the equivalent of a FACEIT
-      hub, and it works at a scale where a global ladder would not.
-- [ ] **Club vs club team matches.** German league shooting is team-based
-      already, so this is not a new format to teach — it is the one the audience
-      knows. Aggregate of N shooters against N shooters.
+- [x] **Clubs as a first-class entity.** Done: clubs, membership, invite codes,
+      and the club a shooter competes for.
+- [x] **Club vs club team matches.** Done: a fixture is a container of ordinary
+      matches, one per board, with a league table on top.
 - [ ] **Join a season from inside the app**, with an invite link a club official
       can send round. Today entrants are inserted into `season_entries` by hand.
 - [ ] **A free challenge queue** so somebody who joins mid-season has something
@@ -188,9 +199,9 @@ ladders grouped by level range so each one stays relevant. Both apply here.
 
 ### 2. The loop — turn-based play needs a reason to come back
 
-- [ ] **Push notifications.** A table for device tokens plus triggers on reveal,
-      on a confirmation waiting, and before a deadline. In turn-based play this
-      is the retention engine and nothing substitutes for it.
+- [x] **Push notifications.** Done: an outbox written by triggers, drained by
+      `supabase/functions/send-notifications`. Deep links carry the reader
+      straight to the match.
 - [ ] **Divisions with promotion and relegation.** One table for everyone is
       demotivating for everyone outside the top ten. FACEIT splits its ladders by
       level range for exactly this reason; ESEA and ESL run divisions. Glicko-2

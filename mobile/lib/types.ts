@@ -31,10 +31,60 @@ export interface Profile {
   handle: string;
   display_name: string;
   country_code: string;
-  club: string | null;
   bio: string | null;
   equipment: Record<string, string>;
   role: 'shooter' | 'referee' | 'admin';
+  primary_club_id: string | null;
+  notify_push: boolean;
+  club: Club | null;
+}
+
+export interface Club {
+  id: string;
+  slug: string;
+  name: string;
+  short_name: string | null;
+  country_code: string;
+  city: string | null;
+}
+
+export type ClubRole = 'member' | 'official' | 'owner';
+
+export interface ClubMembership {
+  club_id: string;
+  role: ClubRole;
+  club: Club;
+}
+
+/** A club-vs-club fixture. Its boards are ordinary matches. */
+export interface TeamMatch {
+  id: string;
+  season_id: string;
+  round_id: string;
+  state: MatchState;
+  opens_at: string;
+  closes_at: string;
+  points_a: number;
+  points_b: number;
+  winner_club_id: string | null;
+  club_a: Club;
+  club_b: Club;
+}
+
+export interface ClubStanding {
+  season_id: string;
+  club_id: string;
+  club_name: string;
+  short_name: string | null;
+  country_code: string;
+  matches_played: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  board_points_for: number;
+  board_points_against: number;
+  table_points: number;
+  position: number;
 }
 
 export interface Discipline {
@@ -78,6 +128,9 @@ export interface Match {
   id: string;
   season_id: string | null;
   round_id: string | null;
+  /** Set when this match is one board of a club fixture. */
+  team_match_id: string | null;
+  board: number | null;
   discipline_id: string;
   format_id: string;
   shooter_a: string;

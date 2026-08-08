@@ -43,11 +43,31 @@ app/
   (auth)/sign-in.tsx      sign in and create an account
   (tabs)/index.tsx        my matches
   (tabs)/leaderboard.tsx  rankings per discipline
-  (tabs)/profile.tsx      profile, ratings, confirmation rate
+  (tabs)/profile.tsx      profile, club, ratings, reliability, push
   match/[id].tsx          a match with all its series
   bout/[id]/report.tsx    report a result: score + photo
   bout/[id]/confirm.tsx   check the opponent's photo
+  club/join.tsx           join by invite code, or start a club
 ```
+
+## Clubs and team matches
+
+A shooter competes for one club, and a club fixture is played out as ordinary
+matches — one per board. The client shows that context rather than modelling it:
+a board carries `team_match` in its payload, so the match list reads
+"Board 2 · SVK v SGM" and the match screen puts the fixture score above the
+series.
+
+## Notifications
+
+The client's only job is to hand its device token to the database
+(`lib/notifications.ts`). What is worth notifying about, and when, is decided by
+triggers in Postgres; delivery is an edge function. Tapping a notification
+follows the `route` in its payload straight to the match.
+
+Push can be turned off in the profile. It is stored on the profile rather than
+on the device, so it holds across reinstalls — and the database stops queueing
+at the source rather than sending into the void.
 
 ## What the blind reveal looks like in the client
 

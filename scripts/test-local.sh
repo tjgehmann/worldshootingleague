@@ -60,7 +60,7 @@ for f in "$REPO/supabase/migrations"/*.sql; do
   cp "$f" "$CLUSTER/work/"
 done
 mkdir -p "$CLUSTER/work/tests"
-cp "$REPO/supabase/tests"/[123]*.sql "$CLUSTER/work/tests/"
+cp "$REPO/supabase/tests"/[1-9]*.sql "$CLUSTER/work/tests/"
 [ -n "$RUNAS" ] && chown -R postgres "$CLUSTER/work"
 
 apply() {

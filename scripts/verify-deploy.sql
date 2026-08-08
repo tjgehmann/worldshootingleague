@@ -9,13 +9,15 @@
 \pset tuples_only on
 
 select 'tables:            ' ||
-       case when count(*) = 13 then 'OK (13)' else 'MISSING — found ' || count(*) end
+       case when count(*) = 20 then 'OK (20)' else 'MISSING — found ' || count(*) end
   from pg_tables
  where schemaname = 'public'
    and tablename in (
      'profiles','disciplines','formats','seasons','season_entries','rounds',
      'matches','bouts','submissions','bout_confirmations','disputes',
-     'ratings','rating_events');
+     'ratings','rating_events',
+     'clubs','club_members','club_invites','club_season_entries','team_matches',
+     'device_tokens','notifications');
 
 select 'rls enabled:       ' ||
        case when count(*) = 0 then 'OK' else 'FAIL — unprotected: ' || string_agg(relname, ', ') end
@@ -42,19 +44,33 @@ select 'submissions write: ' ||
  where schemaname = 'public' and tablename = 'submissions';
 
 select 'functions:         ' ||
-       case when count(*) = 8 then 'OK (8)' else 'MISSING — found ' || count(*) end
+       case when count(*) = 14 then 'OK (14)' else 'MISSING — found ' || count(*) end
   from pg_proc p
   join pg_namespace n on n.oid = p.pronamespace
  where n.nspname = 'public'
    and p.proname in (
      'advance_match','finalize_match','glicko2_update','pair_round',
-     'expire_bouts','expire_confirmations','run_league_tick','shooter_recent_form');
+     'expire_bouts','expire_confirmations','run_league_tick','shooter_recent_form',
+     'create_club','redeem_club_invite','club_lineup','pair_team_round',
+     'advance_team_match','enqueue_deadline_reminders');
 
 select 'views:             ' ||
-       case when count(*) = 3 then 'OK (3)' else 'MISSING — found ' || count(*) end
+       case when count(*) = 4 then 'OK (4)' else 'MISSING — found ' || count(*) end
   from pg_views
  where schemaname = 'public'
-   and viewname in ('leaderboard','match_results','shooter_reliability');
+   and viewname in ('leaderboard','match_results','shooter_reliability','club_standings');
+
+select 'notification dedupe:' ||
+       case when count(*) = 1 then ' OK'
+            else ' MISSING — reminders would resend on every tick' end
+  from pg_indexes
+ where schemaname = 'public' and indexname = 'notifications_dedupe';
+
+select 'outbox is private:  ' ||
+       case when count(*) = 2 then 'OK (own rows only)'
+            else 'CHECK — found ' || count(*) || ' policies' end
+  from pg_policies
+ where schemaname = 'public' and tablename = 'notifications';
 
 select 'triggers:          ' ||
        case when count(*) >= 4 then 'OK' else 'MISSING — found ' || count(*) end

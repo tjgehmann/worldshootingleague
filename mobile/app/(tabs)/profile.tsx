@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-import { ScrollView, Text, View } from 'react-native';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'expo-router';
+import { ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
@@ -16,16 +17,29 @@ import {
   StatRow,
 } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
-import { fetchProfile, fetchRatings, fetchReliability } from '@/lib/queries';
+import { registerForPush } from '@/lib/notifications';
+import {
+  fetchMyClubs,
+  fetchProfile,
+  fetchRatings,
+  fetchReliability,
+  setPushEnabled,
+} from '@/lib/queries';
 import { TAB_BAR_CLEARANCE, useTheme } from '@/lib/theme';
 
 export default function ProfileScreen() {
   const { userId, signOut } = useAuth();
   const t = useTheme();
+  const queryClient = useQueryClient();
 
   const profile = useQuery({
     queryKey: ['profile', userId],
     queryFn: () => fetchProfile(userId!),
+    enabled: !!userId,
+  });
+  const clubs = useQuery({
+    queryKey: ['my-clubs', userId],
+    queryFn: () => fetchMyClubs(userId!),
     enabled: !!userId,
   });
   const ratings = useQuery({
@@ -39,9 +53,20 @@ export default function ProfileScreen() {
     enabled: !!userId,
   });
 
+  const togglePush = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      await setPushEnabled(userId!, enabled);
+      // Turning it back on is also the moment to (re)claim a device token.
+      if (enabled) await registerForPush(userId!).catch(() => {});
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profile', userId] }),
+  });
+
   if (profile.isLoading) return <Loading />;
 
   const rate = reliability.data?.confirmation_rate_pct ?? null;
+  const club = profile.data?.club ?? null;
+  const memberships = clubs.data ?? [];
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.ground }} edges={['top']}>
@@ -67,15 +92,60 @@ export default function ProfileScreen() {
             </Text>
             <Meta>
               {profile.data?.country_code}
-              {profile.data?.club ? ` · ${profile.data.club}` : ''}
+              {club ? ` · ${club.name}` : ''}
             </Meta>
           </View>
         </View>
 
+        <Kicker>Club</Kicker>
+        <Card>
+          {club ? (
+            <>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space.md }}>
+                <Avatar name={club.short_name ?? club.name} size={40} />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={[t.text.name, { color: t.colors.ink }]} numberOfLines={1}>
+                    {club.name}
+                  </Text>
+                  <Meta>
+                    {club.country_code}
+                    {club.city ? ` · ${club.city}` : ''}
+                  </Meta>
+                </View>
+                <Pill tone="won">Competing for</Pill>
+              </View>
+              <Hint>
+                Team matches are shot for this club. Its officials pick the lineup by
+                rating.
+              </Hint>
+            </>
+          ) : (
+            <>
+              <Meta>
+                You are not shooting for a club yet. A club is how twenty people join at
+                once instead of one at a time — and it is what team matches are built on.
+              </Meta>
+              <Link href="/club/join" asChild>
+                <Button label="Join or start a club" onPress={() => {}} />
+              </Link>
+            </>
+          )}
+        </Card>
+
+        {memberships.length > 1 ? (
+          <Hint>
+            You are a member of {memberships.length} clubs. Only the one above fields you
+            in team matches.
+          </Hint>
+        ) : null}
+
         {(ratings.data ?? []).length === 0 ? (
-          <Card>
-            <Meta>No rated matches yet.</Meta>
-          </Card>
+          <>
+            <Kicker>Ratings</Kicker>
+            <Card>
+              <Meta>No rated matches yet.</Meta>
+            </Card>
+          </>
         ) : (
           (ratings.data ?? []).map((r) => (
             <View key={r.discipline_id}>
@@ -126,6 +196,26 @@ export default function ProfileScreen() {
               </Hint>
             </>
           )}
+        </Card>
+
+        <Kicker>Notifications</Kicker>
+        <Card>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View style={{ flex: 1, paddingRight: t.space.md }}>
+              <Text style={[t.text.name, { color: t.colors.ink }]}>Push</Text>
+              <Meta>When it is your turn, when results are in, before a deadline.</Meta>
+            </View>
+            <Switch
+              value={profile.data?.notify_push ?? true}
+              onValueChange={(v) => togglePush.mutate(v)}
+              disabled={togglePush.isPending}
+              trackColor={{ true: t.colors.accentSolid, false: t.colors.surfaceAlt }}
+            />
+          </View>
+          <Hint>
+            With push off, a match can quietly run out of time. Deadlines are not
+            extended.
+          </Hint>
         </Card>
 
         <Button label="Sign out" variant="text" onPress={signOut} />
