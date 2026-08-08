@@ -4,20 +4,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 
-import {
-  Button,
-  Card,
-  Empty,
-  Field,
-  Hint,
-  Kicker,
-  LargeTitle,
-  Loading,
-  Note,
-} from '@/components/ui';
+import { Button, Card, Empty, Field, Hint, Kicker, LargeTitle, Loading, Note } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { formatScore } from '@/lib/format';
-import { fetchBoutDetail, fetchRecentForm, submitResult } from '@/lib/queries';
+import { flushOutbox, queueSubmission } from '@/lib/outbox';
+import { fetchBoutDetail, fetchRecentForm } from '@/lib/queries';
 import { useTheme } from '@/lib/theme';
 
 /** Above this gap to the shooter's own average, ask once more before sending. */
@@ -32,12 +23,23 @@ export default function ReportScreen() {
 
   const [total, setTotal] = useState('');
   const [innerTens, setInnerTens] = useState('');
-  const [photo, setPhoto] = useState<{ uri: string; base64: string; fromCamera: boolean } | null>(null);
+  // capturedAt is when the series was actually shot. It travels with the report
+  // so a queued entry does not later claim to have been fired at upload time.
+  const [photo, setPhoto] = useState<{
+    uri: string;
+    fromCamera: boolean;
+    capturedAt: Date;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [queued, setQueued] = useState(false);
   const [warningAccepted, setWarningAccepted] = useState(false);
 
   const detail = useQuery({ queryKey: ['bout', boutId], queryFn: () => fetchBoutDetail(boutId) });
   const discipline = detail.data?.match.discipline;
+
+  // Inner tens are the ISSF tiebreak for full-ring scores. Disciplines scored
+  // in tenths break their own ties, so the field is not shown there at all.
+  const requiresInnerTens = discipline?.requires_inner_tens ?? false;
 
   const form = useQuery({
     queryKey: ['form', userId, discipline?.id],
@@ -47,23 +49,36 @@ export default function ReportScreen() {
 
   const submit = useMutation({
     mutationFn: async () => {
-      if (!photo || !userId) throw new Error('Photo missing');
-      await submitResult({
+      if (!photo || !userId || !detail.data) throw new Error('Photo missing');
+
+      // Everything goes through the queue, online or not. One code path, and a
+      // report is never lost to a dropped connection.
+      await queueSubmission({
         boutId,
+        matchId: detail.data.match.id,
         shooterId: userId,
         total: Number(total.replace(',', '.')),
         innerTens: requiresInnerTens ? Number(innerTens) : null,
-        photoBase64: photo.base64,
+        sourceUri: photo.uri,
         fromCamera: photo.fromCamera,
+        shotAt: photo.capturedAt,
       });
+
+      return flushOutbox();
     },
-    onSuccess: async () => {
+    onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: ['match'] });
       await queryClient.invalidateQueries({ queryKey: ['matches'] });
       await queryClient.invalidateQueries({ queryKey: ['submissions'] });
-      router.back();
+
+      if (result.sent > 0) {
+        router.back();
+      } else {
+        // No connection. The report is on the device and will go by itself.
+        setQueued(true);
+      }
     },
-    onError: (e) => setError(e instanceof Error ? e.message : 'Submission rejected'),
+    onError: (e) => setError(e instanceof Error ? e.message : 'Could not save the report'),
   });
 
   async function capture(fromCamera: boolean) {
@@ -78,19 +93,15 @@ export default function ReportScreen() {
     }
 
     const result = fromCamera
-      ? await ImagePicker.launchCameraAsync({ quality: 0.7, base64: true })
-      : await ImagePicker.launchImageLibraryAsync({ quality: 0.7, base64: true });
+      ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
+      : await ImagePicker.launchImageLibraryAsync({ quality: 0.7 });
 
     const asset = result.canceled ? undefined : result.assets[0];
-    if (asset?.base64) setPhoto({ uri: asset.uri, base64: asset.base64, fromCamera });
+    if (asset) setPhoto({ uri: asset.uri, fromCamera, capturedAt: new Date() });
   }
 
   if (detail.isLoading) return <Loading />;
   if (!detail.data || !discipline) return <Empty text="Series not found." />;
-
-  // Inner tens are the ISSF tiebreak for full-ring scores. Disciplines scored
-  // in tenths break their own ties, so the field is not shown there at all.
-  const requiresInnerTens = discipline.requires_inner_tens;
 
   const totalValue = Number(total.replace(',', '.'));
   const innerTensValue = Number(innerTens);
@@ -111,13 +122,42 @@ export default function ReportScreen() {
   // finds out before the upload rather than after it. Every inner ten is a ten,
   // so it contributes at least 10 to the total. There is no useful ceiling: a
   // shot that is not an inner ten can still score a full ten.
-  const reachable =
-    !requiresInnerTens || !numbersValid || totalValue >= innerTensValue * 10;
+  const reachable = !requiresInnerTens || !numbersValid || totalValue >= innerTensValue * 10;
 
+  // Offline this query fails and simply produces no warning, which is the right
+  // trade: a missing hint must not stop someone reporting.
   const average = form.data?.average ?? null;
   const farAboveForm = numbersValid && average !== null && totalValue - average > SUSPICIOUS_MARGIN;
 
   const ready = numbersValid && reachable && !!photo && (!farAboveForm || warningAccepted);
+
+  if (queued) {
+    return (
+      <ScrollView
+        style={{ backgroundColor: t.colors.ground }}
+        contentContainerStyle={{ paddingHorizontal: t.space.xl, paddingBottom: t.space.xxl }}
+      >
+        <Kicker>Series {detail.data.bout.index}</Kicker>
+        <LargeTitle>Saved on your phone</LargeTitle>
+        <Note tone="warn">
+          No connection right now. Your report and photo are stored on the device and will
+          be sent by themselves as soon as you have reception — you do not have to come
+          back here.
+        </Note>
+        <Card>
+          <Hint>
+            Recorded as shot at {photo?.capturedAt.toLocaleTimeString('en-GB', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+            , not at the time it is sent. Your opponent still sees nothing until they have
+            reported too.
+          </Hint>
+        </Card>
+        <Button label="Done" onPress={() => router.back()} />
+      </ScrollView>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -240,7 +280,10 @@ export default function ReportScreen() {
           busy={submit.isPending}
           style={{ marginTop: t.space.lg }}
         />
-        <Hint center>Cannot be changed afterwards.</Hint>
+        <Hint center>
+          Cannot be changed afterwards. Works without reception — it will be sent when you
+          have a connection.
+        </Hint>
       </ScrollView>
     </KeyboardAvoidingView>
   );

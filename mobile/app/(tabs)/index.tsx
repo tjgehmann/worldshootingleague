@@ -5,13 +5,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
   Avatar,
+  Button,
   Card,
   Empty,
   Hairline,
+  Hint,
   Kicker,
   LargeTitle,
   Loading,
   Meta,
+  Note,
   Pill,
   Segments,
   type PillTone,
@@ -19,6 +22,8 @@ import {
 } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { formatPoints, timeLeft } from '@/lib/format';
+import { dismissEntry, flushOutbox, retryEntry } from '@/lib/outbox';
+import { useOutbox } from '@/lib/use-outbox';
 import { fetchBoutSubmissions, fetchMyMatches, type MatchDetail } from '@/lib/queries';
 import { TAB_BAR_CLEARANCE, useTheme } from '@/lib/theme';
 import type { Bout } from '@/lib/types';
@@ -108,6 +113,53 @@ function MatchRow({
   );
 }
 
+/**
+ * Reports that have not reached the server yet. Anything sitting here is safe on
+ * the device; the point of showing it is so nobody wonders whether their result
+ * went through.
+ */
+function OutboxBanner() {
+  const t = useTheme();
+  const { pending, rejected } = useOutbox();
+
+  if (pending.length === 0 && rejected.length === 0) return null;
+
+  return (
+    <View style={{ marginBottom: t.space.md }}>
+      {pending.length > 0 ? (
+        <Note tone="warn">
+          {pending.length === 1
+            ? '1 report is waiting for a connection. It will send itself.'
+            : `${pending.length} reports are waiting for a connection. They will send themselves.`}
+        </Note>
+      ) : null}
+
+      {rejected.map((entry) => (
+        <Card key={entry.id}>
+          <Text style={[t.text.name, { color: t.colors.negative }]}>Report not accepted</Text>
+          <Hint>{entry.lastError ?? 'The server refused this report.'}</Hint>
+          <View style={{ flexDirection: 'row', gap: t.space.sm }}>
+            <Button
+              label="Try again"
+              variant="quiet"
+              size="sm"
+              onPress={() => retryEntry(entry.id)}
+              style={{ flex: 1 }}
+            />
+            <Button
+              label="Discard"
+              variant="text"
+              size="sm"
+              onPress={() => dismissEntry(entry.id)}
+              style={{ flex: 1 }}
+            />
+          </View>
+        </Card>
+      ))}
+    </View>
+  );
+}
+
 export default function MatchesScreen() {
   const { userId } = useAuth();
   const t = useTheme();
@@ -145,11 +197,16 @@ export default function MatchesScreen() {
         data={matches.data}
         keyExtractor={(m) => m.id}
         refreshing={matches.isRefetching}
-        onRefresh={() => matches.refetch()}
+        onRefresh={() => {
+          // Pulling to refresh is also the natural moment to retry the queue.
+          flushOutbox().catch(() => {});
+          matches.refetch();
+        }}
         ListHeaderComponent={
           <View style={{ paddingTop: t.space.md }}>
             {openRound ? <Kicker>Current season</Kicker> : null}
             <LargeTitle>My matches</LargeTitle>
+            <OutboxBanner />
           </View>
         }
         ListEmptyComponent={

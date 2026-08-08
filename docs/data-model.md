@@ -218,6 +218,13 @@ Two details carry more weight than they look:
 Clients can mark a notification read. They cannot mark one sent — `sent_at`
 belongs to the edge function, which runs with the service role.
 
+## Reading the league without an account
+
+`supabase/functions/public-pages` renders the same public views as HTML, because
+a single-page app shows a crawler an empty shell. It reads with the **anon** key
+on purpose: that surface can therefore never expose more than a signed-out
+visitor already sees in the app.
+
 ## Rating: Glicko-2
 
 One row in `ratings` per `(shooter, discipline)` with rating, RD and volatility.

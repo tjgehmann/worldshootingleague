@@ -90,6 +90,26 @@ opponent's row, so there is nothing to hide and no condition for the client to
 evaluate. `match/[id].tsx` simply renders what is in `submissions`: while only
 your own report exists, the opponent's block shows `···`.
 
+## Reporting without reception
+
+Every report goes through `lib/outbox.ts`, online or not — one code path, and a
+result is never lost to a dropped connection. Submitting writes a local entry
+and flushes it; if that fails on transport, the screen says the report is safe
+on the device and will send itself.
+
+The photo is copied out of the picker's cache into the app's document directory,
+and `shot_at` is the moment of capture rather than the moment of upload. The
+queue retries when connectivity returns (`expo-network`), on app launch, and on
+pull-to-refresh.
+
+`lib/outbox-errors.ts` holds the one decision that matters: transport failures
+wait, anything the database refuses is marked for the shooter to look at, and a
+unique violation counts as delivered. It has no native imports so it can be
+tested with plain Node — `./scripts/test-node.sh`.
+
+Reading is offline-capable as well: the query cache is persisted to
+AsyncStorage, so open matches are still there without a connection.
+
 ## Reporting
 
 A total and a photo. Where the discipline is scored in whole rings — pistol —

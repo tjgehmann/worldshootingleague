@@ -1,4 +1,7 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import { QueryClient } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -8,6 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Loading } from '@/components/ui';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { routeFromNotification } from '@/lib/notifications';
+import { flushOutbox, watchConnectivity } from '@/lib/outbox';
 import { useTheme } from '@/lib/theme';
 
 const queryClient = new QueryClient({
@@ -15,8 +19,16 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 30_000,
       retry: 1,
+      // Kept for a day so a shooter who opened the app at home can still see
+      // their open matches in a basement range with no reception.
+      gcTime: 24 * 60 * 60 * 1000,
     },
   },
+});
+
+const persister = createAsyncStoragePersister({
+  storage: AsyncStorage,
+  key: 'wsl.query-cache.v1',
 });
 
 function AuthGate() {
@@ -40,6 +52,14 @@ function AuthGate() {
       router.replace('/(tabs)');
     }
   }, [session, loading, segments, router]);
+
+  // Anything queued while offline goes out as soon as there is a connection,
+  // and once more on launch in case the app was killed in between.
+  useEffect(() => {
+    if (!session) return;
+    flushOutbox().catch(() => {});
+    return watchConnectivity();
+  }, [session]);
 
   // Tapping a notification jumps straight to the match it is about.
   useEffect(() => {
@@ -80,12 +100,12 @@ function AuthGate() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
         <AuthProvider>
           <StatusBar style="auto" />
           <AuthGate />
         </AuthProvider>
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     </SafeAreaProvider>
   );
 }

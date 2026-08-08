@@ -106,14 +106,21 @@ Edge functions:
 | Function | Purpose |
 |---|---|
 | `send-notifications` | drains the notification outbox to Expo's push service |
+| `public-pages` | server-rendered HTML for seasons, matches and clubs |
 
 ## Testing locally
 
-Needs only `postgresql-16` — no Docker, no Supabase CLI:
+Two suites, neither needing Docker, a device or a network.
 
 ```bash
-./scripts/test-local.sh
+./scripts/test-local.sh   # the schema, against a throwaway postgres-16 cluster
+./scripts/test-node.sh    # logic that runs off-database
 ```
+
+`test-node.sh` covers the two pieces that are pure enough to check directly:
+the public page renderer (escaping, meta tags, content actually being in the
+HTML) and the outbox's error classification — the decision that separates
+"wait for reception" from "the server said no".
 
 The script builds a throwaway cluster, applies stub, migrations and seed, and
 runs the tests in `supabase/tests/`. The stub stands in for what Supabase
@@ -168,6 +175,30 @@ What is covered:
 
 For testing it helps to turn off the confirmation email under *Authentication →
 Sign In / Providers → Email*, otherwise a new account cannot sign in right away.
+
+## Reporting without reception
+
+A range is usually a concrete box in a basement, so the moment a shooter is most
+likely to submit is the moment they are least likely to have a connection.
+
+Every report goes through a local queue, online or not. Submitting writes an
+entry and then tries to send it: online the entry disappears within a second,
+offline it waits and the app says so. Two details make the delay safe rather
+than merely tolerable:
+
+* **The photo is copied out of the picker's cache** into the app's own storage,
+  so it survives the system reclaiming space, a restart or a reboot.
+* **`shot_at` is when the series was fired**, not when it reached the server.
+  Without that a queued report would claim to have been shot hours later, and
+  the database's window check would be measuring the wrong thing.
+
+A failure that will pass on its own — no connection, a timeout — leaves the entry
+queued. Anything the database refuses is permanent, so it is marked instead and
+shown with the reason and a retry. A duplicate counts as delivered: it means an
+earlier attempt got through after all.
+
+Reading works offline too. The query cache is persisted, so a shooter who opened
+the app at home still sees their open matches in the basement.
 
 ## Reporting model
 
@@ -284,10 +315,9 @@ announcing bans.
 - [x] **Public pages** for seasons, tables, clubs and finished matches. Done: a
       `(public)` route group that works signed out, backed by views that expose
       settled results only.
-- [ ] **Server-rendered HTML** so a crawler sees those pages. The routes are
-      linkable today but the web build is a single-page app, so a search engine
-      that does not run JavaScript sees an empty shell. This is the remaining
-      half of "findable".
+- [x] **Server-rendered HTML** so a crawler sees those pages. Done: the
+      `public-pages` edge function serves real HTML at `/s/{slug}`, `/m/{id}`
+      and `/c/{slug}`, with Open Graph tags and JSON-LD.
 - [ ] Shareable match cards for social, and live results during an on-site
       final.
 

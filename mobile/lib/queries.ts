@@ -1,6 +1,4 @@
-import { decode } from 'base64-arraybuffer';
-
-import { supabase, TARGET_PHOTOS_BUCKET, targetPhotoPath } from './supabase';
+import { supabase, TARGET_PHOTOS_BUCKET } from './supabase';
 import type {
   Bout,
   Club,
@@ -208,47 +206,6 @@ export async function createSignedPhotoUrl(path: string): Promise<string | null>
 
   if (error) return null;
   return data.signedUrl;
-}
-
-export interface SubmitResultInput {
-  boutId: string;
-  shooterId: string;
-  total: number;
-  /** Omitted for disciplines scored in tenths. */
-  innerTens: number | null;
-  photoBase64: string;
-  fromCamera: boolean;
-}
-
-/**
- * Upload first, then insert. Both go through the same can_submit_to_bout()
- * check, so a closed bout fails on the upload before a row is written. An
- * orphaned photo is harmless; a row pointing at a missing photo would not be.
- */
-export async function submitResult(input: SubmitResultInput): Promise<void> {
-  const path = targetPhotoPath(input.boutId, input.shooterId);
-
-  const { error: uploadError } = await supabase.storage
-    .from(TARGET_PHOTOS_BUCKET)
-    .upload(path, decode(input.photoBase64), {
-      contentType: 'image/jpeg',
-      upsert: false,
-    });
-
-  if (uploadError) throw uploadError;
-
-  const { error } = await supabase.from('submissions').insert({
-    bout_id: input.boutId,
-    shooter_id: input.shooterId,
-    total: input.total,
-    inner_tens: input.innerTens,
-    photo_path: path,
-    capture_method: input.fromCamera ? 'in_app_camera' : 'gallery',
-    source: 'manual',
-    shot_at: new Date().toISOString(),
-  });
-
-  if (error) throw error;
 }
 
 export async function confirmSubmission(

@@ -26,6 +26,7 @@ import {
   type MatchDetail,
 } from '@/lib/queries';
 import { useTheme } from '@/lib/theme';
+import { useOutbox } from '@/lib/use-outbox';
 import type { Bout, ScoringMode, Submission } from '@/lib/types';
 
 export default function MatchScreen() {
@@ -316,12 +317,17 @@ function BoutCard({
   confirmedIds: Set<string>;
 }) {
   const t = useTheme();
+  const { queuedBoutIds } = useOutbox();
   const forBout = submissions.filter((s) => s.bout_id === bout.id);
   const mine = forBout.find((s) => s.shooter_id === userId);
   // Before the reveal this is always undefined — RLS does not return the row.
   const theirs = forBout.find((s) => s.shooter_id === opponentId);
 
-  const canReport = !mine && (bout.state === 'open' || bout.state === 'awaiting_opponent');
+  // A queued report has not reached the server, so there is no submission row
+  // yet — but offering "report result" again would invite a duplicate.
+  const queued = queuedBoutIds.has(bout.id);
+  const canReport =
+    !mine && !queued && (bout.state === 'open' || bout.state === 'awaiting_opponent');
   const needsCheck = !!theirs && !confirmedIds.has(theirs.id);
   const blind = !theirs && !!mine;
   const firstName = opponentName.split(' ')[0];
@@ -342,7 +348,9 @@ function BoutCard({
         <Pill tone={tone}>{label}</Pill>
       </View>
 
-      {canReport && !mine ? (
+      {queued && !mine ? (
+        <Meta>Saved on your phone. It will be sent as soon as you have reception.</Meta>
+      ) : canReport ? (
         <Link href={{ pathname: '/bout/[id]/report', params: { id: bout.id } }} asChild>
           <Button label="Report result" onPress={() => {}} />
         </Link>
