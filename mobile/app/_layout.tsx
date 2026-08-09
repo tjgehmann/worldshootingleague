@@ -32,7 +32,7 @@ const persister = createAsyncStoragePersister({
 });
 
 function AuthGate() {
-  const { session, loading } = useAuth();
+  const { session, loading, recovering } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const t = useTheme();
@@ -48,10 +48,12 @@ function AuthGate() {
 
     if (!session && !isOpen) {
       router.replace('/(auth)/sign-in');
-    } else if (session && group === '(auth)') {
+    } else if (session && group === '(auth)' && !recovering) {
+      // A reset link brings a real session with it, so without the exception
+      // the shooter would be swept past the screen they came to use.
       router.replace('/(tabs)');
     }
-  }, [session, loading, segments, router]);
+  }, [session, loading, recovering, segments, router]);
 
   // Anything queued while offline goes out as soon as there is a connection,
   // and once more on launch in case the app was killed in between.
@@ -93,6 +95,7 @@ function AuthGate() {
       <Stack.Screen name="bout/[id]/report" options={{ headerBackTitle: 'Cancel' }} />
       <Stack.Screen name="bout/[id]/confirm" options={{ headerBackTitle: 'Match' }} />
       <Stack.Screen name="club/join" options={{ headerBackTitle: 'Profile' }} />
+      <Stack.Screen name="club/invite" options={{ headerBackTitle: 'Profile' }} />
       <Stack.Screen name="case/[id]" options={{ headerBackTitle: 'Cases' }} />
     </Stack>
   );

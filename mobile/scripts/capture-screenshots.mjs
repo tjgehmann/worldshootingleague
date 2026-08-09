@@ -198,7 +198,10 @@ function restResponse(pathname, search, wantsObject, { asReferee = false } = {})
       case 'shooter_reliability':
         return fixtures.reliability;
       case 'club_members':
-        return fixtures.clubMembers;
+        // Two different reads hit this table: "which clubs am I in" is keyed by
+        // shooter, "who is in this club" by club, and they select different
+        // embeds. The parameter says which.
+        return params.has('club_id') ? fixtures.clubRoster : fixtures.clubMembers;
       case 'clubs':
         return fixtures.clubs;
       default:
@@ -384,6 +387,7 @@ async function contextFor(browser, { theme, signedIn, offline, outbox, asReferee
       if (fn === 'my_season_entry')
         return json([{ joined: false, joined_at: null, entrants: 148 }]);
       if (fn === 'my_club_season_entries') return json(fixtures.clubSeasonEntries);
+      if (fn === 'club_invites_active') return json(fixtures.clubInvites);
       return json(null);
     }
 
@@ -468,6 +472,18 @@ const shots = [
       await page.getByText('I accept the').click();
       await page.waitForTimeout(300);
     },
+  },
+  {
+    name: 'club-invite',
+    path: `/club/invite?club=${fixtures.clubs[0].id}`,
+    signedIn: true,
+    note: 'An official gets the rest of the club in.',
+  },
+  {
+    name: 'password-reset',
+    path: '/reset',
+    signedIn: false,
+    note: 'Forgetting a password, which somebody will in week one.',
   },
   {
     name: 'season-team-join',

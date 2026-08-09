@@ -135,3 +135,66 @@ select public.join_season('does-not-exist');
 
 reset role;
 reset request.jwt.claim.sub;
+
+-- ==================================================== 5. inviting people in ==
+set role authenticated;
+set request.jwt.claim.sub = '4a000000-0000-0000-0000-000000000003';
+
+-- expect failure: a member who is not an official cannot mint a code
+select public.create_club_invite(
+  (select id from public.clubs where slug = 'sv-joinerstadt'));
+
+reset role;
+set request.jwt.claim.sub = '4a000000-0000-0000-0000-000000000001';
+set role authenticated;
+
+select code as minted, expires_at from public.create_club_invite(
+  (select id from public.clubs where slug = 'sv-joinerstadt'), 14, 20) \gset
+
+select 'code minted: ' || (:'minted' ~ '^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$')::text
+       || ', no character anyone can mishear: ' || (:'minted' !~ '[ILO01]')::text;
+
+select 'lasts ' || round(extract(epoch from (expires_at - now())) / 86400)::text || ' days'
+  from public.club_invites where code = :'minted';
+
+-- expect failure: an invite cannot outlive three months
+select public.create_club_invite(
+  (select id from public.clubs where slug = 'sv-joinerstadt'), 400);
+
+reset role;
+reset request.jwt.claim.sub;
+
+-- A code is given to somebody, not looked up by them: club_invites_active is
+-- for officials only.
+set role authenticated;
+set request.jwt.claim.sub = '4a000000-0000-0000-0000-000000000002';
+
+select 'a stranger sees no codes: ' || count(*)::text
+  from public.club_invites_active((select id from public.clubs where slug = 'sv-joinerstadt'));
+
+select 'redeemed: ' || (public.redeem_club_invite(:'minted') is not null)::text;
+
+reset role;
+reset request.jwt.claim.sub;
+
+set role authenticated;
+set request.jwt.claim.sub = '4a000000-0000-0000-0000-000000000001';
+
+select 'the official sees it was used: ' || uses::text || ' of ' || max_uses::text
+  from public.club_invites_active((select id from public.clubs where slug = 'sv-joinerstadt'))
+ where code = :'minted';
+
+select public.revoke_club_invite(:'minted');
+
+select 'withdrawn, so it is gone from the list: ' ||
+       (count(*) filter (where code = :'minted') = 0)::text
+  from public.club_invites_active((select id from public.clubs where slug = 'sv-joinerstadt'));
+
+-- expect failure: a withdrawn code no longer works
+reset role;
+set request.jwt.claim.sub = '4a000000-0000-0000-0000-000000000003';
+set role authenticated;
+select public.redeem_club_invite(:'minted');
+
+reset role;
+reset request.jwt.claim.sub;

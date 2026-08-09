@@ -75,6 +75,7 @@ the link a captain pastes into a chat group.
   <img src="docs/screenshots/sign-up-light.png" alt="Creating an account" width="240">
   <img src="docs/screenshots/season-join-light.png" alt="Entering a season" width="240">
   <img src="docs/screenshots/season-team-join-light.png" alt="An official entering their club" width="240">
+  <img src="docs/screenshots/club-invite-light.png" alt="An invite code for the rest of the club" width="240">
 </p>
 
 **Settling a disagreement.** When two shooters cannot agree, a referee gets both
@@ -165,6 +166,7 @@ Migrations:
 | `..._accounts.sql` | age gate, recorded consent, export and deletion |
 | `..._beta_metrics.sql` | the numbers the beta is judged on |
 | `..._club_entry.sql` | a club official entering the club in a team season |
+| `..._club_invites.sql` | minting, listing and withdrawing an invite code |
 
 Edge functions:
 

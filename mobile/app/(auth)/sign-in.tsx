@@ -145,6 +145,11 @@ export default function SignInScreen() {
               setError(null);
             }}
           />
+          {mode === 'in' ? (
+            <Link href="/reset" asChild>
+              <Button label="Forgotten your password?" variant="text" size="sm" onPress={() => {}} />
+            </Link>
+          ) : null}
 
           <View style={{ marginTop: t.space.xxl }}>
             <Text style={{ color: t.colors.inkFaint, fontSize: 14, lineHeight: 21 }}>

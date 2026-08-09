@@ -546,6 +546,15 @@ const confirmations = [{ submission_id: 'eeee0001-0000-4000-8000-000000000002' }
 
 export const fixtures = {
   people,
+  /** Active codes, as club_invites_active() returns them to an official. */
+  clubInvites: [
+    {
+      code: 'RH7K2MPQ',
+      expires_at: new Date(Date.now() + 11 * 86_400_000).toISOString(),
+      max_uses: null,
+      uses: 4,
+    },
+  ],
   /** One row per club the viewer belongs to, as my_club_season_entries() returns. */
   clubSeasonEntries: [
     {
@@ -582,7 +591,15 @@ export const fixtures = {
     notify_push: true,
     club: KARLSRUHE,
   },
-  clubMembers: [{ club_id: KARLSRUHE.id, role: 'member', club: KARLSRUHE }],
+  clubMembers: [{ club_id: KARLSRUHE.id, role: 'owner', club: KARLSRUHE }],
+  /** The roster read, which embeds the shooter rather than the club. */
+  clubRoster: [
+    { role: 'owner', shooter: people[ME] },
+    { role: 'official', shooter: people[STEFAN] },
+    { role: 'member', shooter: people[ALINA] },
+    { role: 'member', shooter: people[JONAS] },
+    { role: 'member', shooter: people[PAULA] },
+  ],
   ratings: [
     {
       discipline_id: AR,

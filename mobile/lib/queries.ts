@@ -256,6 +256,45 @@ export async function fetchMyClubs(userId: string): Promise<ClubMembership[]> {
   return data ?? [];
 }
 
+export interface ClubInvite {
+  code: string;
+  expires_at: string;
+  max_uses: number | null;
+  uses: number;
+}
+
+/**
+ * Minting a code is a function, not an insert: it has to be unique, and a code
+ * somebody picks is a code somebody can guess. It is the only thing between a
+ * stranger and a club's roster.
+ */
+export async function createClubInvite(
+  clubId: string,
+  days = 14,
+  maxUses?: number,
+): Promise<ClubInvite> {
+  const { data, error } = await supabase.rpc('create_club_invite', {
+    p_club_id: clubId,
+    p_days: days,
+    p_max_uses: maxUses ?? null,
+  });
+  if (error) throw error;
+
+  const rows = (data ?? []) as unknown as ClubInvite[];
+  return { ...rows[0], uses: 0 };
+}
+
+export async function fetchClubInvites(clubId: string): Promise<ClubInvite[]> {
+  const { data, error } = await supabase.rpc('club_invites_active', { p_club_id: clubId });
+  if (error) throw error;
+  return (data ?? []) as unknown as ClubInvite[];
+}
+
+export async function revokeClubInvite(code: string): Promise<void> {
+  const { error } = await supabase.rpc('revoke_club_invite', { p_code: code });
+  if (error) throw error;
+}
+
 export async function fetchClub(clubId: string): Promise<Club> {
   const { data, error } = await supabase
     .from('clubs')

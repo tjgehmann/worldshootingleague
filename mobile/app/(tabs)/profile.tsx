@@ -122,6 +122,13 @@ export default function ProfileScreen() {
                 Team matches are shot for this club. Its officials pick the lineup by
                 rating.
               </Hint>
+              {/* Shown to everyone: the screen itself says whether you may use
+                  it, because club_invites_active() returns nothing to a member
+                  who is not an official. Hiding it would leave a new owner
+                  hunting for the one thing they need. */}
+              <Link href={{ pathname: '/club/invite', params: { club: club.id } }} asChild>
+                <Button label="Invite people" variant="quiet" size="sm" onPress={() => {}} />
+              </Link>
             </>
           ) : (
             <>

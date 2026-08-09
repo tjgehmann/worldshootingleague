@@ -44,7 +44,7 @@ select 'submissions write: ' ||
  where schemaname = 'public' and tablename = 'submissions';
 
 select 'functions:         ' ||
-       case when count(*) = 25 then 'OK (25)' else 'MISSING — found ' || count(*) end
+       case when count(*) = 28 then 'OK (28)' else 'MISSING — found ' || count(*) end
   from pg_proc p
   join pg_namespace n on n.oid = p.pronamespace
  where n.nspname = 'public'
@@ -59,6 +59,8 @@ select 'functions:         ' ||
      'join_season','leave_season','my_season_entry',
      'enter_club_in_season','withdraw_club_from_season','my_club_season_entries',
      'club_eligible_count',
+     -- getting the rest of the club in
+     'create_club_invite','club_invites_active','revoke_club_invite',
      -- accounts, consent and deletion
      'is_adult','request_account_deletion','export_my_data',
      -- what the beta is measured by

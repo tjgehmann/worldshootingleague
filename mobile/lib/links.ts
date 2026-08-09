@@ -34,6 +34,20 @@ function publicPage(path: string): string {
   return SUPABASE ? `${SUPABASE}/functions/v1/public-pages${path}` : path;
 }
 
+/**
+ * Where a password reset link comes back to.
+ *
+ * Supabase appends the recovery tokens as a fragment, so this has to be a URL
+ * the app is actually served from — an address that merely redirects would drop
+ * them, since a fragment never reaches the server.
+ */
+export function resetRedirectUrl(): string {
+  const origin = appOrigin();
+  if (origin) return `${origin}/reset`;
+  // A native build with no web deployment: the scheme from app.json.
+  return 'wsl://reset';
+}
+
 export function seasonUrl(slug: string): string {
   const origin = appOrigin();
   return origin ? `${origin}/season/${slug}` : publicPage(`/s/${slug}`);

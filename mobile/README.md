@@ -45,6 +45,7 @@ app/
   (public)/season/[slug]  a season table
   (public)/club/[slug]    a club page and its roster
   (auth)/sign-in.tsx      sign in and create an account
+  (auth)/reset.tsx        forgotten password, and setting a new one
   (tabs)/index.tsx        my matches
   (tabs)/leaderboard.tsx  rankings per discipline
   (tabs)/profile.tsx      profile, club, ratings, reliability, push
@@ -52,6 +53,7 @@ app/
   bout/[id]/report.tsx    report a result: score + photo
   bout/[id]/confirm.tsx   check the opponent's photo
   club/join.tsx           join by invite code, or start a club
+  club/invite.tsx         mint a code and see who is in
   case/[id].tsx           a referee's case: both photos, and how it ends
   (tabs)/cases.tsx        the case queue — a tab only for referees
   (public)/legal/[doc]    imprint, privacy, terms
@@ -110,6 +112,21 @@ the hosted web app (`EXPO_PUBLIC_SITE_URL`), falls back to the origin the web
 build is served from, and finally to the `public-pages` edge function — which
 always exists and renders real HTML, so the link survives being pasted
 somewhere that builds a preview.
+
+## Passwords
+
+`(auth)/reset.tsx` is one screen with two states, because they are two halves of
+one errand: ask for a link when there is no recovery session, set a new password
+when there is.
+
+The link carries a real session. Without a flag for it the auth gate would see
+somebody signed in and send them straight to their matches, past the screen they
+came to use — so `useAuth()` exposes `recovering`, set on the `PASSWORD_RECOVERY`
+event and cleared once the password is saved.
+
+On web supabase-js reads the recovery tokens out of the address bar
+(`detectSessionInUrl` is enabled there and only there). A native build has no
+address bar, so the screen unpacks the fragment from the deep link itself.
 
 ## Signed out
 
