@@ -219,3 +219,17 @@ select 'a report that arrives late is refused: the series is still ' || state
 -- than one that is still asking to be reported.
 select 'after the tick: ' || (public.run_league_tick() is not null)::text;
 select 'the sweep let it go: ' || state from public.open_series where id = :'late_series';
+
+-- ================================ 7. both shooters are told it was compared ==
+-- The comparison is the payoff, so it has to reach them. An open series match
+-- settles the instant the second report lands, which is an ordinary state
+-- change on matches — so the existing settle trigger carries it.
+select 'both were told: ' || count(*)::text
+  from public.notifications n
+ where n.match_id = (select match_id from public.open_series where id = :'first_series')
+   and n.kind = 'match_settled';
+
+-- And it shows up where anyone can see a finished match, without a season.
+select 'the public results carry it: ' || count(*)::text
+  from public.match_results
+ where match_id = (select match_id from public.open_series where id = :'first_series');
