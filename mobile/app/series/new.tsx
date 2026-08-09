@@ -39,6 +39,8 @@ export default function NewSeriesScreen() {
   const [innerTens, setInnerTens] = useState('');
   const [photo, setPhoto] = useState<{ uri: string; fromCamera: boolean; at: Date } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** Said once, on the screen, when a report went in too late to be compared. */
+  const [practice, setPractice] = useState(false);
 
   const disciplines = useQuery({ queryKey: ['disciplines'], queryFn: fetchDisciplines });
   const live = useQuery({
@@ -82,13 +84,19 @@ export default function NewSeriesScreen() {
         shotAt: photo!.at,
       });
 
-      return flushOutbox();
+      // Whether it is already too late to be compared is decided by the
+      // server, but this is the same clock to within seconds and the shooter
+      // deserves the answer on the screen they are looking at.
+      const late = new Date(series!.report_by).getTime() < Date.now();
+      await flushOutbox();
+      return late;
     },
-    onSuccess: async () => {
+    onSuccess: async (late) => {
       setTotal('');
       setInnerTens('');
       setPhoto(null);
       setError(null);
+      setPractice(late);
       await queryClient.invalidateQueries({ queryKey: ['open-series', userId] });
       await queryClient.invalidateQueries({ queryKey: ['matches'] });
     },
@@ -139,6 +147,13 @@ export default function NewSeriesScreen() {
 
         {error ? <Note tone="error">{error}</Note> : null}
 
+        {practice ? (
+          <Note tone="warn">
+            That arrived after the two hours, so it is in your own record as practice
+            rather than being compared with anybody. Your rating is untouched.
+          </Note>
+        ) : null}
+
         {!series ? (
           <Pick
             disciplines={disciplines.data ?? []}
@@ -158,8 +173,9 @@ export default function NewSeriesScreen() {
                   'en-GB',
                   { hour: '2-digit', minute: '2-digit' },
                 )}
-                , the series counts as practice — so walk up out of the range rather than
-                waiting at the firing point.
+                , it is kept as practice in your own record instead of being compared with
+                anybody — so walk up out of the range rather than waiting at the firing
+                point.
               </Hint>
             </Card>
             <Button label="Back to my matches" onPress={() => router.replace('/(tabs)')} />
@@ -302,7 +318,8 @@ export default function NewSeriesScreen() {
               busy={abandon.isPending}
             />
             <Hint center>
-              If nobody turns up within three days it is let go and counts as practice.
+              It waits a fortnight for somebody to be compared with. If nobody turns up
+              in that time it is let go, and stays in your own record as practice.
             </Hint>
           </>
         )}

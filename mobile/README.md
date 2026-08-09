@@ -104,9 +104,15 @@ obvious move is to shoot ten and report the best.
 
 The report goes through `lib/outbox.ts` like a season report, so a basement with
 no signal does not lose it — but the two hour deadline is the server's and is
-not extended by having waited. The queue gives up on its own once the window has
-passed rather than uploading a photograph that is about to be refused, and tells
-the shooter the series became practice.
+not extended by having waited.
+
+Missing it is not the end of the evening, though. A late report is still sent
+and still kept: `report_open_series()` answers with the state the series landed
+in — `reported` if it is now waiting for somebody to be compared with, `expired`
+if it was too late for that and went into the shooter's own record as practice.
+The screen says which, and a notification says it again for the report that
+finally went out while the phone was in a pocket. The queue only gives up after
+a day, which is the point at which the server stops taking it too.
 
 ## Entering a season
 
@@ -247,7 +253,16 @@ finds out before the upload rather than after it.
 
 It also calls `shooter_recent_form()` and asks once more when a report sits more
 than 5 rings above the shooter's own average. That is the cheap substitute for
-OCR on the one realistic failure mode, the typo.
+OCR on the one realistic failure mode, the typo. That average is drawn from
+everything the shooter has reported lately, practice included — comparing a
+score against only the evenings somebody else turned up would be comparing it
+against an accident of the calendar.
+
+The same record is on the profile, under **Your shooting**: series, average and
+best per discipline, with how many of them were compared and how many were
+practice. It sits above the ratings rather than inside them, because they answer
+different questions — one is how well you shoot, the other is how you do against
+other people, and only the second needs an opponent to have checked the photo.
 
 The photo is taken with the camera (`capture_method = 'in_app_camera'`); the
 library stays available but is recorded as such.

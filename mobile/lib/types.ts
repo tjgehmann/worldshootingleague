@@ -221,6 +221,22 @@ export interface OpenSeries {
   created_at: string;
 }
 
+/**
+ * A shooter's own record: everything they reported, compared or not. Separate
+ * from the rating on purpose — this says how well somebody shoots, the rating
+ * says how they do against other people.
+ */
+export interface FormRow {
+  discipline_id: string;
+  discipline_code: string;
+  series: number;
+  compared: number;
+  practice: number;
+  average: number | null;
+  best: number | null;
+  last_shot_at: string;
+}
+
 // --------------------------------------------------------------- referee ---
 
 export type DisputeState = 'open' | 'assigned' | 'resolved' | 'withdrawn';

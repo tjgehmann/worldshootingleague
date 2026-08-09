@@ -183,11 +183,15 @@ select 'the tick reports on every job: ' ||
                             'matches_voided','confirmations_lapsed','reminders_queued',
                             'matches_finalized']) as k)::text;
 
--- ============================ 6. late is late, however long the phone waited ==
+-- ================== 6. late is late for the ladder, not for the shooter ======
 -- The queue on the phone may hold a report while there is no signal, but the
 -- deadline is the server's. A client that says it tried in time proves nothing:
 -- the set of series somebody can choose between is everything they shot between
 -- declaring and the report arriving, so only arrival can bound it.
+--
+-- What that buys is the right to be compared, and nothing else. A late report
+-- is still a series somebody fired, so it is kept as practice: in their own
+-- record, never offered to the matcher, never near a rating.
 set role authenticated;
 set request.jwt.claim.sub = '50000000-0000-0000-0000-000000000002';
 
@@ -205,20 +209,65 @@ update public.open_series
 set role authenticated;
 set request.jwt.claim.sub = '50000000-0000-0000-0000-000000000002';
 
--- expect failure: the window closed while the phone was underground
-select public.report_open_series(:'late_series', 102.0, null,
-  :'late_series' || '/a/x.jpg', now() - interval '2 hours');
+select 'a late report lands as ' ||
+       public.report_open_series(:'late_series', 102.0, null,
+         :'late_series' || '/a/x.jpg', now() - interval '2 hours');
 
 reset role;
 reset request.jwt.claim.sub;
 
-select 'a report that arrives late is refused: the series is still ' || state
+select 'and the numbers were kept: ' || (total is not null)::text ||
+       ', matchable: ' || (state = 'reported')::text
   from public.open_series where id = :'late_series';
 
--- The sweep is what lets it go, so the shooter sees a series that ended rather
--- than one that is still asking to be reported.
+select 'the shooter was told: ' || count(*)::text
+  from public.notifications
+ where shooter_id = '50000000-0000-0000-0000-000000000002'
+   and kind = 'open_series_expired';
+
+select 'and it counts as practice: ' || practice::text
+  from public.shooter_form('50000000-0000-0000-0000-000000000002')
+ where discipline_code = 'SBR10ET';
+
+-- The matcher must not see it however many times the tick runs.
 select 'after the tick: ' || (public.run_league_tick() is not null)::text;
-select 'the sweep let it go: ' || state from public.open_series where id = :'late_series';
+select 'still let go: ' || state from public.open_series where id = :'late_series';
+
+-- A day later there is nothing left to record: at that distance a declaration
+-- is a notebook to be filled in at leisure rather than a series being shot.
+set role authenticated;
+set request.jwt.claim.sub = '50000000-0000-0000-0000-000000000002';
+
+select public.declare_open_series((select id from public.disciplines where code = 'SBR10ET'))
+  as stale_series \gset
+
+reset role;
+reset request.jwt.claim.sub;
+
+update public.open_series
+   set opens_at = now() - interval '3 days',
+       report_by = now() - interval '3 days' + interval '2 hours'
+ where id = :'stale_series';
+
+set role authenticated;
+set request.jwt.claim.sub = '50000000-0000-0000-0000-000000000002';
+
+-- expect failure: three days is not a walk back up the stairs
+select public.report_open_series(:'stale_series', 102.0, null,
+  :'stale_series' || '/a/x.jpg', now() - interval '3 days');
+
+-- And a series the shooter said they were not shooting stays not shot.
+select public.declare_open_series((select id from public.disciplines where code = 'AP10ET'))
+  as dropped_series \gset
+
+select public.withdraw_open_series(:'dropped_series');
+
+-- expect failure: withdrawn is a decision, not a window running out
+select public.report_open_series(:'dropped_series', 95, 4,
+  :'dropped_series' || '/a/x.jpg', now());
+
+reset role;
+reset request.jwt.claim.sub;
 
 -- ================================ 7. both shooters are told it was compared ==
 -- The comparison is the payoff, so it has to reach them. An open series match
@@ -233,3 +282,70 @@ select 'both were told: ' || count(*)::text
 select 'the public results carry it: ' || count(*)::text
   from public.match_results
  where match_id = (select match_id from public.open_series where id = :'first_series');
+
+-- ===================== 8. a series nobody answered still counts for its owner ==
+-- Shooting is a measurement whether or not somebody was there to compare with.
+-- It goes into the shooter's own record in full; it does not go into the
+-- rating, because the only reason to believe a reported number is that the
+-- opponent looked at the photograph.
+select 'form counts the compared and the practice: ' || series::text ||
+       ' series, ' || compared::text || ' compared, ' || practice::text || ' practice'
+  from public.shooter_form('50000000-0000-0000-0000-000000000001')
+ where discipline_code = 'AR10ET';
+
+select 'and it has an average: ' || (average is not null)::text
+  from public.shooter_form('50000000-0000-0000-0000-000000000001')
+ where discipline_code = 'AR10ET';
+
+-- The warning before submitting uses the same record, so practice counts there.
+select 'the pre-submit check sees ' || series::text || ' recent series'
+  from public.shooter_recent_form(
+    '50000000-0000-0000-0000-000000000001',
+    (select id from public.disciplines where code = 'AR10ET'), 10);
+
+-- Letting a series go says so rather than being silent about it.
+update public.open_series
+   set reported_at = now() - interval '20 days'
+ where id = :'rematch_one';
+
+select 'the sweep let it go and said so: ' ||
+       (public.match_open_series() >= 0)::text;
+
+select 'told: ' || count(*)::text
+  from public.notifications
+ where shooter_id = '50000000-0000-0000-0000-000000000001'
+   and kind = 'open_series_expired';
+
+select 'the rating did not move for it: ' || (
+  (select count(*) from public.rating_events re
+    join public.matches m on m.id = re.match_id
+   where re.shooter_id = '50000000-0000-0000-0000-000000000001'
+     and m.season_id is null) <= 1)::text;
+
+-- ================================================== 9. what the beta reports ==
+set role authenticated;
+set request.jwt.claim.sub = 'acc00000-0000-0000-0000-00000000000a';
+
+select 'health: ' || metric || ' = ' || coalesce(value::text, 'n/a')
+  from public.beta_health(30)
+ where metric like 'series%' or metric like 'hours_to%' or metric = 'reachable'
+    or metric like 'disputes_%' or metric = 'window_used';
+
+select 'backlog: ' || metric || ' = ' || value::text
+  from public.beta_backlog() where metric = 'series_waiting';
+
+reset role;
+reset request.jwt.claim.sub;
+
+-- Both submissions of an open series match land in one statement, so the reveal
+-- trigger fires twice with both rows visible. It must not undo the settlement
+-- the first firing caused: a bout left 'revealed' under a settled match is
+-- invisible to everything that counts series by bout state.
+select 'the bout ended settled, not revealed: ' ||
+       (count(*) filter (where b.state = 'settled') = count(*))::text ||
+       ' (' || string_agg(distinct b.state::text, ',') || ')'
+  from public.submissions s
+  join public.bouts b on b.id = s.bout_id
+  join public.matches m on m.id = b.match_id
+ where s.shooter_id = '50000000-0000-0000-0000-000000000001'
+   and m.season_id is null;

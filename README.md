@@ -42,6 +42,34 @@ ones they shot between declaring and the report arriving, so only arrival can
 bound it. Two hours is enough to shoot, pack up and walk out to a signal;
 anything later counts as practice.
 
+## Every series counts, compared or not
+
+A shooter who declares, shoots and reports has done everything asked of them.
+Whether anybody else happened to be at a range that evening is not their doing,
+and telling them "nothing happened" is both unfair and the fastest way to stop
+them reporting at all. So there are two records, and they answer different
+questions.
+
+**Your shooting** is your own: how many series, what you average, your best, per
+discipline. Everything you report goes in, whether or not it was ever compared —
+the paper Schießbuch every shooter already keeps, kept for you. A series that
+missed its two hours goes in here too, rather than being thrown away, and so
+does one that waited a fortnight without anybody turning up.
+
+**Your rating** is what your number means against somebody else's, and it only
+moves when there was a somebody. The single reason to believe a reported score
+is that an opponent looked at the photograph of the display; a series nobody was
+matched with is a series nobody checked. Rating it would put unchecked numbers
+into the one figure that is supposed to be worth something, and it would make
+"report a good series and hope nobody matches it" a strategy.
+
+Around that, three things make going uncompared rare and quiet rather than
+common and silent: a reported series waits **a fortnight** for a partner rather
+than three days; a series that is finally let go **says so** instead of
+vanishing; and a late report is kept as practice instead of being refused, for
+up to a day after its window — long enough for a range with no signal, a phone
+that died and the drive home, and nothing more.
+
 ## Formats
 
 Short formats, deliberately:
@@ -87,7 +115,7 @@ you and still hidden, series 4 waiting to be shot.
   <img src="docs/screenshots/series-new-light.png" alt="Shooting a series with no opponent" width="240">
   <img src="docs/screenshots/match-light.png" alt="A running match with one series still blind" width="240">
   <img src="docs/screenshots/rankings-light.png" alt="Rankings" width="240">
-  <img src="docs/screenshots/profile-light.png" alt="Profile: club, ratings, reliability" width="240">
+  <img src="docs/screenshots/profile-light.png" alt="Profile: your own record, club, ratings" width="240">
   <img src="docs/screenshots/profile-edit-light.png" alt="Editing a profile, and picking the club that fields you" width="240">
 </p>
 
@@ -208,6 +236,10 @@ Migrations:
 | `..._open_series.sql` | shooting now: declare, report, get compared |
 | `..._open_series_photos.sql` | proof for a series that has no bout yet |
 | `..._open_series_window.sql` | two hours to report, on the server's clock |
+| `..._practice_counts.sql` | your own record, a fortnight of patience, a word when one is let go |
+| `..._more_metrics.sql` | what the new mode is measured by |
+| `..._reveal_once.sql` | a bout can only be revealed once |
+| `..._late_counts_as_practice.sql` | a late report is kept rather than refused |
 
 Edge functions:
 
@@ -267,6 +299,12 @@ What is covered:
   against whoever is already waiting, the match settling and rating itself, the
   same two not being paired again straight away, and the tick reporting on every
   job it runs — which is what caught the harness applying `scheduling.sql` last.
+  Then what a series is worth when nobody answers: a late report kept as
+  practice but never offered to the matcher, one from three days ago refused, a
+  withdrawn series staying withdrawn, the shooter's own record counting compared
+  and practice separately, the sweep saying so when it lets one go, the rating
+  not moving for it — and the bout of a matched open series ending **settled**
+  rather than `revealed`, which is what caught the reveal trigger firing twice.
 * **`60_accounts.sql`** — an adult gets in and a minor does not, consent is
   recorded, the export carries what it should, and deletion removes the name
   while the results survive; the beta's own metrics, admin-only.

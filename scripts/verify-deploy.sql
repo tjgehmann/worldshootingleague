@@ -44,7 +44,7 @@ select 'submissions write: ' ||
  where schemaname = 'public' and tablename = 'submissions';
 
 select 'functions:         ' ||
-       case when count(*) = 36 then 'OK (36)' else 'MISSING — found ' || count(*) end
+       case when count(*) = 42 then 'OK (42)' else 'MISSING — found ' || count(*) end
   from pg_proc p
   join pg_namespace n on n.oid = p.pronamespace
  where n.nspname = 'public'
@@ -71,7 +71,9 @@ select 'functions:         ' ||
      'check_primary_club_membership','shares_a_match_with',
      -- shooting without waiting to be paired
      'declare_open_series','report_open_series','withdraw_open_series',
-     'match_open_series','check_series_numbers');
+     'match_open_series','check_series_numbers',
+     -- and having it count for you even when nobody was there to compare
+     'shooter_form','open_series_patience');
 
 select 'views:             ' ||
        case when count(*) = 5 then 'OK (5)' else 'MISSING — found ' || count(*) end
@@ -108,8 +110,10 @@ select 'target-photos:     ' ||
        case when bool_and(not public) then 'OK (private)' else 'FAIL — bucket is public!' end
   from storage.buckets where id = 'target-photos';
 
+-- Two, not the original four: one read and one insert, both delegating to a
+-- function that answers for a bout folder and an open-series folder alike.
 select 'photo policies:    ' ||
-       case when count(*) = 4 then 'OK (4, no update/delete)'
+       case when count(*) = 2 then 'OK (2, no update/delete)'
             else 'CHECK — found ' || count(*) end
   from pg_policies
  where schemaname = 'storage' and policyname like 'target_photos%';

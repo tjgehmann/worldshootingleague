@@ -389,6 +389,7 @@ async function contextFor(browser, { theme, signedIn, offline, outbox, asReferee
     if (url.pathname.startsWith('/rest/v1/rpc/')) {
       const fn = url.pathname.split('/').pop();
       if (fn === 'shooter_recent_form') return json(fixtures.recentForm);
+      if (fn === 'shooter_form') return json(fixtures.form);
       if (fn === 'my_season_entry')
         return json([{ joined: false, joined_at: null, entrants: 148 }]);
       if (fn === 'my_club_season_entries') return json(fixtures.clubSeasonEntries);

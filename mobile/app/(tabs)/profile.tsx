@@ -24,6 +24,7 @@ import { LEGAL_LIST } from '@/lib/legal';
 import {
   exportMyData,
   fetchMyClubs,
+  fetchMyForm,
   fetchProfile,
   fetchRatings,
   fetchReliability,
@@ -46,6 +47,11 @@ export default function ProfileScreen() {
   const clubs = useQuery({
     queryKey: ['my-clubs', userId],
     queryFn: () => fetchMyClubs(userId!),
+    enabled: !!userId,
+  });
+  const form = useQuery({
+    queryKey: ['form', userId],
+    queryFn: fetchMyForm,
     enabled: !!userId,
   });
   const ratings = useQuery({
@@ -158,6 +164,46 @@ export default function ProfileScreen() {
             You are a member of {memberships.length} clubs. Only the one above fields you
             in team matches.
           </Hint>
+        ) : null}
+
+        {(form.data ?? []).length > 0 ? (
+          <>
+            <Kicker>Your shooting</Kicker>
+            <Card>
+              {(form.data ?? []).map((row, i) => (
+                <View key={row.discipline_id}>
+                  {i > 0 ? <Hairline /> : null}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-end',
+                    }}
+                  >
+                    <View>
+                      <Label>{row.discipline_code}</Label>
+                      <Text style={[t.text.scoreSm, { color: t.colors.ink, marginTop: 2 }]}>
+                        {row.average ?? '–'}
+                      </Text>
+                    </View>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Meta>
+                        {row.series} series · best {row.best ?? '–'}
+                      </Meta>
+                      <Meta>
+                        {row.compared} compared
+                        {row.practice > 0 ? ` · ${row.practice} practice` : ''}
+                      </Meta>
+                    </View>
+                  </View>
+                </View>
+              ))}
+              <Hint>
+                Every series you report counts here, whether or not somebody was there to
+                compare with. The rating below only moves when one was.
+              </Hint>
+            </Card>
+          </>
         ) : null}
 
         {(ratings.data ?? []).length === 0 ? (

@@ -85,6 +85,21 @@ for t in "$CLUSTER/work/tests"/*.sql; do
   as "$PSQL PGDATABASE=$DB psql -q -f $t" 2>&1 || status=1
 done
 
+# The post-deploy check is a list of counts, and a list of counts goes stale the
+# moment a migration adds a function or replaces four policies with two. Running
+# it here means it is wrong for ten minutes rather than until the next deploy.
+# pg_cron is the one thing it may honestly not find: it is hosted-only.
+echo
+echo "---------- verify-deploy.sql ----------"
+cp "$REPO/scripts/verify-deploy.sql" "$CLUSTER/work/verify.sql"
+[ -n "$RUNAS" ] && chown "$RUNAS" "$CLUSTER/work/verify.sql"
+verify="$(as "$PSQL PGDATABASE=$DB psql -q -f $CLUSTER/work/verify.sql" 2>&1)"
+echo "$verify"
+if echo "$verify" | grep -E 'FAIL|MISSING|CHECK' | grep -qvi 'cron'; then
+  echo "!! the deploy check does not match what the migrations build"
+  status=1
+fi
+
 echo
 echo "==> done (expected-failure cases print ERROR by design; check the assertions)"
 exit $status

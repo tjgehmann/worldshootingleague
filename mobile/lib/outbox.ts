@@ -191,12 +191,16 @@ async function send(entry: OutboxEntry): Promise<void> {
     throw Object.assign(new Error('The photo for this report is gone.'), { code: 'no_photo' });
   }
 
-  // An open series has a deadline the server will enforce anyway. Giving up
-  // here saves uploading a photograph that is about to be refused, and lets the
-  // shooter be told something true rather than a policy error.
-  if (entry.kind === 'series' && new Date(entry.reportBy).getTime() < Date.now()) {
+  // A report that misses the two hours is still sent: the server keeps it as
+  // practice rather than throwing the evening away. What it will not take is
+  // one from a day ago, so give up here rather than upload a photograph that is
+  // about to be refused.
+  if (
+    entry.kind === 'series' &&
+    new Date(entry.reportBy).getTime() < Date.now() - 24 * 60 * 60 * 1000
+  ) {
     throw Object.assign(
-      new Error('The two hours ran out before this could be sent. It counts as practice.'),
+      new Error('This has been waiting more than a day. It is too late to record.'),
       { code: 'window_closed' },
     );
   }

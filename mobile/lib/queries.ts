@@ -7,6 +7,7 @@ import type {
   Discipline,
   DisputeCase,
   DisputeOutcome,
+  FormRow,
   LeaderboardRow,
   Match,
   OpenSeries,
@@ -480,7 +481,13 @@ export async function declareOpenSeries(disciplineId: string): Promise<string> {
   return data as unknown as string;
 }
 
-/** Called by the outbox rather than by a screen: the report may be queued. */
+/**
+ * Called by the outbox rather than by a screen: the report may be queued.
+ *
+ * Answers with the state the series landed in — 'reported' if it is waiting for
+ * somebody to be compared with, 'expired' if it arrived after the two hours and
+ * was kept as practice. Both are successes.
+ */
 export async function reportOpenSeries(input: {
   id: string;
   total: number;
@@ -489,8 +496,8 @@ export async function reportOpenSeries(input: {
   /** ISO, because it may have been sitting on the phone for a while. */
   shotAt: string;
   fromCamera: boolean;
-}): Promise<void> {
-  const { error } = await supabase.rpc('report_open_series', {
+}): Promise<'reported' | 'expired'> {
+  const { data, error } = await supabase.rpc('report_open_series', {
     p_id: input.id,
     p_total: input.total,
     p_inner_tens: input.innerTens,
@@ -499,11 +506,19 @@ export async function reportOpenSeries(input: {
     p_capture_method: input.fromCamera ? 'in_app_camera' : 'gallery',
   });
   if (error) throw error;
+  return (data as unknown as 'reported' | 'expired') ?? 'reported';
 }
 
 export async function withdrawOpenSeries(id: string): Promise<void> {
   const { error } = await supabase.rpc('withdraw_open_series', { p_id: id });
   if (error) throw error;
+}
+
+/** Series shot, average and best per discipline — practice included. */
+export async function fetchMyForm(): Promise<FormRow[]> {
+  const { data, error } = await supabase.rpc('shooter_form', {});
+  if (error) throw error;
+  return (data ?? []) as unknown as FormRow[];
 }
 
 /** The one that is live, if any: declared and unreported, or waiting. */

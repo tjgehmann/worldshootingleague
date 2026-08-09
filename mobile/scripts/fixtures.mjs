@@ -630,6 +630,32 @@ export const fixtures = {
   reliability: [{ confirmations_due: 18, confirmations_given: 17, confirmation_rate_pct: 94 }],
   /** Backs the "well above your average" check on the report screen. */
   recentForm: [{ series: 10, average: 92.4, best: 97, worst: 88 }],
+  /**
+   * The shooter's own record. More series than the ratings show matches,
+   * because the practice ones nobody was there for count here too.
+   */
+  form: [
+    {
+      discipline_id: AR,
+      discipline_code: 'AR10ET',
+      series: 31,
+      compared: 24,
+      practice: 7,
+      average: 92.6,
+      best: 98.1,
+      last_shot_at: daysAgo(1),
+    },
+    {
+      discipline_id: AP,
+      discipline_code: 'AP10ET',
+      series: 5,
+      compared: 3,
+      practice: 2,
+      average: 84.3,
+      best: 89,
+      last_shot_at: daysAgo(9),
+    },
+  ],
   clubProfile: {
     ...KARLSRUHE,
     shooters: 34,
