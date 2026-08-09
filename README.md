@@ -170,6 +170,7 @@ Migrations:
 | `..._club_invites.sql` | minting, listing and withdrawing an invite code |
 | `..._email_notifications.sql` | the second delivery channel and its queue |
 | `..._profile_edit.sql` | the club you shoot for has to be one you belong to |
+| `..._pair_team_rounds.sql` | the tick draws club rounds with the club pairing |
 
 Edge functions:
 
@@ -231,7 +232,9 @@ What is covered:
   lineup that excludes a member who competes for someone else, a team round
   paired board by board, aggregation into a 2:1 fixture win, the league table,
   the notifications each step produces, the deadline sweep deduplicating on a
-  second run, and opting out stopping the queue at the source.
+  second run, opting out stopping the queue at the source, and — the case that
+  caught a real bug — `run_league_tick()` drawing a **club** round rather than
+  quietly marking it paired.
 
 ## Going into beta
 

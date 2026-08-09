@@ -27,9 +27,13 @@
 -- update public.seasons set state = 'running' where slug = 'air-rifle-beta-2026';
 
 -- ================================================= a round, every Monday ====
--- Creates the round window and draws the pairings. Swiss: closest rating that
--- has not been played yet. Run it once a week — twice is harmless, it does
--- nothing if the round is already paired.
+-- This is the one recurring thing an operator has to do: lay out the round
+-- window. The drawing itself is not manual — run_league_tick() runs every ten
+-- minutes and pairs any round of a running season whose window starts within a
+-- day, using the individual or the club pairing depending on the season.
+--
+-- The rounds of a whole season can be created up front, one insert per week,
+-- and then nothing has to be remembered at all.
 
 -- insert into public.rounds (season_id, index, opens_at, closes_at)
 -- select s.id,
@@ -40,11 +44,13 @@
 --  where s.slug = 'air-rifle-beta-2026'
 --  group by s.id;
 
+-- Drawing it by hand, if you do not want to wait for the next tick:
 -- select public.pair_round(id) from public.rounds
 --  where season_id = (select id from public.seasons where slug = 'air-rifle-beta-2026')
 --  order by index desc limit 1;
 
--- For a club season, the same thing one level up:
+-- For a club season it is pair_team_round() instead — but the tick picks the
+-- right one by itself, so this is only for impatience.
 -- select public.pair_team_round(id) from public.rounds ...;
 
 -- ==================================================== the tick, every hour ==

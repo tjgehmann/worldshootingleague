@@ -193,3 +193,55 @@ select count(*) from public.disputes;
 select count(*) from public.bout_confirmations;
 
 reset role;
+
+-- ==================================== 6. the tick has to pair a club round ===
+-- A third club, so round 2 has a pairing to find: A and B have already met and
+-- there are no rematches inside a season.
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('d4444444-0000-0000-0000-000000000001','tc1@x.de','{"handle":"tc_one","display_name":"Hanna Meier","date_of_birth":"1990-05-14"}'),
+  ('d4444444-0000-0000-0000-000000000002','tc2@x.de','{"handle":"tc_two","display_name":"Ingo Ritter","date_of_birth":"1990-05-14"}'),
+  ('d4444444-0000-0000-0000-000000000003','tc3@x.de','{"handle":"tc_three","display_name":"Jana Roth","date_of_birth":"1990-05-14"}');
+
+set request.jwt.claim.sub = 'd4444444-0000-0000-0000-000000000001';
+select public.create_club('SV Drittstadt', 'sv-drittstadt', 'DE', 'SVD');
+
+insert into public.club_invites (club_id, code, created_by, expires_at)
+select id, 'SVD2026', 'd4444444-0000-0000-0000-000000000001', now() + interval '7 days'
+  from public.clubs where slug = 'sv-drittstadt';
+
+set request.jwt.claim.sub = 'd4444444-0000-0000-0000-000000000002';
+select public.redeem_club_invite('SVD2026');
+set request.jwt.claim.sub = 'd4444444-0000-0000-0000-000000000003';
+select public.redeem_club_invite('SVD2026');
+reset request.jwt.claim.sub;
+
+insert into public.club_season_entries (season_id, club_id)
+select s.id, c.id from public.seasons s, public.clubs c
+ where s.slug = 'team-ar10et-2026' and c.slug = 'sv-drittstadt';
+
+-- Round 2, left to the scheduler exactly as it would be in a real season: the
+-- operator creates the round, run_league_tick() is supposed to draw it.
+insert into public.rounds (season_id, index, opens_at, closes_at)
+select id, 2, now() - interval '1 hour', now() + interval '7 days'
+  from public.seasons where slug = 'team-ar10et-2026';
+
+select 'tick reports: ' || (public.run_league_tick() ->> 'rounds_paired') || ' round(s) opened';
+
+select 'round 2 is marked paired: ' || (paired_at is not null)::text
+  from public.rounds r join public.seasons s on s.id = r.season_id
+ where s.slug = 'team-ar10et-2026' and r.index = 2;
+
+select 'round 2 produced ' || count(*) || ' club fixture(s)'
+  from public.team_matches tm
+  join public.rounds r on r.id = tm.round_id
+ where r.index = 2;
+
+select 'and the boards under them: ' || count(*)
+  from public.matches m
+  join public.team_matches tm on tm.id = m.team_match_id
+  join public.rounds r on r.id = tm.round_id
+ where r.index = 2;
+
+select 'the fixture is live, not scheduled: ' || (state = 'live')::text
+  from public.team_matches tm join public.rounds r on r.id = tm.round_id
+ where r.index = 2;
