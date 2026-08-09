@@ -44,7 +44,7 @@ select 'submissions write: ' ||
  where schemaname = 'public' and tablename = 'submissions';
 
 select 'functions:         ' ||
-       case when count(*) = 29 then 'OK (29)' else 'MISSING — found ' || count(*) end
+       case when count(*) = 31 then 'OK (31)' else 'MISSING — found ' || count(*) end
   from pg_proc p
   join pg_namespace n on n.oid = p.pronamespace
  where n.nspname = 'public'
@@ -66,7 +66,9 @@ select 'functions:         ' ||
      -- what the beta is measured by
      'beta_health','beta_backlog',
      -- the second delivery channel
-     'pending_email_notifications');
+     'pending_email_notifications',
+     -- editing a profile without lying about which club fields you
+     'check_primary_club_membership','shares_a_match_with');
 
 select 'views:             ' ||
        case when count(*) = 5 then 'OK (5)' else 'MISSING — found ' || count(*) end

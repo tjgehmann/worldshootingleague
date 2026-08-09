@@ -48,7 +48,8 @@ app/
   (auth)/reset.tsx        forgotten password, and setting a new one
   (tabs)/index.tsx        my matches
   (tabs)/leaderboard.tsx  rankings per discipline
-  (tabs)/profile.tsx      profile, club, ratings, reliability, push
+  (tabs)/profile.tsx      profile, club, ratings, reliability, notifications
+  profile/edit.tsx        name, handle, country, bio, the club you shoot for
   match/[id].tsx          a match with all its series
   bout/[id]/report.tsx    report a result: score + photo
   bout/[id]/confirm.tsx   check the opponent's photo
@@ -137,6 +138,21 @@ that acts on someone's behalf stays behind a session.
 `match/[id]` serves both. A participant gets the full screen; anyone else gets a
 spectator view built from `match_scorecard`, which carries finished matches
 only. A match still being shot shows a line saying so and nothing else.
+
+## The club you shoot for
+
+`primary_club_id` is the field that decides whether a club can field you, and it
+is joined straight into the public season table. Two guards in the database, not
+in this screen:
+
+* it has to be a club you are a member of, or the standings would carry a claim
+  nobody checked;
+* leaving a club clears it, rather than leaving a profile pointing at a roster
+  it is not on.
+
+A shooter can belong to several clubs. Only the one picked here can put them on
+a board — before `profile/edit.tsx` existed that was whichever club they joined
+first, permanently.
 
 ## Clubs and team matches
 

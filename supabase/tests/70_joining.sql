@@ -198,3 +198,82 @@ select public.redeem_club_invite(:'minted');
 
 reset role;
 reset request.jwt.claim.sub;
+
+-- ================================================= 6. editing your profile ===
+-- The club you shoot for decides whether a club can field you, and it is
+-- joined straight into the public season table — so it has to be a club you
+-- are actually in.
+set role authenticated;
+set request.jwt.claim.sub = '4a000000-0000-0000-0000-000000000002';
+
+update public.profiles set primary_club_id = null
+ where id = '4a000000-0000-0000-0000-000000000002';
+
+update public.profiles
+   set primary_club_id = (select id from public.clubs where slug = 'sv-joinerstadt')
+ where id = '4a000000-0000-0000-0000-000000000002';
+
+select 'a member picks the club they belong to: ' ||
+       (primary_club_id = (select id from public.clubs where slug = 'sv-joinerstadt'))::text
+  from public.profiles where id = '4a000000-0000-0000-0000-000000000002';
+
+-- expect failure: a club they are not in
+update public.profiles
+   set primary_club_id = (select id from public.clubs where slug = 'sv-karlsruhe')
+ where id = '4a000000-0000-0000-0000-000000000002';
+
+-- Renaming yourself is allowed; taking somebody else's handle is not.
+update public.profiles set display_name = 'Jo the Second'
+ where id = '4a000000-0000-0000-0000-000000000002';
+
+-- expect failure: the handle is taken
+update public.profiles set handle = 'joiner_one'
+ where id = '4a000000-0000-0000-0000-000000000002';
+
+-- expect failure: somebody else's profile
+update public.profiles set display_name = 'Hacked'
+ where id = '4a000000-0000-0000-0000-000000000001';
+
+reset role;
+reset request.jwt.claim.sub;
+
+select 'renamed: ' || display_name || ', shooting for ' ||
+       coalesce((select short_name from public.clubs where id = p.primary_club_id), 'nobody')
+  from public.profiles p where id = '4a000000-0000-0000-0000-000000000002';
+
+select 'the other profile is untouched: ' || (display_name = 'Jo One')::text
+  from public.profiles where id = '4a000000-0000-0000-0000-000000000001';
+
+-- Leaving the club stops you shooting for it.
+delete from public.club_members
+ where shooter_id = '4a000000-0000-0000-0000-000000000002'
+   and club_id = (select id from public.clubs where slug = 'sv-joinerstadt');
+
+select 'after leaving the club: shooting for ' ||
+       coalesce((select short_name from public.clubs where id = p.primary_club_id), 'nobody')
+  from public.profiles p where id = '4a000000-0000-0000-0000-000000000002';
+
+-- An opponent can always read your name, whatever your profile visibility says.
+update public.profiles set is_public = false
+ where id = '4a000000-0000-0000-0000-000000000001';
+
+insert into public.matches (discipline_id, format_id, shooter_a, shooter_b, state, opens_at, closes_at)
+select d.id, f.id, '4a000000-0000-0000-0000-000000000001',
+       '4a000000-0000-0000-0000-000000000002',
+       'live', now() - interval '1 hour', now() + interval '7 days'
+  from public.disciplines d, public.formats f
+ where d.code = 'AR10ET' and f.code = 'single_10';
+
+set role authenticated;
+set request.jwt.claim.sub = '4a000000-0000-0000-0000-000000000002';
+select 'a private opponent is still readable to me: ' || count(*)::text
+  from public.profiles where id = '4a000000-0000-0000-0000-000000000001';
+reset role;
+reset request.jwt.claim.sub;
+
+set role authenticated;
+set request.jwt.claim.sub = '4a000000-0000-0000-0000-000000000003';
+select 'but not to a stranger: ' || count(*)::text
+  from public.profiles where id = '4a000000-0000-0000-0000-000000000001';
+reset role;
+reset request.jwt.claim.sub;

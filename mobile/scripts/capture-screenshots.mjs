@@ -477,6 +477,12 @@ const shots = [
     },
   },
   {
+    name: 'profile-edit',
+    path: '/profile/edit',
+    signedIn: true,
+    note: 'Fixing what signing up got wrong, and picking the club that can field you.',
+  },
+  {
     name: 'club-invite',
     path: `/club/invite?club=${fixtures.clubs[0].id}`,
     signedIn: true,

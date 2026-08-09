@@ -54,6 +54,7 @@ reported by you and still hidden, series 4 waiting to be shot.
   <img src="docs/screenshots/match-light.png" alt="A running match with one series still blind" width="240">
   <img src="docs/screenshots/rankings-light.png" alt="Rankings" width="240">
   <img src="docs/screenshots/profile-light.png" alt="Profile: club, ratings, reliability" width="240">
+  <img src="docs/screenshots/profile-edit-light.png" alt="Editing a profile, and picking the club that fields you" width="240">
 </p>
 
 **Reporting and checking.** One number, the inner tens where the discipline is
@@ -168,6 +169,7 @@ Migrations:
 | `..._club_entry.sql` | a club official entering the club in a team season |
 | `..._club_invites.sql` | minting, listing and withdrawing an invite code |
 | `..._email_notifications.sql` | the second delivery channel and its queue |
+| `..._profile_edit.sql` | the club you shoot for has to be one you belong to |
 
 Edge functions:
 

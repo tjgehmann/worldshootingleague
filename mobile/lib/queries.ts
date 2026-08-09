@@ -350,6 +350,52 @@ export async function setPrimaryClub(userId: string, clubId: string | null): Pro
   if (error) throw error;
 }
 
+export interface ProfileEdit {
+  display_name: string;
+  handle: string;
+  country_code: string;
+  bio: string | null;
+  primary_club_id: string | null;
+}
+
+/**
+ * One update for the whole form. The handle is unique and the club has to be
+ * one the shooter belongs to; both are refused by the database rather than by
+ * the client, so this surfaces what it says.
+ */
+export async function updateProfile(userId: string, edit: ProfileEdit): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      display_name: edit.display_name.trim(),
+      handle: edit.handle.trim().toLowerCase(),
+      country_code: edit.country_code.trim().toUpperCase(),
+      bio: edit.bio?.trim() || null,
+      primary_club_id: edit.primary_club_id,
+    })
+    .eq('id', userId);
+
+  if (error) throw error;
+}
+
+/** Turns what Postgres says into what a shooter can act on. */
+export function describeProfileError(error: unknown): string {
+  const code = (error as { code?: string } | null)?.code;
+  const message = (error as { message?: string } | null)?.message ?? '';
+
+  if (code === '23505') return 'That handle is taken. Try another.';
+  if (message.includes('profiles_handle_check')) {
+    return 'A handle is 3–24 characters: lower case, digits and _.';
+  }
+  if (message.includes('profiles_display_name_check')) {
+    return 'A display name is between 2 and 40 characters.';
+  }
+  if (message.includes('country_code')) return 'A country is two letters, like DE.';
+  if (message.includes('club you belong to')) return 'You can only shoot for a club you belong to.';
+
+  return message || 'The profile could not be saved.';
+}
+
 // ----------------------------------------------------------- team league ---
 
 export async function fetchTeamMatches(clubId: string): Promise<TeamMatch[]> {

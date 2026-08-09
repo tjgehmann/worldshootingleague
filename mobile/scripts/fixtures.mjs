@@ -591,7 +591,10 @@ export const fixtures = {
     notify_push: true,
     club: KARLSRUHE,
   },
-  clubMembers: [{ club_id: KARLSRUHE.id, role: 'owner', club: KARLSRUHE }],
+  clubMembers: [
+    { club_id: KARLSRUHE.id, role: 'owner', club: KARLSRUHE },
+    { club_id: ZURICH.id, role: 'member', club: ZURICH },
+  ],
   /** The roster read, which embeds the shooter rather than the club. */
   clubRoster: [
     { role: 'owner', shooter: people[ME] },

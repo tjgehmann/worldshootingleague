@@ -106,6 +106,9 @@ export default function ProfileScreen() {
               {club ? ` · ${club.name}` : ''}
             </Meta>
           </View>
+          <Link href="/profile/edit" asChild>
+            <Button label="Edit" variant="quiet" size="sm" onPress={() => {}} style={{ marginTop: 0 }} />
+          </Link>
         </View>
 
         <Kicker>Club</Kicker>
