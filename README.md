@@ -11,13 +11,35 @@ This repository contains:
   level security and Glicko-2 rating.
 * **`mobile/`** — the Expo client for iOS, Android and web.
 
+## Two ways to shoot
+
+**A season** pairs you every round and gives you a week. It is the competitive
+spine: a table only means something if everybody in it played the same schedule.
+
+**An open series** does not wait for anything. You declare that you are about to
+shoot, you shoot, you report — with no opponent in sight. Your series waits, and
+the moment somebody at a similar rating reports one, both numbers are revealed
+at once and the match is scored. Neither of you waited for the other, because
+both were going to the range anyway.
+
+That order matters for more than convenience. You commit your score before you
+know who you are up against, so there is no number to aim at — the blind reveal
+comes out of it stronger than in a season match.
+
+What it has to defend against is not a wrong score, which the photo and the
+opponent's check already cover, but picking *which* series to submit. Shoot ten,
+report the best, and the ranking is worthless in a fortnight. So the window
+opens when you declare, and a series fired before that is refused. One tap
+before you step up to the firing point, and the number next to your name means
+something.
+
 ## Formats
 
 Short formats, deliberately:
 
 | Format | How it runs |
 |---|---|
-| `single_10` | One series of 10 shots, one week to shoot it. |
+| `single_10` | One series of 10 shots. A season gives a week; an open series gives 45 minutes from declaring. |
 | `best_of_five` | Five series of 10 shots, first to 3 points wins. All five bouts are open at once. |
 
 Disciplines in the seed: `AR10ET` (air rifle 10 m standing), `AP10ET` (air
@@ -46,11 +68,14 @@ anyone; a match still being shot is not.
   <img src="docs/screenshots/sign-in-light.png" alt="Sign in or create an account" width="240">
 </p>
 
-**Competing.** Your matches, one of them running: series 1 decided, series 2
-reported by you and still hidden, series 4 waiting to be shot.
+**Competing.** The first card is the answer to "I am at a range right now":
+shoot a series without an opponent, and it is compared with whoever reports one
+next. Below it, a running season match — series 1 decided, series 2 reported by
+you and still hidden, series 4 waiting to be shot.
 
 <p>
   <img src="docs/screenshots/matches-light.png" alt="My matches" width="240">
+  <img src="docs/screenshots/series-new-light.png" alt="Shooting a series with no opponent" width="240">
   <img src="docs/screenshots/match-light.png" alt="A running match with one series still blind" width="240">
   <img src="docs/screenshots/rankings-light.png" alt="Rankings" width="240">
   <img src="docs/screenshots/profile-light.png" alt="Profile: club, ratings, reliability" width="240">
@@ -171,6 +196,8 @@ Migrations:
 | `..._email_notifications.sql` | the second delivery channel and its queue |
 | `..._profile_edit.sql` | the club you shoot for has to be one you belong to |
 | `..._pair_team_rounds.sql` | the tick draws club rounds with the club pairing |
+| `..._open_series.sql` | shooting now: declare, report, get compared |
+| `..._open_series_photos.sql` | proof for a series that has no bout yet |
 
 Edge functions:
 
@@ -225,6 +252,11 @@ What is covered:
   twice being the same entry, leaving and coming back, a national ladder
   refusing the wrong country, a team season refusing an individual and vice
   versa, and a club that only an official may enter.
+* **`80_open_series.sql`** — declaring, a series shot before the window being
+  refused, reporting twice being refused, the second shooter being matched
+  against whoever is already waiting, the match settling and rating itself, the
+  same two not being paired again straight away, and the tick reporting on every
+  job it runs — which is what caught the harness applying `scheduling.sql` last.
 * **`60_accounts.sql`** — an adult gets in and a minor does not, consent is
   recorded, the export carries what it should, and deletion removes the name
   while the results survive; the beta's own metrics, admin-only.

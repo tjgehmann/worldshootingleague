@@ -48,15 +48,20 @@ PSQL="PGHOST=$CLUSTER/run PGPORT=$PORT PGUSER=postgres"
 
 as "$PSQL psql -q -c 'create database $DB;'"
 
-# pg_cron lives in the hosted project only.
-sed -e 's/^create extension if not exists pg_cron;/-- pg_cron: hosted only/' \
-    "$REPO/supabase/migrations"/*_scheduling.sql \
-  | sed -e '/^select cron.schedule($/,$d' > "$CLUSTER/work/scheduling.sql"
+# pg_cron lives in the hosted project only, so the extension and the schedule
+# are stripped — but the file keeps its name and therefore its place in the
+# ordering. Applying it out of order would let its create-or-replace overwrite
+# every later redefinition, and the suite would be testing functions the real
+# project never runs.
+for f in "$REPO/supabase/migrations"/*_scheduling.sql; do
+  sed -e 's/^create extension if not exists pg_cron;/-- pg_cron: hosted only/' "$f" \
+    | sed -e '/^select cron.schedule($/,$d' > "$CLUSTER/work/$(basename "$f")"
+done
 
 cp "$REPO/supabase/tests/00_local_supabase_stub.sql" "$CLUSTER/work/stub.sql"
 cp "$REPO/supabase/seed.sql" "$CLUSTER/work/seed.sql"
 for f in "$REPO/supabase/migrations"/*.sql; do
-  case "$f" in *_scheduling.sql) continue ;; esac
+  case "$f" in *_scheduling.sql) continue ;; esac   # already written, stripped
   cp "$f" "$CLUSTER/work/"
 done
 mkdir -p "$CLUSTER/work/tests"
@@ -70,7 +75,6 @@ apply() {
 echo "==> applying stub + migrations + seed"
 apply "$CLUSTER/work/stub.sql"
 for f in "$CLUSTER/work"/2026*.sql; do apply "$f"; done
-apply "$CLUSTER/work/scheduling.sql"
 apply "$CLUSTER/work/seed.sql"
 
 echo "==> running tests"

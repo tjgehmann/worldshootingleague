@@ -9,7 +9,7 @@
 \pset tuples_only on
 
 select 'tables:            ' ||
-       case when count(*) = 21 then 'OK (21)' else 'MISSING — found ' || count(*) end
+       case when count(*) = 22 then 'OK (22)' else 'MISSING — found ' || count(*) end
   from pg_tables
  where schemaname = 'public'
    and tablename in (
@@ -17,7 +17,7 @@ select 'tables:            ' ||
      'matches','bouts','submissions','bout_confirmations','disputes',
      'ratings','rating_events',
      'clubs','club_members','club_invites','club_season_entries','team_matches',
-     'device_tokens','notifications','deletion_requests');
+     'device_tokens','notifications','deletion_requests','open_series');
 
 select 'rls enabled:       ' ||
        case when count(*) = 0 then 'OK' else 'FAIL — unprotected: ' || string_agg(relname, ', ') end
@@ -44,7 +44,7 @@ select 'submissions write: ' ||
  where schemaname = 'public' and tablename = 'submissions';
 
 select 'functions:         ' ||
-       case when count(*) = 31 then 'OK (31)' else 'MISSING — found ' || count(*) end
+       case when count(*) = 36 then 'OK (36)' else 'MISSING — found ' || count(*) end
   from pg_proc p
   join pg_namespace n on n.oid = p.pronamespace
  where n.nspname = 'public'
@@ -68,7 +68,10 @@ select 'functions:         ' ||
      -- the second delivery channel
      'pending_email_notifications',
      -- editing a profile without lying about which club fields you
-     'check_primary_club_membership','shares_a_match_with');
+     'check_primary_club_membership','shares_a_match_with',
+     -- shooting without waiting to be paired
+     'declare_open_series','report_open_series','withdraw_open_series',
+     'match_open_series','check_series_numbers');
 
 select 'views:             ' ||
        case when count(*) = 5 then 'OK (5)' else 'MISSING — found ' || count(*) end

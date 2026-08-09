@@ -196,6 +196,31 @@ export interface Reliability {
   confirmation_rate_pct: number | null;
 }
 
+// ---------------------------------------------------------- open series ----
+
+export type OpenSeriesState = 'open' | 'reported' | 'matched' | 'expired';
+
+/**
+ * A series shot without an opponent. Declared first, so the window it has to be
+ * fired in starts before the shooting does — which is what stops somebody
+ * shooting ten and reporting the best.
+ */
+export interface OpenSeries {
+  id: string;
+  shooter_id: string;
+  discipline_id: string;
+  state: OpenSeriesState;
+  opens_at: string;
+  report_by: string;
+  total: number | null;
+  inner_tens: number | null;
+  shot_at: string | null;
+  reported_at: string | null;
+  match_id: string | null;
+  matched_at: string | null;
+  created_at: string;
+}
+
 // --------------------------------------------------------------- referee ---
 
 export type DisputeState = 'open' | 'assigned' | 'resolved' | 'withdrawn';

@@ -204,6 +204,8 @@ function restResponse(pathname, search, wantsObject, { asReferee = false } = {})
         return params.has('club_id') ? fixtures.clubRoster : fixtures.clubMembers;
       case 'clubs':
         return fixtures.clubs;
+      case 'open_series':
+        return fixtures.openSeries;
       default:
         return [];
     }
@@ -475,6 +477,12 @@ const shots = [
       await page.getByText('I accept the').click();
       await page.waitForTimeout(300);
     },
+  },
+  {
+    name: 'series-new',
+    path: '/series/new',
+    signedIn: true,
+    note: 'The answer to "I am at a range now": shoot, report, get compared.',
   },
   {
     name: 'profile-edit',

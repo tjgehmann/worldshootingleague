@@ -24,9 +24,14 @@ import { useAuth } from '@/lib/auth';
 import { formatPoints, timeLeft } from '@/lib/format';
 import { dismissEntry, flushOutbox, retryEntry } from '@/lib/outbox';
 import { useOutbox } from '@/lib/use-outbox';
-import { fetchBoutSubmissions, fetchMyMatches, type MatchDetail } from '@/lib/queries';
+import {
+  fetchBoutSubmissions,
+  fetchLiveOpenSeries,
+  fetchMyMatches,
+  type MatchDetail,
+} from '@/lib/queries';
 import { TAB_BAR_CLEARANCE, useTheme } from '@/lib/theme';
-import type { Bout } from '@/lib/types';
+import type { Bout, OpenSeries } from '@/lib/types';
 
 function segmentStates(match: MatchDetail, userId: string): SegmentState[] {
   return match.bouts.map((b: Bout) => {
@@ -178,6 +183,12 @@ export default function MatchesScreen() {
     enabled: boutIds.length > 0,
   });
 
+  const openSeries = useQuery({
+    queryKey: ['open-series', userId],
+    queryFn: () => fetchLiveOpenSeries(userId!),
+    enabled: !!userId,
+  });
+
   if (matches.isLoading) return <Loading />;
   if (matches.error) return <Empty text="Could not load your matches." />;
 
@@ -207,17 +218,22 @@ export default function MatchesScreen() {
             {openRound ? <Kicker>Current season</Kicker> : null}
             <LargeTitle>My matches</LargeTitle>
             <OutboxBanner />
+            <OpenSeriesCard series={openSeries.data ?? null} />
           </View>
         }
         ListEmptyComponent={
           <Card>
             <Text style={[t.text.name, { color: t.colors.ink }]}>Nothing to shoot yet</Text>
             <Hint>
-              Enter a season and the next round pairs you with somebody at your level. You
-              can join one that is already running.
+              If you are at a range right now, shoot a series and it will be compared with
+              whoever reports one next — no waiting for a round. Or enter a season and be
+              paired every week.
             </Hint>
+            <Link href="/series/new" asChild>
+              <Button label="Shoot a series now" onPress={() => {}} />
+            </Link>
             <Link href="/(public)" asChild>
-              <Button label="Find a season" onPress={() => {}} />
+              <Button label="Find a season" variant="quiet" onPress={() => {}} />
             </Link>
           </Card>
         }
@@ -232,5 +248,59 @@ export default function MatchesScreen() {
         )}
       />
     </SafeAreaView>
+  );
+}
+
+/**
+ * The way in that does not need a round, and the state of the one in flight.
+ *
+ * It sits above the matches because it is the answer to the only question a new
+ * account has: I am at the range now, what can I do?
+ */
+function OpenSeriesCard({ series }: { series: OpenSeries | null }) {
+  const t = useTheme();
+
+  if (!series) {
+    return (
+      <Link href="/series/new" asChild>
+        <Pressable>
+          <Card>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space.md }}>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={[t.text.name, { color: t.colors.ink }]}>At a range now?</Text>
+                <Meta numberOfLines={2}>
+                  Shoot a series and it is compared with whoever reports one next.
+                </Meta>
+              </View>
+              <Text style={{ color: t.colors.accent, fontSize: 15, fontWeight: '600' }}>Start</Text>
+            </View>
+          </Card>
+        </Pressable>
+      </Link>
+    );
+  }
+
+  return (
+    <Link href="/series/new" asChild>
+      <Pressable>
+        <Card tone={series.state === 'open' ? 'positive' : undefined}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space.md }}>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[t.text.name, { color: t.colors.ink }]}>
+                {series.state === 'open' ? 'Series in progress' : 'Series waiting'}
+              </Text>
+              <Meta numberOfLines={2}>
+                {series.state === 'open'
+                  ? `Report it within ${timeLeft(series.report_by)}`
+                  : 'Waiting for somebody at your level to report one'}
+              </Meta>
+            </View>
+            <Pill tone={series.state === 'open' ? 'turn' : 'wait'}>
+              {series.state === 'open' ? 'Report' : 'Waiting'}
+            </Pill>
+          </View>
+        </Card>
+      </Pressable>
+    </Link>
   );
 }

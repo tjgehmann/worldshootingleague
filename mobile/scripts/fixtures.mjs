@@ -546,6 +546,8 @@ const confirmations = [{ submission_id: 'eeee0001-0000-4000-8000-000000000002' }
 
 export const fixtures = {
   people,
+  /** No series in flight, so the screen offers to start one. */
+  openSeries: [],
   /** Active codes, as club_invites_active() returns them to an official. */
   clubInvites: [
     {

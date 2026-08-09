@@ -9,6 +9,7 @@ import type {
   DisputeOutcome,
   LeaderboardRow,
   Match,
+  OpenSeries,
   Profile,
   Rating,
   RecentForm,
@@ -463,6 +464,59 @@ export async function requestAccountDeletion(reason?: string): Promise<void> {
     p_reason: reason ?? null,
   });
   if (error) throw error;
+}
+
+// -------------------------------------------------------- open series ------
+
+/**
+ * Declaring opens the window the series has to be fired in, so this is tapped
+ * before stepping up to the firing point rather than after.
+ */
+export async function declareOpenSeries(disciplineId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('declare_open_series', {
+    p_discipline_id: disciplineId,
+  });
+  if (error) throw error;
+  return data as unknown as string;
+}
+
+export async function reportOpenSeries(input: {
+  id: string;
+  total: number;
+  innerTens: number | null;
+  photoPath: string;
+  shotAt: Date;
+  fromCamera: boolean;
+}): Promise<void> {
+  const { error } = await supabase.rpc('report_open_series', {
+    p_id: input.id,
+    p_total: input.total,
+    p_inner_tens: input.innerTens,
+    p_photo_path: input.photoPath,
+    p_shot_at: input.shotAt.toISOString(),
+    p_capture_method: input.fromCamera ? 'in_app_camera' : 'gallery',
+  });
+  if (error) throw error;
+}
+
+export async function withdrawOpenSeries(id: string): Promise<void> {
+  const { error } = await supabase.rpc('withdraw_open_series', { p_id: id });
+  if (error) throw error;
+}
+
+/** The one that is live, if any: declared and unreported, or waiting. */
+export async function fetchLiveOpenSeries(userId: string): Promise<OpenSeries | null> {
+  const { data, error } = await supabase
+    .from('open_series')
+    .select('*')
+    .eq('shooter_id', userId)
+    .in('state', ['open', 'reported'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .returns<OpenSeries[]>();
+
+  if (error) throw error;
+  return data?.[0] ?? null;
 }
 
 // ------------------------------------------------------------- referee ------

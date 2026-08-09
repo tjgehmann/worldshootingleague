@@ -53,6 +53,7 @@ app/
   match/[id].tsx          a match with all its series
   bout/[id]/report.tsx    report a result: score + photo
   bout/[id]/confirm.tsx   check the opponent's photo
+  series/new.tsx          shoot a series with no opponent, and report it
   club/join.tsx           join by invite code, or start a club
   club/invite.tsx         mint a code and see who is in
   case/[id].tsx           a referee's case: both photos, and how it ends
@@ -91,6 +92,19 @@ means a correction can change who won it.
 The photographs are readable to a referee exactly while a case on that series is
 open. That falls out of the storage policy rather than being enforced in the
 client, so a closed case shows the decision and no evidence.
+
+## Shooting without an opponent
+
+`series/new.tsx` is one screen with three states — pick a discipline, shoot,
+report — because they are one errand at a firing point.
+
+Declaring is not ceremony: it opens the window the series has to be fired in,
+and `report_open_series()` refuses anything shot before it. Without that, the
+obvious move is to shoot ten and report the best.
+
+This is the one place the offline story does not apply, and the screen says so.
+A season report goes through the outbox and waits for reception; an open series
+has 45 minutes, so a report that waited would arrive too late to count.
 
 ## Entering a season
 
