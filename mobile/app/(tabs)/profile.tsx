@@ -8,6 +8,7 @@ import {
   Avatar,
   Button,
   Card,
+  Hairline,
   Hint,
   Kicker,
   Label,
@@ -27,6 +28,7 @@ import {
   fetchRatings,
   fetchReliability,
   requestAccountDeletion,
+  setEmailEnabled,
   setPushEnabled,
 } from '@/lib/queries';
 import { TAB_BAR_CLEARANCE, useTheme } from '@/lib/theme';
@@ -55,6 +57,11 @@ export default function ProfileScreen() {
     queryKey: ['reliability', userId],
     queryFn: () => fetchReliability(userId!),
     enabled: !!userId,
+  });
+
+  const toggleEmail = useMutation({
+    mutationFn: (enabled: boolean) => setEmailEnabled(userId!, enabled),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profile', userId] }),
   });
 
   const togglePush = useMutation({
@@ -223,9 +230,23 @@ export default function ProfileScreen() {
               trackColor={{ true: t.colors.accentSolid, false: t.colors.surfaceAlt }}
             />
           </View>
+          <Hairline />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View style={{ flex: 1, paddingRight: t.space.md }}>
+              <Text style={[t.text.name, { color: t.colors.ink }]}>Email</Text>
+              <Meta>The same messages, to the address you signed up with.</Meta>
+            </View>
+            <Switch
+              value={profile.data?.notify_email ?? true}
+              onValueChange={(v) => toggleEmail.mutate(v)}
+              disabled={toggleEmail.isPending}
+              trackColor={{ true: t.colors.accentSolid, false: t.colors.surfaceAlt }}
+            />
+          </View>
           <Hint>
-            With push off, a match can quietly run out of time. Deadlines are not
-            extended.
+            With both off, a match can quietly run out of time. Deadlines are not
+            extended. On a phone that has not added the app to its home screen, email is
+            the only one that arrives.
           </Hint>
         </Card>
 

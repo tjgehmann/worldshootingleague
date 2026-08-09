@@ -167,12 +167,13 @@ Migrations:
 | `..._beta_metrics.sql` | the numbers the beta is judged on |
 | `..._club_entry.sql` | a club official entering the club in a team season |
 | `..._club_invites.sql` | minting, listing and withdrawing an invite code |
+| `..._email_notifications.sql` | the second delivery channel and its queue |
 
 Edge functions:
 
 | Function | Purpose |
 |---|---|
-| `send-notifications` | drains the notification outbox to Expo's push service |
+| `send-notifications` | drains the notification outbox to push **and** email |
 | `public-pages` | server-rendered HTML for seasons, matches and clubs |
 
 ## Testing locally
@@ -184,10 +185,12 @@ Two suites, neither needing Docker, a device or a network.
 ./scripts/test-node.sh    # logic that runs off-database
 ```
 
-`test-node.sh` covers the two pieces that are pure enough to check directly:
+`test-node.sh` covers the three pieces that are pure enough to check directly:
 the public page renderer (escaping, meta tags, content actually being in the
-HTML) and the outbox's error classification — the decision that separates
-"wait for reception" from "the server said no".
+HTML), the notification email builder (escaping, links, and that no message
+carries a score — the blind reveal would otherwise have a hole an email could
+walk through), and the outbox's error classification, the decision that
+separates "wait for reception" from "the server said no".
 
 The script builds a throwaway cluster, applies stub, migrations and seed, and
 runs the tests in `supabase/tests/`. The stub stands in for what Supabase
@@ -236,12 +239,27 @@ now also enter a season from the app, and have a referee end a disagreement.
 still has to happen once, from pushing the schema to writing the invitation,
 including how the beta should be shaped so that the ladder is not empty.
 
-The beta ships as a **web app**, not through the stores: no app review, and a
-club official can send a link instead of an invitation to install something.
+The beta ships as a **web app**, not through the stores. Not because sport
+shooting apps are banned — they are not; the store rules prohibit *facilitating
+the purchase* of firearms and ammunition, and ISSF scoring apps sit in both
+stores today — but because store review, two developer accounts and signed
+builds cost a fortnight that buys nothing in week one.
 
 ```bash
 cd mobile && npm run build:web    # dist/, ready for any static host
 ```
+
+That build carries a service worker, which is what makes a **cold start without
+a network** work. The outbox keeps a report safe and the query cache keeps open
+matches readable, but neither helps if the app will not open — and a range is a
+concrete box in a basement, so opening it there is the normal case. Verified by
+serving the build, letting the worker install, taking the server away
+completely, and loading the page again: it renders.
+
+What a native build would still buy is push on iOS, where a web app can only be
+pushed to once somebody has added it to their home screen. That is why
+notifications also go out by **email**, which reaches everybody and needs
+nothing installed.
 
 Four things are worth knowing before the invitations go out:
 

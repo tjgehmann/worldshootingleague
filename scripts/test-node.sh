@@ -13,6 +13,11 @@ node --experimental-strip-types --no-warnings \
   "$REPO/supabase/functions/public-pages/render.test.ts"
 
 echo
+echo "==> notification emails"
+node --experimental-strip-types --no-warnings \
+  "$REPO/supabase/functions/send-notifications/email.test.ts"
+
+echo
 echo "==> outbox error classification"
 node --experimental-strip-types --no-warnings \
   "$REPO/mobile/lib/outbox-errors.test.ts"

@@ -1,21 +1,42 @@
 /**
- * Drains public.notifications and hands them to Expo's push service.
+ * Drains public.notifications into the two channels that can reach a shooter.
  *
  * The database decides what is worth telling someone; this only moves it. That
  * split is why the triggers are testable without a network and why a delivery
  * outage loses nothing — unsent rows simply stay unsent.
  *
+ * Two passes, tracked separately:
+ *
+ *   push   to every device that claimed the account, marked in sent_at
+ *   email  to the address on the account, marked in emailed_at
+ *
+ * They are independent because a shooter with no device token would otherwise
+ * leave a row nothing ever settles, and because a push that failed should not
+ * stop the email that would have worked. Email is the channel that matters for
+ * this beta: it ships as a web app, and on iOS a web app can only be pushed to
+ * after somebody adds it to their home screen.
+ *
  * Invoke on a schedule (pg_cron via pg_net, or an external scheduler):
  *   curl -X POST "$SUPABASE_URL/functions/v1/send-notifications" \
  *        -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+ *
+ * Environment, beyond the two Supabase variables:
+ *   RESEND_API_KEY   set to send email at all; unset means push only
+ *   NOTIFY_FROM      "World Shooting League <league@example.org>"
+ *   PUBLIC_SITE_URL  where the web app lives, for the link in the email
  */
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
+import { buildEmail, type EmailNotification } from './email.ts';
+
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+const RESEND_URL = 'https://api.resend.com/emails';
 /** Expo accepts at most 100 messages per request. */
 const CHUNK = 100;
 const MAX_PER_RUN = 500;
+/** Resend has no batch endpoint worth the complexity; these go one at a time. */
+const MAX_EMAILS_PER_RUN = 200;
 
 interface PendingRow {
   id: string;
@@ -31,6 +52,76 @@ interface ExpoTicket {
   id?: string;
   message?: string;
   details?: { error?: string };
+}
+
+/**
+ * The email pass. Returns how many were sent; a row is only marked once the
+ * provider has accepted it, so a failed send is simply retried next run.
+ */
+async function sendEmails(
+  supabase: ReturnType<typeof createClient>,
+): Promise<{ emailed: number; skipped: string | null }> {
+  const apiKey = Deno.env.get('RESEND_API_KEY');
+  const from = Deno.env.get('NOTIFY_FROM');
+  const siteUrl = Deno.env.get('PUBLIC_SITE_URL') ?? undefined;
+
+  if (!apiKey || !from) {
+    return { emailed: 0, skipped: 'RESEND_API_KEY or NOTIFY_FROM not set' };
+  }
+
+  const { data, error } = await supabase.rpc('pending_email_notifications', {
+    p_limit: MAX_EMAILS_PER_RUN,
+  });
+
+  if (error) {
+    console.error('could not read the email queue', error.message);
+    return { emailed: 0, skipped: error.message };
+  }
+
+  const pending = (data ?? []) as unknown as EmailNotification[];
+  const delivered: string[] = [];
+
+  for (const row of pending) {
+    const mail = buildEmail(row, siteUrl);
+
+    try {
+      const res = await fetch(RESEND_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from,
+          to: [mail.to],
+          subject: mail.subject,
+          text: mail.text,
+          html: mail.html,
+        }),
+      });
+
+      if (res.ok) {
+        delivered.push(row.id);
+      } else {
+        // 4xx is usually a bad address and 5xx is the provider having a bad
+        // day. Neither is worth losing the row over: leaving emailed_at null
+        // retries it, and the backlog metric shows if that never resolves.
+        console.error(`resend responded ${res.status} for ${row.id}`);
+      }
+    } catch (e) {
+      console.error('email request failed', e);
+      break;
+    }
+  }
+
+  if (delivered.length) {
+    await supabase
+      .from('notifications')
+      .update({ emailed_at: new Date().toISOString() })
+      .in('id', delivered);
+  }
+
+  return { emailed: delivered.length, skipped: null };
 }
 
 function chunk<T>(items: T[], size: number): T[][] {
@@ -66,8 +157,12 @@ Deno.serve(async (req) => {
   if (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
+
+  // Nothing to push is not nothing to do: most shooters in this beta have no
+  // device token at all, and their notifications go out by email.
   if (!pending?.length) {
-    return Response.json({ sent: 0, failed: 0, tokens_disabled: 0 });
+    const mail = await sendEmails(supabase);
+    return Response.json({ sent: 0, failed: 0, tokens_disabled: 0, ...mail });
   }
 
   // One Expo message per (notification, device). A shooter with a phone and a
@@ -155,9 +250,12 @@ Deno.serve(async (req) => {
       .in('id', [...deadTokens]);
   }
 
+  const mail = await sendEmails(supabase);
+
   return Response.json({
     sent: sent.size,
     failed: failed.size,
     tokens_disabled: deadTokens.size,
+    ...mail,
   });
 });

@@ -38,9 +38,17 @@ Supabase project. Budget half a day for it and expect two or three surprises.
 
 ## 2. The app
 
-The beta ships as a **web app**, not through the stores. That removes app
-review — firearms content policies are a real rejection risk — and it means a
-club official can send a link instead of an invitation to install something.
+The beta ships as a **web app**, not through the stores. Not because the stores
+ban this: Apple and Google prohibit apps that *facilitate the purchase* of
+firearms or ammunition, and ISSF scoring apps sit in both stores today. It is
+that review, two developer accounts and signed builds cost a fortnight that buys
+nothing in week one — and a club official can send a link instead of an
+invitation to install something.
+
+If you do go to the stores later, the rules to stay inside are the ones you are
+already inside: no affiliate links to weapon or ammunition sellers, no equipment
+marketplace, an honest age rating, and screenshots of scores rather than of
+firearms.
 
 ```bash
 cd mobile
@@ -57,8 +65,29 @@ Host `dist/` anywhere static. Two things the host must do:
 * **Serve over HTTPS**, or the camera will not open.
 
 Installing it to a home screen gives a standalone app with an icon
-(`public/manifest.webmanifest`). Push notifications on iOS web are limited;
-that is a reason to do a native build later, not a reason to delay the beta.
+(`public/manifest.webmanifest`), and the service worker in the build means it
+opens without a network — which is the state a shooter is in at a range.
+
+Push on iOS web only works once the app has been added to the home screen, so
+say that in the invitation. Email is the channel that reaches everybody.
+
+### Notification email
+
+The outbox goes out by email as well as push. Set three variables on the
+`send-notifications` function, then schedule it:
+
+```bash
+npx supabase secrets set \
+  RESEND_API_KEY=re_... \
+  NOTIFY_FROM='World Shooting League <league@your-domain.org>' \
+  PUBLIC_SITE_URL=https://league.your-domain.org
+npx supabase functions deploy send-notifications
+```
+
+Without `RESEND_API_KEY` the function still runs and still pushes; it just skips
+the email pass and says so in its response. The sending domain has to be
+verified with the provider, or everything lands in spam — do that before the
+invitations go out, not after.
 
 ## 3. Before real people
 

@@ -36,6 +36,7 @@ export interface Profile {
   role: 'shooter' | 'referee' | 'admin';
   primary_club_id: string | null;
   notify_push: boolean;
+  notify_email: boolean;
   club: Club | null;
 }
 

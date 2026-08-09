@@ -153,7 +153,7 @@ export async function fetchProfile(userId: string): Promise<Profile> {
     .from('profiles')
     .select(
       `id, handle, display_name, country_code, bio, equipment, role, primary_club_id,
-       notify_push, club:clubs(${CLUB_FIELDS})`,
+       notify_push, notify_email, club:clubs(${CLUB_FIELDS})`,
     )
     .eq('id', userId)
     .single<Profile>();
@@ -386,6 +386,14 @@ export async function setPushEnabled(userId: string, enabled: boolean): Promise<
   const { error } = await supabase
     .from('profiles')
     .update({ notify_push: enabled })
+    .eq('id', userId);
+  if (error) throw error;
+}
+
+export async function setEmailEnabled(userId: string, enabled: boolean): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ notify_email: enabled })
     .eq('id', userId);
   if (error) throw error;
 }

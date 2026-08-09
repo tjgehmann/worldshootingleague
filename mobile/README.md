@@ -153,9 +153,26 @@ The client's only job is to hand its device token to the database
 triggers in Postgres; delivery is an edge function. Tapping a notification
 follows the `route` in its payload straight to the match.
 
-Push can be turned off in the profile. It is stored on the profile rather than
-on the device, so it holds across reinstalls — and the database stops queueing
-at the source rather than sending into the void.
+Two channels, switchable separately in the profile. Push is the better one and
+cannot be relied on: this ships as a web app, and on iOS a web app can only be
+pushed to after somebody has added it to their home screen. Email reaches
+everybody and needs nothing installed.
+
+Both settings live on the profile rather than on the device, so they hold across
+reinstalls — and the database stops queueing at the source rather than sending
+into the void.
+
+## Offline, before the app has even started
+
+`scripts/finish-web-build.mjs` generates a service worker that precaches the
+shell and every hashed asset, so the app opens without a network. Without it the
+rest of the offline story is moot: an outbox that keeps a report safe is no help
+if the app will not start in the basement where the report was shot.
+
+The worker deliberately handles **same-origin GETs only**. Everything Supabase —
+API, storage, auth — is left to fail, because the app's offline behaviour is
+built on those failures. A worker that answered them from a cache would show a
+stale score, and one of those is the opponent's.
 
 ## What the blind reveal looks like in the client
 

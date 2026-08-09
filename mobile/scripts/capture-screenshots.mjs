@@ -338,6 +338,9 @@ async function contextFor(browser, { theme, signedIn, offline, outbox, asReferee
     hasTouch: true,
     locale: 'en-GB',
     timezoneId: 'Europe/Berlin',
+    // The build ships a service worker. Letting it install here would put a
+    // cached bundle between the run and the code being photographed.
+    serviceWorkers: 'block',
   });
 
   if (signedIn) {
