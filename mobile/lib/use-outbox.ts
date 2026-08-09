@@ -9,6 +9,8 @@ export function useOutbox(): {
   rejected: OutboxEntry[];
   /** Bout ids with something waiting, so a bout can show "queued". */
   queuedBoutIds: Set<string>;
+  /** Open series ids with a report still on the phone. */
+  queuedSeriesIds: Set<string>;
 } {
   const [entries, setEntries] = useState<OutboxEntry[]>([]);
 
@@ -21,6 +23,11 @@ export function useOutbox(): {
     entries,
     pending: entries.filter((e) => e.state === 'pending'),
     rejected: entries.filter((e) => e.state === 'rejected'),
-    queuedBoutIds: new Set(entries.map((e) => e.boutId)),
+    queuedBoutIds: new Set(
+      entries.filter((e) => e.kind === 'bout').map((e) => e.boutId),
+    ),
+    queuedSeriesIds: new Set(
+      entries.filter((e) => e.kind === 'series').map((e) => e.seriesId),
+    ),
   };
 }

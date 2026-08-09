@@ -7,14 +7,14 @@ import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'r
 import { Button, Card, Field, Hint, Kicker, LargeTitle, Loading, Meta, Note, Pill } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { formatScore, timeLeft } from '@/lib/format';
-import { uploadSeriesPhoto } from '@/lib/photos';
+import { flushOutbox, queueSeriesReport } from '@/lib/outbox';
 import {
   declareOpenSeries,
   fetchDisciplines,
   fetchLiveOpenSeries,
-  reportOpenSeries,
   withdrawOpenSeries,
 } from '@/lib/queries';
+import { useOutbox } from '@/lib/use-outbox';
 import { useTheme } from '@/lib/theme';
 import type { Discipline } from '@/lib/types';
 
@@ -49,9 +49,13 @@ export default function NewSeriesScreen() {
     refetchInterval: 20_000,
   });
 
+  const { queuedSeriesIds } = useOutbox();
+
   const series = live.data ?? null;
   const discipline = disciplines.data?.find((d) => d.id === series?.discipline_id);
   const requiresInnerTens = discipline?.requires_inner_tens ?? false;
+  // Reported on the phone but not yet on the server: the row still says 'open'.
+  const queued = !!series && queuedSeriesIds.has(series.id);
 
   const declare = useMutation({
     mutationFn: (disciplineId: string) => declareOpenSeries(disciplineId),
@@ -64,16 +68,21 @@ export default function NewSeriesScreen() {
 
   const report = useMutation({
     mutationFn: async () => {
-      const path = await uploadSeriesPhoto(series!.id, userId!, photo!.uri);
-
-      await reportOpenSeries({
-        id: series!.id,
+      // Through the queue, online or not — one code path, and a series shot in
+      // a basement is not lost to the walk back up the stairs. The two hours
+      // are the server's and are not extended by having waited.
+      await queueSeriesReport({
+        seriesId: series!.id,
+        reportBy: new Date(series!.report_by),
+        shooterId: userId!,
         total: Number(total.replace(',', '.')),
         innerTens: requiresInnerTens ? Number(innerTens) : null,
-        photoPath: path,
-        shotAt: photo!.at,
+        sourceUri: photo!.uri,
         fromCamera: photo!.fromCamera,
+        shotAt: photo!.at,
       });
+
+      return flushOutbox();
     },
     onSuccess: async () => {
       setTotal('');
@@ -136,6 +145,25 @@ export default function NewSeriesScreen() {
             busy={declare.isPending}
             onPick={(d) => declare.mutate(d.id)}
           />
+        ) : queued ? (
+          <>
+            <Note tone="warn">
+              No connection right now. Your report and the photo are on the phone and go
+              out by themselves the moment you have a signal.
+            </Note>
+            <Card>
+              <Hint>
+                The two hours are counted by the server and are not extended by having
+                waited. If it arrives after {new Date(series.report_by).toLocaleTimeString(
+                  'en-GB',
+                  { hour: '2-digit', minute: '2-digit' },
+                )}
+                , the series counts as practice — so walk up out of the range rather than
+                waiting at the firing point.
+              </Hint>
+            </Card>
+            <Button label="Back to my matches" onPress={() => router.replace('/(tabs)')} />
+          </>
         ) : series.state === 'open' ? (
           <>
             <Card tone="positive">
@@ -241,9 +269,9 @@ export default function NewSeriesScreen() {
               style={{ marginTop: t.space.lg }}
             />
             <Hint center>
-              This one needs a connection: the window is 45 minutes, so a report that waited
-              for a signal would arrive too late to count. A season match does not — that one
-              waits on your phone.
+              Works without a signal: the report waits on your phone and sends itself. It
+              has to reach the server inside the two hours, though — waiting does not
+              extend them.
             </Hint>
             <Button
               label="Never mind"

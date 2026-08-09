@@ -102,9 +102,11 @@ Declaring is not ceremony: it opens the window the series has to be fired in,
 and `report_open_series()` refuses anything shot before it. Without that, the
 obvious move is to shoot ten and report the best.
 
-This is the one place the offline story does not apply, and the screen says so.
-A season report goes through the outbox and waits for reception; an open series
-has 45 minutes, so a report that waited would arrive too late to count.
+The report goes through `lib/outbox.ts` like a season report, so a basement with
+no signal does not lose it — but the two hour deadline is the server's and is
+not extended by having waited. The queue gives up on its own once the window has
+passed rather than uploading a photograph that is about to be refused, and tells
+the shooter the series became practice.
 
 ## Entering a season
 

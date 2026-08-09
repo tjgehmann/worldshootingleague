@@ -33,13 +33,22 @@ opens when you declare, and a series fired before that is refused. One tap
 before you step up to the firing point, and the number next to your name means
 something.
 
+The window is **two hours, on the server's clock**, and the report queues on the
+phone while there is no reception — which is the normal state of a basement
+range. It is deliberately not the client saying when it *tried* to send: that
+timestamp comes from the device and can say anything, and it would buy nothing
+anyway. Whatever a client claims, the series somebody can choose between are the
+ones they shot between declaring and the report arriving, so only arrival can
+bound it. Two hours is enough to shoot, pack up and walk out to a signal;
+anything later counts as practice.
+
 ## Formats
 
 Short formats, deliberately:
 
 | Format | How it runs |
 |---|---|
-| `single_10` | One series of 10 shots. A season gives a week; an open series gives 45 minutes from declaring. |
+| `single_10` | One series of 10 shots. A season gives a week; an open series gives two hours from declaring. |
 | `best_of_five` | Five series of 10 shots, first to 3 points wins. All five bouts are open at once. |
 
 Disciplines in the seed: `AR10ET` (air rifle 10 m standing), `AP10ET` (air
@@ -198,6 +207,7 @@ Migrations:
 | `..._pair_team_rounds.sql` | the tick draws club rounds with the club pairing |
 | `..._open_series.sql` | shooting now: declare, report, get compared |
 | `..._open_series_photos.sql` | proof for a series that has no bout yet |
+| `..._open_series_window.sql` | two hours to report, on the server's clock |
 
 Edge functions:
 

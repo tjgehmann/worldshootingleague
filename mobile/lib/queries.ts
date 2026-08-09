@@ -480,12 +480,14 @@ export async function declareOpenSeries(disciplineId: string): Promise<string> {
   return data as unknown as string;
 }
 
+/** Called by the outbox rather than by a screen: the report may be queued. */
 export async function reportOpenSeries(input: {
   id: string;
   total: number;
   innerTens: number | null;
   photoPath: string;
-  shotAt: Date;
+  /** ISO, because it may have been sitting on the phone for a while. */
+  shotAt: string;
   fromCamera: boolean;
 }): Promise<void> {
   const { error } = await supabase.rpc('report_open_series', {
@@ -493,7 +495,7 @@ export async function reportOpenSeries(input: {
     p_total: input.total,
     p_inner_tens: input.innerTens,
     p_photo_path: input.photoPath,
-    p_shot_at: input.shotAt.toISOString(),
+    p_shot_at: input.shotAt,
     p_capture_method: input.fromCamera ? 'in_app_camera' : 'gallery',
   });
   if (error) throw error;

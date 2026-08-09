@@ -3,6 +3,7 @@ import { Directory, File, Paths } from 'expo-file-system';
 import * as Network from 'expo-network';
 
 import { isDuplicateSubmission, isTransportFailure } from './outbox-errors';
+import { reportOpenSeries } from './queries';
 import { supabase, TARGET_PHOTOS_BUCKET, targetPhotoPath } from './supabase';
 
 /**
@@ -22,6 +23,12 @@ import { supabase, TARGET_PHOTOS_BUCKET, targetPhotoPath } from './supabase';
  *     reached the server. Without that a queued entry would claim to have been
  *     shot hours later, and the database's window check would be measuring the
  *     wrong thing.
+ *
+ * Two kinds go through it. A season report belongs to a bout and has a week to
+ * arrive. An open series has two hours from the moment it was declared — and
+ * that deadline is the server's, not this queue's: waiting is allowed, arriving
+ * late is not. The queue gives up on its own when the window has passed rather
+ * than uploading a photograph the server is about to refuse.
  */
 
 const STORAGE_KEY = 'wsl.outbox.v1';
@@ -29,10 +36,8 @@ const OUTBOX_DIR = 'outbox';
 /** Beyond this a pending entry has almost certainly hit something permanent. */
 const MAX_ATTEMPTS = 20;
 
-export interface OutboxEntry {
+interface BaseEntry {
   id: string;
-  boutId: string;
-  matchId: string;
   shooterId: string;
   total: number;
   innerTens: number | null;
@@ -48,6 +53,23 @@ export interface OutboxEntry {
   state: 'pending' | 'rejected';
 }
 
+/** A series of a season match: it belongs to a bout and has a week. */
+export interface BoutEntry extends BaseEntry {
+  kind: 'bout';
+  boutId: string;
+  matchId: string;
+}
+
+/** A series shot with no opponent: two hours from declaring, then it is gone. */
+export interface SeriesEntry extends BaseEntry {
+  kind: 'series';
+  seriesId: string;
+  /** The server's deadline, copied here so the queue can stop trying. */
+  reportBy: string;
+}
+
+export type OutboxEntry = BoutEntry | SeriesEntry;
+
 type Listener = (entries: OutboxEntry[]) => void;
 const listeners = new Set<Listener>();
 let cache: OutboxEntry[] | null = null;
@@ -55,7 +77,13 @@ let cache: OutboxEntry[] | null = null;
 async function read(): Promise<OutboxEntry[]> {
   if (cache) return cache;
   const raw = await AsyncStorage.getItem(STORAGE_KEY);
-  cache = raw ? (JSON.parse(raw) as OutboxEntry[]) : [];
+  // Entries written before open series existed have no kind; they are all
+  // season reports.
+  cache = raw
+    ? (JSON.parse(raw) as OutboxEntry[]).map(
+        (e) => ({ ...e, kind: e.kind ?? 'bout' }) as OutboxEntry,
+      )
+    : [];
   return cache;
 }
 
@@ -81,9 +109,7 @@ function outboxDirectory(): Directory {
   return dir;
 }
 
-export interface QueueInput {
-  boutId: string;
-  matchId: string;
+interface CommonInput {
   shooterId: string;
   total: number;
   innerTens: number | null;
@@ -93,17 +119,25 @@ export interface QueueInput {
   shotAt: Date;
 }
 
-export async function queueSubmission(input: QueueInput): Promise<OutboxEntry> {
-  const id = `${input.boutId}-${Date.now()}`;
+export interface QueueInput extends CommonInput {
+  boutId: string;
+  matchId: string;
+}
+
+export interface QueueSeriesInput extends CommonInput {
+  seriesId: string;
+  reportBy: Date;
+}
+
+/** Copies the photo somewhere the system will not reclaim, and queues the row. */
+async function queue(id: string, input: CommonInput, rest: object): Promise<OutboxEntry> {
   const target = new File(outboxDirectory(), `${id}.jpg`);
 
   // Out of the picker's cache and into storage we control.
   await new File(input.sourceUri).copy(target);
 
-  const entry: OutboxEntry = {
+  const entry = {
     id,
-    boutId: input.boutId,
-    matchId: input.matchId,
     shooterId: input.shooterId,
     total: input.total,
     innerTens: input.innerTens,
@@ -112,11 +146,28 @@ export async function queueSubmission(input: QueueInput): Promise<OutboxEntry> {
     shotAt: input.shotAt.toISOString(),
     queuedAt: new Date().toISOString(),
     attempts: 0,
-    state: 'pending',
-  };
+    state: 'pending' as const,
+    ...rest,
+  } as OutboxEntry;
 
   await write([...(await read()), entry]);
   return entry;
+}
+
+export async function queueSubmission(input: QueueInput): Promise<OutboxEntry> {
+  return queue(`${input.boutId}-${Date.now()}`, input, {
+    kind: 'bout',
+    boutId: input.boutId,
+    matchId: input.matchId,
+  });
+}
+
+export async function queueSeriesReport(input: QueueSeriesInput): Promise<OutboxEntry> {
+  return queue(`${input.seriesId}-${Date.now()}`, input, {
+    kind: 'series',
+    seriesId: input.seriesId,
+    reportBy: input.reportBy.toISOString(),
+  });
 }
 
 async function discard(entry: OutboxEntry): Promise<void> {
@@ -140,7 +191,18 @@ async function send(entry: OutboxEntry): Promise<void> {
     throw Object.assign(new Error('The photo for this report is gone.'), { code: 'no_photo' });
   }
 
-  const path = targetPhotoPath(entry.boutId, entry.shooterId);
+  // An open series has a deadline the server will enforce anyway. Giving up
+  // here saves uploading a photograph that is about to be refused, and lets the
+  // shooter be told something true rather than a policy error.
+  if (entry.kind === 'series' && new Date(entry.reportBy).getTime() < Date.now()) {
+    throw Object.assign(
+      new Error('The two hours ran out before this could be sent. It counts as practice.'),
+      { code: 'window_closed' },
+    );
+  }
+
+  const folder = entry.kind === 'bout' ? entry.boutId : entry.seriesId;
+  const path = targetPhotoPath(folder, entry.shooterId);
   const bytes = await file.bytes();
 
   const { error: uploadError } = await supabase.storage
@@ -148,6 +210,18 @@ async function send(entry: OutboxEntry): Promise<void> {
     .upload(path, bytes, { contentType: 'image/jpeg', upsert: false });
 
   if (uploadError) throw uploadError;
+
+  if (entry.kind === 'series') {
+    await reportOpenSeries({
+      id: entry.seriesId,
+      total: entry.total,
+      innerTens: entry.innerTens,
+      photoPath: path,
+      shotAt: entry.shotAt,
+      fromCamera: entry.fromCamera,
+    });
+    return;
+  }
 
   const { error } = await supabase.from('submissions').insert({
     bout_id: entry.boutId,

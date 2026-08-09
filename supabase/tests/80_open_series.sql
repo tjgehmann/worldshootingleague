@@ -182,3 +182,40 @@ select 'the tick reports on every job: ' ||
           from unnest(array['rounds_paired','open_series_matched','bouts_expired',
                             'matches_voided','confirmations_lapsed','reminders_queued',
                             'matches_finalized']) as k)::text;
+
+-- ============================ 6. late is late, however long the phone waited ==
+-- The queue on the phone may hold a report while there is no signal, but the
+-- deadline is the server's. A client that says it tried in time proves nothing:
+-- the set of series somebody can choose between is everything they shot between
+-- declaring and the report arriving, so only arrival can bound it.
+set role authenticated;
+set request.jwt.claim.sub = '50000000-0000-0000-0000-000000000002';
+
+select public.declare_open_series((select id from public.disciplines where code = 'SBR10ET'))
+  as late_series \gset
+
+reset role;
+reset request.jwt.claim.sub;
+
+update public.open_series
+   set opens_at = now() - interval '3 hours',
+       report_by = now() - interval '1 hour'
+ where id = :'late_series';
+
+set role authenticated;
+set request.jwt.claim.sub = '50000000-0000-0000-0000-000000000002';
+
+-- expect failure: the window closed while the phone was underground
+select public.report_open_series(:'late_series', 102.0, null,
+  :'late_series' || '/a/x.jpg', now() - interval '2 hours');
+
+reset role;
+reset request.jwt.claim.sub;
+
+select 'a report that arrives late is refused: the series is still ' || state
+  from public.open_series where id = :'late_series';
+
+-- The sweep is what lets it go, so the shooter sees a series that ended rather
+-- than one that is still asking to be reported.
+select 'after the tick: ' || (public.run_league_tick() is not null)::text;
+select 'the sweep let it go: ' || state from public.open_series where id = :'late_series';
