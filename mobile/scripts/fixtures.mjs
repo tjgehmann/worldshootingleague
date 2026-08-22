@@ -213,6 +213,9 @@ const matches = [
   }),
 ];
 
+// Every string here adds up to the total it sits under — the database enforces
+// exactly that cross-check when a range supplies the individual shots, so a
+// fixture that did not add up would be a picture of something impossible.
 const submissions = [
   // Series 1, settled and open to both.
   {
@@ -220,6 +223,7 @@ const submissions = [
     bout_id: liveBouts[0].id,
     shooter_id: ME,
     total: 103.7,
+    shots: [10.4, 10.9, 10.2, 9.8, 10.7, 10.5, 10.3, 10.6, 10.0, 10.3],
     inner_tens: null,
     adjusted_total: null,
     photo_path: `${liveBouts[0].id}/${ME}/target.jpg`,
@@ -231,6 +235,7 @@ const submissions = [
     bout_id: liveBouts[0].id,
     shooter_id: STEFAN,
     total: 101.2,
+    shots: [10.1, 9.8, 10.5, 10.3, 9.6, 10.2, 10.4, 9.9, 10.0, 10.4],
     inner_tens: null,
     adjusted_total: null,
     photo_path: `${liveBouts[0].id}/${STEFAN}/target.jpg`,
@@ -244,6 +249,7 @@ const submissions = [
     bout_id: liveBouts[1].id,
     shooter_id: ME,
     total: 102.9,
+    shots: [10.2, 10.6, 9.9, 10.4, 10.3, 10.1, 10.7, 9.8, 10.5, 10.4],
     inner_tens: null,
     adjusted_total: null,
     photo_path: `${liveBouts[1].id}/${ME}/target.jpg`,
@@ -256,6 +262,7 @@ const submissions = [
     bout_id: BOUT_TO_CONFIRM,
     shooter_id: ME,
     total: 100.8,
+    shots: [10.0, 9.7, 10.3, 10.1, 9.9, 10.4, 10.2, 9.6, 10.5, 10.1],
     inner_tens: null,
     adjusted_total: null,
     photo_path: `${BOUT_TO_CONFIRM}/${ME}/target.jpg`,
@@ -267,6 +274,7 @@ const submissions = [
     bout_id: BOUT_TO_CONFIRM,
     shooter_id: STEFAN,
     total: 104.4,
+    shots: [10.6, 10.8, 10.3, 10.5, 10.4, 10.2, 10.9, 10.1, 10.7, 9.9],
     inner_tens: null,
     adjusted_total: null,
     photo_path: `${BOUT_TO_CONFIRM}/${STEFAN}/target.jpg`,

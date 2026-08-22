@@ -103,7 +103,7 @@ export async function fetchBoutSubmissions(boutIds: string[]): Promise<Submissio
   const { data, error } = await supabase
     .from('submissions')
     .select(
-      'id, bout_id, shooter_id, total, inner_tens, adjusted_total, adjusted_inner_tens, ' +
+      'id, bout_id, shooter_id, total, shots, inner_tens, adjusted_total, adjusted_inner_tens, ' +
         'photo_path, shot_at, submitted_at',
     )
     .in('bout_id', boutIds)

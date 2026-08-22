@@ -90,7 +90,6 @@ function MatchRow({
                 {match.team_match
                   ? `Board ${match.board} · ${match.team_match.club_a.short_name ?? match.team_match.club_a.name} v ${match.team_match.club_b.short_name ?? match.team_match.club_b.name}`
                   : match.discipline.name}
-                {decided ? '' : ` · ${timeLeft(match.closes_at)}`}
               </Meta>
             </View>
             <Pill tone={tone}>{label}</Pill>
@@ -102,11 +101,20 @@ function MatchRow({
             <Text style={[t.text.points, { color: t.colors.ink }]}>
               {formatPoints(myPoints)} : {formatPoints(theirPoints)}
             </Text>
-            <Meta>
-              {decided
-                ? `${done} of ${match.bouts.length} series`
-                : `Series ${Math.min(done + 1, match.bouts.length)} of ${match.bouts.length}`}
-            </Meta>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: t.space.sm }}>
+              <Meta>
+                {decided
+                  ? `${done} of ${match.bouts.length} series`
+                  : `Series ${Math.min(done + 1, match.bouts.length)} of ${match.bouts.length}`}
+              </Meta>
+              {/* Urgency belongs next to the action, not crammed into the
+                  fixture line, where a club-vs-club board truncated it. */}
+              {decided ? null : (
+                <Text style={[t.text.data, { color: t.colors.accent }]}>
+                  {timeLeft(match.closes_at)}
+                </Text>
+              )}
+            </View>
           </View>
 
           <View style={{ marginTop: t.space.md }}>

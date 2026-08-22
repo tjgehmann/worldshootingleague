@@ -117,6 +117,11 @@ export interface Submission {
   bout_id: string;
   shooter_id: string;
   total: number;
+  /**
+   * The individual shots, when the range could export them (SIUS, DISAG).
+   * Null for a hand-typed report, which is the common case today.
+   */
+  shots: number[] | null;
   /** ISSF tiebreak for full-ring scores; null where scoring is decimal. */
   inner_tens: number | null;
   adjusted_total: number | null;

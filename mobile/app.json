@@ -41,7 +41,8 @@
         {
           "cameraPermission": "The app needs the camera to photograph the display or the printout as proof of a result."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

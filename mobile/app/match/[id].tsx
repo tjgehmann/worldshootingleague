@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useLocalSearchParams } from 'expo-router';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import {
   Button,
@@ -14,6 +14,9 @@ import {
   Loading,
   Meta,
   Pill,
+  Plate,
+  Rule,
+  ScoreLine,
   type PillTone,
 } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
@@ -117,15 +120,24 @@ export default function MatchScreen() {
           </Text>
         </Card>
       ) : (
-        <Card>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View style={{ marginBottom: t.space.lg }}>
+          <Rule heavy />
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingVertical: t.space.md,
+            }}
+          >
             <Text style={[t.text.points, { color: t.colors.ink }]}>
               {formatPoints(myPoints)} : {formatPoints(theirPoints)}
             </Text>
-            <Pill tone="wait">{timeLeft(m.closes_at)}</Pill>
+            <Text style={[t.text.label, { color: t.colors.accent }]}>{timeLeft(m.closes_at)}</Text>
           </View>
+          <Rule />
           <Hint>You can shoot every series in one range session.</Hint>
-        </Card>
+        </View>
       )}
 
       {played.map((bout) => (
@@ -334,8 +346,11 @@ function BoutCard({
 
   const { tone, label } = boutStatus(bout, userId, !!mine, firstName);
 
+  const innerTens = (s: Submission | undefined) =>
+    s?.inner_tens != null ? `${s.inner_tens} inner tens` : undefined;
+
   return (
-    <Card>
+    <View style={{ paddingVertical: t.space.lg, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.colors.hairline }}>
       <View
         style={{
           flexDirection: 'row',
@@ -354,24 +369,41 @@ function BoutCard({
         <Link href={{ pathname: '/bout/[id]/report', params: { id: bout.id } }} asChild>
           <Button label="Report result" onPress={() => {}} />
         </Link>
+      ) : blind ? (
+        // The series being shot right now is the only one that gets plates: your
+        // number printed and locked, theirs a shutter. This is the blind reveal
+        // made into something you can look at.
+        <View style={{ flexDirection: 'row', gap: t.space.sm }}>
+          <Plate
+            compact
+            who="You"
+            score={formatScore(mine?.adjusted_total ?? mine?.total, scoringMode)}
+            sub={innerTens(mine)}
+            shots={mine?.shots}
+          />
+          <Plate
+            compact
+            sealed
+            who={firstName}
+            sealedLabel={`Not yet\nsubmitted`}
+          />
+        </View>
       ) : (
+        // Decided: two ruled lines instead of a scoreboard. Four series now fit
+        // where two did, and the eye goes to whatever is still open.
         <>
-          <HeadToHead
-            leftLabel="You"
-            leftValue={formatScore(mine?.adjusted_total ?? mine?.total, scoringMode)}
-            leftMeta={mine?.inner_tens != null ? `${mine.inner_tens} inner tens` : undefined}
-            leftWon={bout.winner_id === userId}
-            rightLabel={firstName}
-            rightValue={blind ? '···' : formatScore(theirs?.adjusted_total ?? theirs?.total, scoringMode)}
-            rightMeta={
-              blind
-                ? `hidden until ${firstName} submits`
-                : theirs?.inner_tens != null
-                  ? `${theirs.inner_tens} inner tens`
-                  : undefined
-            }
-            rightWon={!!bout.winner_id && bout.winner_id === opponentId}
-            rightBlind={blind}
+          <ScoreLine
+            you
+            name="You"
+            meta={innerTens(mine)}
+            value={formatScore(mine?.adjusted_total ?? mine?.total, scoringMode)}
+            won={bout.winner_id === userId}
+          />
+          <ScoreLine
+            name={firstName}
+            meta={innerTens(theirs)}
+            value={formatScore(theirs?.adjusted_total ?? theirs?.total, scoringMode)}
+            won={!!bout.winner_id && bout.winner_id === opponentId}
           />
 
           {needsCheck ? (
@@ -381,7 +413,7 @@ function BoutCard({
           ) : null}
         </>
       )}
-    </Card>
+    </View>
   );
 }
 

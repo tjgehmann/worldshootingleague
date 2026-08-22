@@ -10,20 +10,51 @@ app changes nothing.
 
 ## Design
 
-Light by default, dark as an equal partner; the app follows the system setting
-(`userInterfaceStyle: "automatic"`), so a phone set to dark gets the dark
-palette. Both live in `lib/theme.ts` and are built separately rather than
-inverted: in light, cards carry a shadow instead of a lift in brightness, and
-green, amber and red move darker so they stay legible on white.
+**Lead and Bone.** Both palettes come from an indoor 10 m range rather than from
+a component library: lead is the cool grey concrete of the tunnel, bone is the
+target card, pitch is the black aiming mark, and amber is the lane-ready light —
+the only accent in the app, spent on whatever is live and waiting for you. Won
+and lost are a desaturated olive and brick; they report rather than shout.
+
+Light stays the default and dark follows the system setting
+(`userInterfaceStyle: "automatic"`). The two are built separately rather than
+inverted. One rule holds across both: **the plate never changes theme.** A score
+printed on a target card is pitch on bone in a bright hall and in a dark one,
+because that is what the object is.
+
+Three faces, three jobs, loaded in `app/_layout.tsx` one weight at a time —
+importing from a `@expo-google-fonts` package root pulls every weight and both
+italics into the bundle:
+
+| Face | Carries |
+|---|---|
+| Archivo | Headings and every score. A signage grotesque: the lettering of a competition hall. |
+| Instrument Sans | Running text. |
+| IBM Plex Mono | Data — shot strings, discipline codes, lanes, timestamps, labels. Anything read as a value rather than as a sentence. |
+
+React Native selects a weight by family name, not by `fontWeight`, so
+`lib/theme.ts` names each weight and the styles set no `fontWeight` at all;
+setting both double-applies on Android.
+
+The signature object is the **plate** (`components/ui.tsx`): a bone slab
+carrying a score in pitch and, when the range could export them, the ten-shot
+string beneath it. It is deliberately scarce — only what is unresolved right now
+gets one, so a screen of decided series does not shout as loudly as the series
+being shot tonight. A sealed plate is the blind reveal made visible: a shutter
+saying a number exists and is not yours to see yet.
+
+Corners are nearly square (2–5 pt). The old 18 pt radius was what made every
+screen read as a stack of app cards.
+
+Two rules that matter more here than the prevailing style: **high contrast** and
+**large targets**. Shooters skew older, stand in a dim hall, have cold hands and
+may be wearing shooting glasses. The type scale is unchanged from before the
+repaint for exactly this reason — buttons are 52 pt tall, scores 40 with tabular
+figures. This was a change of voice, not of size.
 
 Components read the active palette through `useTheme()`. There is no global
 `StyleSheet.create` with fixed colours — styles that depend on the palette are
 built during render.
-
-Two rules that matter more here than the prevailing style: **high contrast** and
-**large targets**. Shooters skew older, stand in a dim hall, have cold hands and
-may be wearing shooting glasses. Buttons are 52pt tall, body text 16, scores 40
-with tabular figures.
 
 ## Getting started
 

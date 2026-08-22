@@ -124,7 +124,10 @@ export default function ProfileScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space.md }}>
                 <Avatar name={club.short_name ?? club.name} size={40} />
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[t.text.name, { color: t.colors.ink }]} numberOfLines={1}>
+                  {/* Club names are long and the last word is usually the year
+                      that distinguishes two clubs in the same town, so this
+                      wraps rather than truncating. */}
+                  <Text style={[t.text.name, { color: t.colors.ink }]} numberOfLines={2}>
                     {club.name}
                   </Text>
                   <Meta>

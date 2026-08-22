@@ -1,7 +1,19 @@
+// Imported one weight at a time rather than from the package root: the root
+// index re-exports every weight and both italics, and metro bundles whatever it
+// can see, which put forty typefaces into a build that uses six.
+import { Archivo_600SemiBold } from '@expo-google-fonts/archivo/600SemiBold';
+import { Archivo_700Bold } from '@expo-google-fonts/archivo/700Bold';
+import { Archivo_800ExtraBold } from '@expo-google-fonts/archivo/800ExtraBold';
+import { IBMPlexMono_400Regular } from '@expo-google-fonts/ibm-plex-mono/400Regular';
+import { IBMPlexMono_500Medium } from '@expo-google-fonts/ibm-plex-mono/500Medium';
+import { InstrumentSans_400Regular } from '@expo-google-fonts/instrument-sans/400Regular';
+import { InstrumentSans_500Medium } from '@expo-google-fonts/instrument-sans/500Medium';
+import { InstrumentSans_600SemiBold } from '@expo-google-fonts/instrument-sans/600SemiBold';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -104,6 +116,26 @@ function AuthGate() {
 }
 
 export default function RootLayout() {
+  // Archivo carries headings and scores, Instrument Sans the running text and
+  // IBM Plex Mono every value a shooter reads as data. Rendering before they
+  // arrive would lay the app out in the system face and then reflow it, so the
+  // splash holds until they are in — a few hundred milliseconds once, and
+  // nothing at all on a warm start.
+  const [fontsLoaded, fontError] = useFonts({
+    Archivo_600SemiBold,
+    Archivo_700Bold,
+    Archivo_800ExtraBold,
+    InstrumentSans_400Regular,
+    InstrumentSans_500Medium,
+    InstrumentSans_600SemiBold,
+    IBMPlexMono_400Regular,
+    IBMPlexMono_500Medium,
+  });
+
+  // A font that will not load is not worth a blank app: React Native falls back
+  // to the system face per family, so the league is still readable.
+  if (!fontsLoaded && !fontError) return null;
+
   return (
     <SafeAreaProvider>
       <PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>

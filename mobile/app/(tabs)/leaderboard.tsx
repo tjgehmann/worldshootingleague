@@ -3,10 +3,19 @@ import { useState } from 'react';
 import { FlatList, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Avatar, Empty, Hint, Kicker, LargeTitle, Loading, Meta } from '@/components/ui';
+import { ColLabel, Empty, Hint, Kicker, LargeTitle, Loading, Rule } from '@/components/ui';
 import { fetchDisciplines, fetchLeaderboard } from '@/lib/queries';
 import { TAB_BAR_CLEARANCE, useTheme } from '@/lib/theme';
 
+/**
+ * The ladder, set as a table rather than as a list of cards.
+ *
+ * Two rules do the separating — heavy under the header, hairline between rows —
+ * which is what a printed results sheet does and what a shooter already knows
+ * how to read. The initials tiles are gone: "MF" in a coloured square stood in
+ * for an identity nobody has uploaded, while the club and country underneath
+ * are the things a captain actually looks for.
+ */
 export default function LeaderboardScreen() {
   const [code, setCode] = useState<string | undefined>();
   const t = useTheme();
@@ -16,9 +25,6 @@ export default function LeaderboardScreen() {
     queryKey: ['leaderboard', code],
     queryFn: () => fetchLeaderboard(code),
   });
-
-  const nameFor = (c: string) =>
-    disciplines.data?.find((d) => d.code === c)?.name ?? c;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.ground }} edges={['top']}>
@@ -56,51 +62,79 @@ export default function LeaderboardScreen() {
           }}
           refreshing={rows.isRefetching}
           onRefresh={() => rows.refetch()}
-          ListEmptyComponent={<Empty text="No rated matches yet." />}
-          ItemSeparatorComponent={() => (
-            <View style={{ height: 1, backgroundColor: t.colors.hairline }} />
-          )}
+          ListEmptyComponent={<Empty text="No rated matches yet. The first rated series starts this table." />}
+          ListHeaderComponent={
+            rows.data?.length ? (
+              <View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'flex-end',
+                    gap: t.space.md,
+                    paddingBottom: 7,
+                  }}
+                >
+                  <ColLabel width={22}>#</ColLabel>
+                  <View style={{ flex: 1 }}>
+                    <ColLabel>Shooter</ColLabel>
+                  </View>
+                  <View style={{ width: 58 }}>
+                    <ColLabel align="right">Rating</ColLabel>
+                  </View>
+                  <View style={{ width: 46 }}>
+                    <ColLabel align="right">W/L</ColLabel>
+                  </View>
+                </View>
+                <Rule heavy />
+              </View>
+            ) : null
+          }
+          ItemSeparatorComponent={() => <Rule />}
           renderItem={({ item }) => (
             <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: t.space.md,
-                paddingVertical: 11,
+                paddingVertical: 13,
               }}
             >
               <Text
                 style={{
-                  width: 24,
-                  fontSize: 14,
-                  fontWeight: '700',
-                  color: item.position === 1 ? t.colors.accent : t.colors.inkFaint,
+                  width: 22,
+                  fontFamily: t.fonts.monoMedium,
+                  fontSize: 13,
+                  color: item.position <= 3 ? t.colors.accent : t.colors.inkFaint,
                   fontVariant: ['tabular-nums'],
                 }}
               >
                 {item.position}
               </Text>
-              <Avatar name={item.display_name} size={34} />
+
               <View style={{ flex: 1, minWidth: 0 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space.sm }}>
-                  <Text style={[t.text.name, { color: t.colors.ink }]} numberOfLines={1}>
+                  <Text
+                    style={[t.text.name, { color: t.colors.ink, flexShrink: 1 }]}
+                    numberOfLines={1}
+                  >
                     {item.display_name}
                   </Text>
                   {item.is_provisional ? (
                     <View
                       style={{
-                        backgroundColor: t.colors.surfaceAlt,
+                        borderWidth: 1,
+                        borderColor: t.colors.hairline,
                         borderRadius: t.radius.sm,
-                        paddingHorizontal: 6,
-                        paddingVertical: 2,
+                        paddingHorizontal: 5,
+                        paddingVertical: 1,
                       }}
                     >
                       <Text
                         style={{
                           color: t.colors.inkFaint,
-                          fontSize: 9.5,
-                          fontWeight: '700',
-                          letterSpacing: 0.6,
+                          fontFamily: t.fonts.monoMedium,
+                          fontSize: 9,
+                          letterSpacing: 1,
                           textTransform: 'uppercase',
                         }}
                       >
@@ -109,33 +143,45 @@ export default function LeaderboardScreen() {
                     </View>
                   ) : null}
                 </View>
-                <Meta>
-                  {item.country_code} · {nameFor(item.discipline)}
-                </Meta>
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
                 <Text
-                  style={{
-                    fontSize: 17,
-                    fontWeight: '700',
-                    letterSpacing: -0.4,
-                    color: t.colors.ink,
-                    fontVariant: ['tabular-nums'],
-                  }}
+                  style={[t.text.data, { color: t.colors.inkFaint, marginTop: 2 }]}
+                  numberOfLines={1}
                 >
-                  {Math.round(item.rating)}
+                  {/* The code rather than the full name: this line is mono data
+                      sitting in a narrow column, and "Air Rifle 10 m" pushed the
+                      match count off the end of it. */}
+                  {item.country_code} · {item.discipline} · {item.matches_played}{' '}
+                  {item.matches_played === 1 ? 'match' : 'matches'}
                 </Text>
-                <Meta>
-                  {item.wins} / {item.losses}
-                </Meta>
               </View>
+
+              <Text
+                style={{
+                  width: 58,
+                  textAlign: 'right',
+                  fontFamily: t.fonts.display,
+                  fontSize: 21,
+                  letterSpacing: -0.5,
+                  color: t.colors.ink,
+                  fontVariant: ['tabular-nums'],
+                }}
+              >
+                {Math.round(item.rating)}
+              </Text>
+
+              <Text
+                style={[
+                  t.text.data,
+                  { width: 46, textAlign: 'right', color: t.colors.inkFaint },
+                ]}
+              >
+                {item.wins}/{item.losses}
+              </Text>
             </View>
           )}
           ListFooterComponent={
             rows.data?.length ? (
-              <Hint>
-                "Provisional" means too few matches so far for a settled rating.
-              </Hint>
+              <Hint>"Provisional" means too few matches so far for a settled rating.</Hint>
             ) : null
           }
         />
@@ -160,17 +206,21 @@ function Chip({
       accessibilityState={{ selected: active }}
       onPress={onPress}
       style={{
-        paddingHorizontal: 14,
+        paddingHorizontal: 12,
         paddingVertical: 8,
-        borderRadius: t.radius.pill,
-        backgroundColor: active ? t.colors.accentSolid : t.colors.surface,
+        borderRadius: t.radius.sm,
+        borderWidth: 1,
+        borderColor: active ? t.colors.ink : t.colors.hairline,
+        backgroundColor: active ? t.colors.ink : 'transparent',
       }}
     >
       <Text
         style={{
-          fontSize: 13,
-          fontWeight: '600',
-          color: active ? t.colors.onSolid : t.colors.inkMuted,
+          fontFamily: t.fonts.monoMedium,
+          fontSize: 10.5,
+          letterSpacing: 1.1,
+          textTransform: 'uppercase',
+          color: active ? t.colors.ground : t.colors.inkMuted,
         }}
       >
         {label}

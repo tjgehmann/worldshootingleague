@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs } from 'expo-router';
 
+import { RingMark } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { fetchProfile } from '@/lib/queries';
 import { useTheme } from '@/lib/theme';
@@ -29,24 +30,28 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: t.colors.ground },
         tabBarActiveTintColor: t.colors.accent,
         tabBarInactiveTintColor: t.colors.inkFaint,
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
-        // Floating pill rather than a bar welded to the bottom edge.
+        tabBarLabelStyle: {
+          fontFamily: t.fonts.monoMedium,
+          fontSize: 9.5,
+          letterSpacing: 1.1,
+          textTransform: 'uppercase',
+        },
+        // A bar on the ground with a rule above it, not a floating pill. The
+        // pill and its drop shadow were the last of the app-card language, and
+        // they cost 30 pt of a screen that is mostly list.
         tabBarStyle: {
           position: 'absolute',
-          left: 16,
-          right: 16,
-          bottom: 14,
-          height: 64,
-          paddingTop: 8,
-          paddingBottom: 8,
-          borderRadius: 22,
-          borderTopWidth: 0,
-          backgroundColor: t.colors.surface,
-          elevation: 8,
-          shadowColor: '#000',
-          shadowOpacity: t.dark ? 0.4 : 0.12,
-          shadowRadius: 16,
-          shadowOffset: { width: 0, height: 4 },
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 78,
+          paddingTop: 10,
+          paddingBottom: 18,
+          borderTopWidth: 1,
+          borderTopColor: t.colors.hairline,
+          backgroundColor: t.colors.ground,
+          elevation: 0,
+          shadowOpacity: 0,
         },
       }}
     >
@@ -54,14 +59,19 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Matches',
-          tabBarIcon: ({ color, size }) => <Ionicons name="flash" color={color} size={size} />,
+          // A target, not a lightning bolt. The bolt meant "fast" in a sport
+          // where nothing is, and it was the only icon on the screen that could
+          // have belonged to any app at all.
+          tabBarIcon: ({ color, size }) => <RingMark size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="leaderboard"
         options={{
           title: 'Rankings',
-          tabBarIcon: ({ color, size }) => <Ionicons name="list" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="stats-chart" color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen

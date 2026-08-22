@@ -17,6 +17,7 @@
  */
 
 import { createServer } from 'node:http';
+import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -65,7 +66,12 @@ function build() {
   if (process.argv.includes('--no-build') && existsSync(DIST)) return;
   rmSync(DIST, { recursive: true, force: true });
   console.log('exporting web build…');
-  execFileSync('npx', ['expo', 'export', '--platform', 'web', '--clear'], {
+  // The expo CLI is invoked through node directly rather than through npx: npx
+  // is a .cmd shim on Windows, which recent node refuses to spawn without a
+  // shell, and going through the shell then needs its own quoting. Resolving
+  // the CLI and running it on this same interpreter avoids both.
+  const expoCli = createRequire(import.meta.url).resolve('expo/bin/cli');
+  execFileSync(process.execPath, [expoCli, 'export', '--platform', 'web', '--clear'], {
     cwd: MOBILE,
     stdio: 'inherit',
     env: {
