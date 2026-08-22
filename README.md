@@ -160,8 +160,11 @@ set to dark — the two palettes are built separately, not inverted.
   <img src="docs/screenshots/match-dark.png" alt="A running match, dark theme" width="240">
 </p>
 
-Every screen is also annotated, one design decision at a time, in
-[`docs/mockups.html`](docs/mockups.html) — open it in a browser.
+All twenty-seven of them are annotated, one design decision at a time, in
+[`docs/mockups.html`](docs/mockups.html) — open it in a browser. That page shows
+these same captures rather than drawings of them: it used to redraw every screen
+in its own CSS, which quietly stopped matching the app the first time the theme
+changed.
 
 ## Who can see what
 
@@ -199,7 +202,7 @@ scripts/
 docs/
   beta-checklist.md  what has to happen before real people sign up
   data-model.md      entities, state machine, design decisions
-  mockups.html       every screen, annotated
+  mockups.html       the same captures, annotated one decision at a time
   screenshots/       captures from the running build
 ```
 

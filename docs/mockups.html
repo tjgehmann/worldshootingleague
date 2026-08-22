@@ -1,438 +1,383 @@
-<title>World Shooting League -- Screens</title>
+<title>World Shooting League &#8212; Screens</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400..700&display=swap">
 
 <style>
-  /* ============================================================== PAGE ====
-     Gallery chrome. Cool near-black biased toward the app's indigo, so the
-     device frames sit in their own world rather than on a neutral backdrop. */
+  /* ==========================================================================
+     The app, screen by screen.
+
+     Every frame on this page is a photograph of the running build, taken by
+     mobile/scripts/capture-screenshots.mjs. Nothing here redraws a component.
+
+     That is deliberate, and it is a correction. This page used to hand-draw
+     each screen in its own CSS so the annotations had something to point at.
+     It claimed at the top that "every colour, spacing step and type size comes
+     from mobile/lib/theme.ts" — and the first time the theme changed, that
+     stopped being true and nobody noticed, because a drawing cannot fail. Now
+     the pictures come from the same harness as docs/screenshots/, so a
+     regression shows up here as a wrong photograph rather than as a caption
+     quietly describing an app that no longer exists.
+
+     The page itself is set in the app's own palette and faces, for the same
+     reason: if Lead and Bone stops working, this page stops looking right.
+     ========================================================================== */
+
   :root {
-    --p-ground:  #F7F8FC;
-    --p-surf:    #FFFFFF;
-    --p-sunken:  #ECEEF5;
-    --p-ink:     #0C0E14;
-    --p-ink2:    #586074;
-    --p-line:    #E1E4EE;
-    --p-accent:  #4B4DE0;
-    --p-accent2: #EDEDFC;
-    --p-shadow:  0 2px 4px rgba(12,14,20,.05), 0 22px 50px rgba(12,14,20,.10);
+    --ground:   #D7D6CE;
+    --surface:  #E2E1DA;
+    --sunken:   #C6C5BC;
+    --ink:      #171C21;
+    --ink-2:    #4E565F;
+    --ink-3:    #828A93;
+    --hair:     #BBBAB0;
+    --rule:     #171C21;
+    --accent:   #96600F;
+    --accent-tint: #F0E4CE;
+    --pos:      #456F3A;
+    --neg:      #9C382C;
+    --shadow:   0 1px 2px rgba(23,28,33,.06), 0 18px 40px -18px rgba(23,28,33,.28);
+    --bezel:    #B4B3A9;
+
+    /* The plate does not change theme, here or in the app. */
+    --plate:     #EFEAE0;
+    --plate-ink: #101418;
+
+    --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --body:    "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+    --mono:    "IBM Plex Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   }
+
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --p-ground:  #0A0C11;
-      --p-surf:    #13161F;
-      --p-sunken:  #070910;
-      --p-ink:     #F2F4FA;
-      --p-ink2:    #8B93A8;
-      --p-line:    #232936;
-      --p-accent:  #8788FF;
-      --p-accent2: #1B1D33;
-      --p-shadow:  0 2px 4px rgba(0,0,0,.5), 0 24px 56px rgba(0,0,0,.6);
+      --ground:   #1B2128;
+      --surface:  #242C35;
+      --sunken:   #2E3741;
+      --ink:      #E8E4DA;
+      --ink-2:    #98A2AD;
+      --ink-3:    #6B7681;
+      --hair:     #333C47;
+      --rule:     #E8E4DA;
+      --accent:   #E2A03C;
+      --accent-tint: #3A2E19;
+      --pos:      #7FB069;
+      --neg:      #CE5F52;
+      --shadow:   0 1px 2px rgba(0,0,0,.4), 0 20px 46px -18px rgba(0,0,0,.7);
+      --bezel:    #0E1216;
     }
   }
   :root[data-theme="dark"] {
-    --p-ground:  #0A0C11;
-    --p-surf:    #13161F;
-    --p-sunken:  #070910;
-    --p-ink:     #F2F4FA;
-    --p-ink2:    #8B93A8;
-    --p-line:    #232936;
-    --p-accent:  #8788FF;
-    --p-accent2: #1B1D33;
-    --p-shadow:  0 2px 4px rgba(0,0,0,.5), 0 24px 56px rgba(0,0,0,.6);
-  }
-
-  :root {
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --ground:   #1B2128;
+    --surface:  #242C35;
+    --sunken:   #2E3741;
+    --ink:      #E8E4DA;
+    --ink-2:    #98A2AD;
+    --ink-3:    #6B7681;
+    --hair:     #333C47;
+    --rule:     #E8E4DA;
+    --accent:   #E2A03C;
+    --accent-tint: #3A2E19;
+    --pos:      #7FB069;
+    --neg:      #CE5F52;
+    --shadow:   0 1px 2px rgba(0,0,0,.4), 0 20px 46px -18px rgba(0,0,0,.7);
+    --bezel:    #0E1216;
   }
 
   * { box-sizing: border-box; }
 
   body {
     margin: 0;
-    background: var(--p-ground);
-    color: var(--p-ink);
-    font-family: var(--sans);
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
     font-size: 16px;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
   }
 
-  .wrap { max-width: 1340px; margin: 0 auto; padding: 60px 24px 100px; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 64px 24px 110px; }
 
+  /* ------------------------------------------------------------- type ---- */
   .eyebrow {
     font-family: var(--mono);
-    font-size: 11.5px;
-    letter-spacing: .11em;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .16em;
     text-transform: uppercase;
-    color: var(--p-ink2);
-    margin: 0 0 16px;
+    color: var(--ink-3);
+    margin: 0 0 14px;
   }
   h1 {
-    font-size: clamp(32px, 4.6vw, 50px);
-    line-height: 1.06;
-    letter-spacing: -.028em;
-    font-weight: 700;
-    margin: 0 0 20px;
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(34px, 5.2vw, 62px);
+    line-height: 1;
+    letter-spacing: -.03em;
+    margin: 0 0 24px;
     text-wrap: balance;
   }
-  .lede { max-width: 64ch; color: var(--p-ink2); font-size: 17.5px; margin: 0 0 14px; }
-  .lede strong { color: var(--p-ink); font-weight: 600; }
+  .lede { max-width: 66ch; color: var(--ink-2); font-size: 17px; margin: 0 0 14px; line-height: 1.62; }
+  .lede strong { color: var(--ink); font-weight: 600; }
+  code {
+    font-family: var(--mono);
+    font-size: .84em;
+    background: var(--sunken);
+    padding: 1px 5px;
+    border-radius: 2px;
+  }
 
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  /* ---------------------------------------------------------- sections --- */
   .section { margin-top: 84px; }
-  .section-head { border-top: 1px solid var(--p-line); padding-top: 24px; margin-bottom: 34px; }
+  .section-head { border-top: 2px solid var(--rule); padding-top: 22px; margin-bottom: 36px; }
   h2 {
     font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: .13em;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .17em;
     text-transform: uppercase;
-    color: var(--p-accent);
-    font-weight: 600;
-    margin: 0 0 8px;
+    color: var(--accent);
+    margin: 0 0 10px;
   }
-  .section-note { max-width: 64ch; color: var(--p-ink2); margin: 0; }
+  .section-note { max-width: 66ch; color: var(--ink-2); margin: 0; font-size: 15.5px; }
 
+  /* ------------------------------------------------------------ tokens --- */
+  .tokens { display: grid; grid-template-columns: repeat(auto-fit, minmax(158px, 1fr)); gap: 12px; }
+  .swatch { border: 1px solid var(--hair); border-radius: 3px; overflow: hidden; background: var(--surface); }
+  .swatch .chip { display: block; height: 64px; border-bottom: 1px solid var(--hair); }
+  .swatch .meta { padding: 10px 12px 12px; }
+  .swatch .nm { font-family: var(--display); font-weight: 700; font-size: 13.5px; }
+  .swatch .hx { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); margin-top: 1px; }
+  .swatch .src { font-size: 12.5px; color: var(--ink-2); margin-top: 6px; line-height: 1.45; }
+
+  .faces { display: grid; gap: 1px; background: var(--hair); border: 1px solid var(--hair); border-radius: 3px; margin-top: 30px; }
+  .face { background: var(--surface); padding: 22px 22px; display: grid; grid-template-columns: 168px 1fr; gap: 22px; align-items: baseline; }
+  .face .role { font-family: var(--mono); font-size: 10.5px; letter-spacing: .15em; text-transform: uppercase; color: var(--ink-3); }
+  .face .role b { display: block; font-family: var(--mono); font-weight: 400; text-transform: none; letter-spacing: .03em; font-size: 11.5px; color: var(--ink-2); margin-top: 5px; }
+  .face .spec-display { font-family: var(--display); font-weight: 800; font-size: 34px; letter-spacing: -.025em; line-height: 1.05; }
+  .face .spec-score { font-family: var(--display); font-weight: 800; font-size: 42px; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1; }
+  .face .spec-body { font-family: var(--body); font-size: 16px; color: var(--ink-2); max-width: 46ch; }
+  .face .spec-mono { font-family: var(--mono); font-size: 13.5px; color: var(--ink-2); }
+
+  /* ----------------------------------------------------------- gallery --- */
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 380px));
-    gap: 44px 34px;
-    justify-content: start;
+    grid-template-columns: repeat(auto-fit, minmax(430px, 1fr));
+    gap: 44px 40px;
   }
 
-  figure { margin: 0; display: flex; flex-direction: column; gap: 16px; }
-  figcaption { display: flex; flex-direction: column; gap: 6px; max-width: 380px; }
+  figure {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 232px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* A thin bezel, so a screenshot reads as a device rather than as an image
+     bleeding into the page. No glass, no notch, no drop-shadowed hardware. */
+  .shot {
+    border-radius: 14px;
+    padding: 5px;
+    background: var(--bezel);
+    box-shadow: var(--shadow);
+  }
+  .shot img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+  }
+
+  figcaption { display: flex; flex-direction: column; gap: 7px; padding-top: 2px; }
   .route {
     font-family: var(--mono);
-    font-size: 11.5px;
-    color: var(--p-accent);
-    background: var(--p-accent2);
-    padding: 3px 8px;
-    border-radius: 5px;
+    font-size: 10.5px;
+    letter-spacing: .06em;
+    color: var(--accent);
+    background: var(--accent-tint);
+    padding: 3px 7px;
+    border-radius: 2px;
     align-self: flex-start;
   }
-  .cap-title { font-weight: 650; font-size: 15.5px; }
-  .cap-note { font-size: 14px; color: var(--p-ink2); line-height: 1.55; }
-  .cap-note code { font-family: var(--mono); font-size: 12.5px; }
+  .cap-title { font-family: var(--display); font-weight: 700; font-size: 16px; letter-spacing: -.015em; }
+  .cap-note { font-size: 14.5px; color: var(--ink-2); line-height: 1.58; }
+  .cap-note em { color: var(--ink); font-style: normal; font-weight: 600; }
 
-  /* Change log: what moved and why. Information, not ornament. */
-  .changes { border-collapse: collapse; width: 100%; max-width: 900px; font-size: 15px; }
-  .changes th, .changes td { text-align: left; padding: 12px 16px 12px 0; vertical-align: top; border-bottom: 1px solid var(--p-line); }
-  .changes th { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--p-ink2); font-weight: 600; }
-  .changes td:first-child { color: var(--p-ink2); width: 30%; }
-  .changes td:last-child { color: var(--p-ink); width: 70%; }
-  .changes-scroll { overflow-x: auto; }
-
+  /* A note that belongs to a pair of frames rather than to either one. */
   .pair-note {
     grid-column: 1 / -1;
-    display: flex;
-    gap: 14px;
-    background: var(--p-surf);
-    border: 1px solid var(--p-line);
-    border-radius: 10px;
-    padding: 18px 20px;
-    max-width: 794px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 16px;
+    background: var(--surface);
+    border: 1px solid var(--hair);
+    border-radius: 3px;
+    padding: 17px 19px;
   }
   .pair-note .k {
-    font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
-    text-transform: uppercase; color: var(--p-accent); white-space: nowrap; padding-top: 4px;
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--accent); white-space: nowrap; padding-top: 3px;
   }
-  .pair-note p { margin: 0; font-size: 14.5px; color: var(--p-ink2); line-height: 1.6; }
-  .pair-note strong { color: var(--p-ink); font-weight: 600; }
+  .pair-note p { margin: 0; font-size: 14.5px; color: var(--ink-2); line-height: 1.6; }
+  .pair-note strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------------------------------------------------------- decisions -- */
+  .changes-scroll { overflow-x: auto; }
+  .changes { border-collapse: collapse; width: 100%; font-size: 15px; }
+  .changes th, .changes td {
+    text-align: left; padding: 13px 20px 13px 0; vertical-align: top;
+    border-bottom: 1px solid var(--hair);
+  }
+  .changes th {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--ink-3); font-weight: 500;
+    border-bottom: 2px solid var(--rule);
+  }
+  .changes td:first-child { color: var(--ink); font-weight: 600; width: 32%; }
+  .changes td:last-child { color: var(--ink-2); width: 68%; line-height: 1.55; }
 
   footer {
-    margin-top: 90px; border-top: 1px solid var(--p-line); padding-top: 26px;
-    color: var(--p-ink2); font-size: 14.5px; max-width: 64ch;
+    margin-top: 92px; border-top: 1px solid var(--hair); padding-top: 26px;
+    color: var(--ink-3); font-size: 14.5px; max-width: 68ch;
   }
-  footer code { font-family: var(--mono); font-size: 13px; background: var(--p-sunken); padding: 1px 5px; border-radius: 4px; }
-  a { color: var(--p-accent); }
-  :focus-visible { outline: 2px solid var(--p-accent); outline-offset: 3px; }
+  footer p { margin: 0 0 12px; }
 
-  /* ============================================================ DEVICE ==== */
-  .device {
-    width: 380px; max-width: 100%;
-    border-radius: 42px;
-    padding: 8px;
-    background: #05070C;
-    box-shadow: var(--p-shadow);
+  @media (max-width: 900px) {
+    .wrap { padding: 44px 20px 80px; }
+    .grid { grid-template-columns: 1fr; }
+    .face { grid-template-columns: 1fr; gap: 12px; }
   }
-  .screen {
-    position: relative;
-    height: 760px;
-    border-radius: 35px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    font-size: 15px;
-    line-height: 1.42;
-  }
-  .screen[data-clip]::after {
-    content: "";
-    position: absolute; left: 0; right: 0; bottom: 0; height: 90px;
-    pointer-events: none;
-    background: linear-gradient(to top, var(--ground), transparent);
-  }
-
-  /* ================================================ APP . LIGHT (default) = */
-  .app {
-    --ground:   #F7F8FB;
-    --surf:     #FFFFFF;
-    --surf-2:   #EFF1F7;
-    --hair:     #E3E6EF;
-    --ink:      #0B0D13;
-    --ink-2:    #5B6377;
-    --ink-3:    #838B9E;
-    --accent:   #4B4DE0;
-    --accent-solid: #4B4DE0;
-    --accent-tint:  #ECECFB;
-    --pos:      #0E9F6E;
-    --pos-tint: #E3F7EF;
-    --warn:     #B4740A;
-    --warn-tint:#FCF1DE;
-    --neg:      #DC3B4C;
-    --neg-tint: #FCE9EB;
-    --on-solid: #FFFFFF;
-    background: var(--ground);
-    color: var(--ink);
-  }
-  .app.dark {
-    --ground:   #0B0D13;
-    --surf:     #161A25;
-    --surf-2:   #1F2432;
-    --hair:     #272D3C;
-    --ink:      #F4F6FB;
-    --ink-2:    #939BB0;
-    --ink-3:    #656D80;
-    --accent:   #8788FF;
-    --accent-solid: #5250E8;
-    --accent-tint:  #1D1F3A;
-    --pos:      #34D399;
-    --pos-tint: #0F2A21;
-    --warn:     #FBBF4A;
-    --warn-tint:#2E2413;
-    --neg:      #FF6B7A;
-    --neg-tint: #331A1F;
-    --on-solid: #FFFFFF;
-  }
-
-  /* status bar -- no coloured chrome, it sits on the content ground */
-  .sb {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 13px 26px 2px;
-    font-size: 14px; font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    color: var(--ink);
-    flex: 0 0 auto;
-  }
-  .sb svg { display: block; }
-
-  .nav {
-    display: flex; align-items: center; gap: 12px;
-    padding: 6px 20px 2px;
-    flex: 0 0 auto;
-  }
-  .nav .chev { color: var(--accent); font-size: 26px; line-height: 1; margin-top: -4px; }
-  .nav .nav-t { font-size: 15px; font-weight: 600; color: var(--ink-2); }
-
-  .scroll { flex: 1; overflow: hidden; padding: 0 20px; }
-  .scroll.flush { padding: 0; }
-
-  .kicker {
-    font-size: 11px; letter-spacing: .13em; text-transform: uppercase;
-    color: var(--ink-3); font-weight: 650; margin: 14px 0 5px;
-  }
-  .large-title {
-    font-size: 30px; font-weight: 730; letter-spacing: -.028em;
-    line-height: 1.12; margin: 0 0 18px;
-  }
-  .sub { color: var(--ink-2); font-size: 14.5px; }
-
-  .card {
-    background: var(--surf);
-    border-radius: 18px;
-    padding: 16px 18px;
-    margin-bottom: 12px;
-  }
-  .app.light .card { box-shadow: 0 1px 2px rgba(11,13,19,.05), 0 1px 0 rgba(11,13,19,.02); }
-
-  /* avatar */
-  .av {
-    width: 38px; height: 38px; border-radius: 12px;
-    background: var(--surf-2); color: var(--accent);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 700; letter-spacing: .01em;
-    flex: 0 0 auto;
-  }
-
-  .row { display: flex; align-items: center; }
-  .row.between { justify-content: space-between; }
-  .gap-sm { gap: 10px; }
-  .gap-md { gap: 14px; }
-  .grow { flex: 1; min-width: 0; }
-
-  .name { font-size: 16px; font-weight: 620; letter-spacing: -.01em; }
-  .meta { font-size: 12.5px; color: var(--ink-3); }
-
-  /* status pill -- urgency belongs to the match, not to every segment */
-  .pill {
-    font-size: 10.5px; font-weight: 700; letter-spacing: .07em;
-    text-transform: uppercase; padding: 5px 10px; border-radius: 999px;
-    white-space: nowrap;
-  }
-  .pill.turn { background: var(--warn-tint); color: var(--warn); }
-  .pill.wait { background: var(--surf-2); color: var(--ink-3); }
-  .pill.won  { background: var(--pos-tint); color: var(--pos); }
-  .pill.lost { background: var(--neg-tint); color: var(--neg); }
-
-  /* segmented series bar */
-  .seg { display: flex; gap: 4px; }
-  .seg i { flex: 1; height: 5px; border-radius: 3px; background: var(--hair); display: block; }
-  :where(.app.dark) .seg i { background: var(--surf-2); }
-  .seg i.won  { background: var(--pos); }
-  .seg i.lost { background: var(--neg); }
-  .seg i.tie  { background: var(--ink-3); }
-  .seg i.void { opacity: .35; }
-
-  /* the scoreboard: the app is about two numbers facing each other */
-  .h2h { display: flex; align-items: stretch; margin: 4px 0 2px; }
-  .h2h .col { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-  .h2h .col.right { align-items: flex-end; text-align: right; }
-  .h2h .rule { width: 1px; background: var(--hair); margin: 4px 16px; flex: 0 0 auto; }
-  .num {
-    font-size: 40px; font-weight: 700; letter-spacing: -.035em;
-    font-variant-numeric: tabular-nums; line-height: 1.05;
-    color: var(--ink);
-  }
-  .num.sm { font-size: 30px; }
-  .num.dim { color: var(--ink-3); }
-  .num.pos { color: var(--pos); }
-  .num.blind { color: var(--ink-3); letter-spacing: .12em; font-size: 34px; }
-  .lbl { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); font-weight: 650; }
-  .tens { font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
-
-  .points {
-    font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums;
-    letter-spacing: -.02em;
-  }
-
-  .hair { height: 1px; background: var(--hair); margin: 14px 0; }
-
-  /* buttons */
-  .btn {
-    height: 52px; border-radius: 15px;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    font-size: 16px; font-weight: 620; letter-spacing: -.01em;
-    background: var(--accent-solid); color: var(--on-solid);
-    margin-top: 10px;
-  }
-  .btn.quiet { background: var(--surf-2); color: var(--ink); }
-  .btn.pos { background: var(--pos); color: #04150F; }
-  .app.light .btn.pos { color: #FFFFFF; }
-  .btn.text { background: none; color: var(--accent); height: 46px; }
-  .btn.sm { height: 44px; font-size: 15px; border-radius: 13px; margin-top: 8px; }
-
-  /* inputs */
-  .field { margin-bottom: 14px; }
-  .field .lbl { display: block; margin-bottom: 7px; }
-  .input {
-    background: var(--surf-2); border-radius: 15px;
-    padding: 14px 16px; font-size: 21px; font-weight: 620;
-    font-variant-numeric: tabular-nums; letter-spacing: -.01em;
-  }
-  .input.text { font-size: 16px; font-weight: 500; }
-  .input.ph { color: var(--ink-3); font-weight: 500; }
-  .hint { font-size: 12.5px; color: var(--ink-3); margin-top: 6px; }
-
-  .note {
-    border-radius: 15px; padding: 14px 16px; font-size: 14px; line-height: 1.5;
-    background: var(--surf); color: var(--ink-2);
-  }
-  .note.warn { background: var(--warn-tint); color: var(--warn); }
-  .note.warn b { color: var(--warn); }
-  .note b { color: var(--ink); font-weight: 620; }
-
-  /* photo */
-  .photo {
-    border-radius: 16px; overflow: hidden; background: var(--surf-2);
-    display: flex; align-items: center; justify-content: center;
-    height: 190px;
-  }
-  .photo.tall { height: 262px; }
-  .photo svg { height: 100%; width: auto; }
-  .photo.empty { border: 1.5px dashed var(--hair); background: none; }
-
-  /* leaderboard */
-  .chips { display: flex; gap: 8px; padding: 4px 20px 16px; overflow: hidden; }
-  .chip {
-    padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 620;
-    background: var(--surf); color: var(--ink-2); white-space: nowrap;
-  }
-  .chip.on { background: var(--accent-solid); color: var(--on-solid); }
-
-  .lb { display: flex; align-items: center; gap: 12px; padding: 11px 0; }
-  .lb + .lb { border-top: 1px solid var(--hair); }
-  .lb .pos {
-    width: 24px; font-size: 14px; font-weight: 700; color: var(--ink-3);
-    font-variant-numeric: tabular-nums;
-  }
-  .lb.top .pos { color: var(--accent); }
-  .lb .r { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
-  .lb .wl { font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; width: 34px; text-align: right; }
-  .prov {
-    font-size: 9.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-    color: var(--ink-3); background: var(--surf-2); padding: 2px 6px; border-radius: 5px;
-  }
-
-  /* stat strip */
-  .stats { display: flex; gap: 10px; }
-  .stat { flex: 1; background: var(--surf-2); border-radius: 14px; padding: 12px 10px; text-align: center; }
-  .stat b { display: block; font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
-  .stat span { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 650; }
-
-  /* meter for the confirmation rate */
-  .meter { height: 6px; border-radius: 3px; background: var(--surf-2); overflow: hidden; margin-top: 10px; }
-  .meter i { display: block; height: 100%; background: var(--pos); border-radius: 3px; }
-
-  /* floating tab bar */
-  .tabs {
-    flex: 0 0 auto;
-    margin: 0 16px 14px;
-    background: var(--surf);
-    border-radius: 22px;
-    padding: 9px 8px 8px;
-    display: flex;
-    position: relative;
-    z-index: 2;
-  }
-  .app.light .tabs { box-shadow: 0 4px 20px rgba(11,13,19,.10); }
-  .tabs .t { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-  .tabs .t span { font-size: 10px; font-weight: 620; color: var(--ink-3); letter-spacing: .01em; }
-  .tabs .t.on span { color: var(--accent); }
-
-  @media (max-width: 480px) {
-    .wrap { padding: 36px 14px 70px; }
-    .device { width: 100%; }
+  @media (max-width: 560px) {
+    figure { grid-template-columns: 1fr; gap: 16px; }
+    .shot { max-width: 260px; }
   }
 </style>
+
 <div class="wrap">
 
-  <p class="eyebrow">Sample data &#183; real design tokens</p>
+  <p class="eyebrow">Photographs of the running build</p>
   <h1>The app, screen by screen</h1>
+
   <p class="lede">
-    Every colour, spacing step and type size below comes from
-    <code style="font-family:var(--mono);font-size:15px">mobile/lib/theme.ts</code>, and the
-    wording is what the screens actually render. <strong>The design is in the code</strong> &#8212;
-    what is invented here is only the sample data.
+    Every frame below is a capture of the real app, taken by
+    <code>mobile/scripts/capture-screenshots.mjs</code>: the web build is exported, every
+    Supabase request is answered from a fixture file, and the screens are photographed in a
+    phone-sized browser. <strong>The layout, the type and the wording are whatever the
+    components currently render</strong> &#8212; only the league behind them is invented.
   </p>
   <p class="lede">
-    Light is the default. Dark is built separately rather than inverted, and the app
-    follows the system setting, so a phone in dark mode gets the dark palette.
+    This page used to draw each screen by hand so the annotations had something to point at.
+    It also claimed that every colour and type size on it came from
+    <code>mobile/lib/theme.ts</code>, and the first time the theme changed that stopped being
+    true and nobody noticed &#8212; a drawing cannot fail. The captions are the part worth
+    keeping, so they are now attached to the photographs instead. Regenerating the screenshots
+    updates this page too.
   </p>
   <p class="lede">
-    These frames are drawn by hand to carry the annotations. Captures of the running
-    build are in <code style="font-family:var(--mono);font-size:15px">docs/screenshots/</code>,
-    regenerated by <code style="font-family:var(--mono);font-size:15px">mobile/scripts/capture-screenshots.mjs</code>.
+    Light is the default; dark is built separately rather than inverted, and the app follows the
+    system setting. Where a screen is shown twice, the second is the same screen on a phone set
+    to dark. Screens taller than the frame are cut off at the bottom &#8212; that is where the
+    app scrolls.
   </p>
 
-  <div class="section">
+  <!-- ================================================ the design system == -->
+  <section class="section">
+    <div class="section-head">
+      <h2>Lead and bone</h2>
+      <p class="section-note">
+        Both palettes come from an indoor 10&nbsp;m range rather than from a component library.
+        Amber is the only accent and it is spent on one thing: whatever is live and waiting for
+        you. Won and lost are a desaturated olive and brick &#8212; they report rather than
+        shout. These are the values in <code>mobile/lib/theme.ts</code>; this page is set in
+        them, so if they stop working it stops looking right.
+      </p>
+    </div>
+
+    <div class="tokens">
+      <div class="swatch">
+        <span class="chip" style="background:#1B2128"></span>
+        <div class="meta">
+          <div class="nm">Lead</div><div class="hx">#1B2128</div>
+          <div class="src">The dark ground. A range is not black; it is cool grey concrete under fluorescent light.</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <span class="chip" style="background:#D7D6CE"></span>
+        <div class="meta">
+          <div class="nm">Stock</div><div class="hx">#D7D6CE</div>
+          <div class="src">The light ground. Card stock, not white, so bone can still be the brightest thing on it.</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <span class="chip" style="background:#EFEAE0"></span>
+        <div class="meta">
+          <div class="nm">Bone</div><div class="hx">#EFEAE0</div>
+          <div class="src">The target card. The one colour that does not change with the theme.</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <span class="chip" style="background:#101418"></span>
+        <div class="meta">
+          <div class="nm">Pitch</div><div class="hx">#101418</div>
+          <div class="src">The black aiming mark. Every score is printed in it, on bone, in both themes.</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <span class="chip" style="background:#E2A03C"></span>
+        <div class="meta">
+          <div class="nm">Amber</div><div class="hx">#E2A03C</div>
+          <div class="src">The lane-ready light. Your turn, live now, the window closing. Nothing else.</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <span class="chip" style="background:#7FB069"></span>
+        <div class="meta">
+          <div class="nm">Hit</div><div class="hx">#7FB069</div>
+          <div class="src">A series won. Olive rather than acid; it sits below amber in the hierarchy.</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <span class="chip" style="background:#CE5F52"></span>
+        <div class="meta">
+          <div class="nm">Miss</div><div class="hx">#CE5F52</div>
+          <div class="src">A series lost. Brick, close to an ISSF bib. Losing is information, not an error.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="faces">
+      <div class="face">
+        <div class="role">Display<b>Archivo 700/800</b></div>
+        <div class="spec-display">Air Rifle Spring 2026</div>
+      </div>
+      <div class="face">
+        <div class="role">Score<b>Archivo 800, tabular</b></div>
+        <div class="spec-score">103.7 &#183; 1684</div>
+      </div>
+      <div class="face">
+        <div class="role">Body<b>Instrument Sans 400&#8211;600</b></div>
+        <div class="spec-body">You declare that you are about to shoot, you shoot, you report &#8212; with no opponent in sight. Your series waits.</div>
+      </div>
+      <div class="face">
+        <div class="role">Data<b>IBM Plex Mono 400/500</b></div>
+        <div class="spec-mono">AR10ET &#183; LANE 4 &#183; 10.4 10.9 10.2 9.8 10.7</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================= the decisions ===== -->
+  <section class="section">
+    <div class="section-head">
+      <h2>Decisions</h2>
+      <p class="section-note">What moved, and why. Information, not ornament.</p>
+    </div>
+
     <div class="changes-scroll">
       <table class="changes">
         <thead>
@@ -440,882 +385,555 @@
         </thead>
         <tbody>
           <tr>
+            <td>The plate never changes theme</td>
+            <td>A score printed on a target card is pitch on bone in a bright hall and in a dark
+                one, because that is what the object is. Everything else flips; the plate does not.</td>
+          </tr>
+          <tr>
+            <td>Only what is unresolved gets a plate</td>
+            <td>Deliberate scarcity. A screen of decided series should not shout as loudly as the
+                series being shot tonight, so settled ones collapse to two ruled lines and four
+                now fit where two did.</td>
+          </tr>
+          <tr>
+            <td>A shutter, not a grey placeholder</td>
+            <td>The blind reveal is the product. "Hidden until Stefan submits" describes it; a
+                sealed plate says a number exists and is not yours to see yet, which is a stronger
+                thing to look at.</td>
+          </tr>
+          <tr>
+            <td>Amber is the only accent</td>
+            <td>One saturated thing per screen, and it is always the action you can take right
+                now. "Your turn" and "closing soon" are the same signal as the lane light, so
+                warning and accent are the same value.</td>
+          </tr>
+          <tr>
+            <td>Nearly square corners (2&#8211;5&nbsp;pt)</td>
+            <td>The old 18&nbsp;pt radius was what made every screen read as a stack of app cards.
+                Equipment and printed cards are cut, not rounded.</td>
+          </tr>
+          <tr>
+            <td>Cards separate with a hairline</td>
+            <td>A drop shadow is the one thing that never happens on card stock, and it was doing
+                work that a rule does better and quieter.</td>
+          </tr>
+          <tr>
+            <td>Three faces, three jobs</td>
+            <td>Archivo for headings and scores, Instrument Sans for running text, IBM&nbsp;Plex
+                Mono for anything read as a value rather than as a sentence. Before this there was
+                no typeface at all, which is the single biggest reason the app read as generic.</td>
+          </tr>
+          <tr>
+            <td>The ten-shot string</td>
+            <td>Not a score, but the shape of how it was arrived at &#8212; the one thing this
+                league holds that nobody else does. Drawn whenever a range could export
+                <code>submissions.shots</code>, and absent without complaint when it could not.</td>
+          </tr>
+          <tr>
+            <td>Tables where there are tables</td>
+            <td>Rankings gets a header row and two weights of rule, which is what a printed results
+                sheet does and what a shooter already knows how to read.</td>
+          </tr>
+          <tr>
+            <td>No initials tiles</td>
+            <td>"MF" in a coloured square stood in for an identity nobody has uploaded. The club
+                and country say more, and give a captain something to point at.</td>
+          </tr>
+          <tr>
+            <td>52&nbsp;pt buttons, sizes unchanged</td>
+            <td>Cold hands, dim hall, shooting glasses, shooters who skew older. The type scale
+                deliberately survived the repaint intact: this was a change of voice, not of size.</td>
+          </tr>
+          <tr>
             <td>No coloured header bar</td>
-            <td>It cost 80 points of height and carried no information. Screens open
-                with a large title on the content ground.</td>
-          </tr>
-          <tr>
-            <td>Two 40pt figures across a hairline</td>
-            <td>Comparing two numbers is the whole product. It is legible at arm's
-                length, in a dim hall, through shooting glasses.</td>
-          </tr>
-          <tr>
-            <td>One slim series bar, one status pill</td>
-            <td>Urgency belongs to the match, not repeated five times over.</td>
-          </tr>
-          <tr>
-            <td>52pt buttons, 16pt body text</td>
-            <td>Cold hands, gloves, bad light. Deliberately against the current
-                fashion for thin, low-contrast type.</td>
+            <td>It cost 80 points of height and carried no information. Screens open with a large
+                title on the content ground.</td>
           </tr>
           <tr>
             <td>Inner tens only for pistol</td>
-            <td>ISSF breaks a tied full-ring score on inner tens. Decimal scores
-                break their own ties, so rifle shooters type one number.</td>
+            <td>ISSF breaks a tied full-ring score on inner tens. Decimal scores break their own
+                ties, so rifle shooters type one number.</td>
           </tr>
         </tbody>
       </table>
     </div>
-  </div>
-
-  <!-- ============================================== 01 getting in ======= -->
-  <section class="section">
-    <div class="section-head">
-      <h2>01 &#8212; Getting in</h2>
-      <p class="section-note">
-        What a shooter sees on opening the app. Left light, right dark &#8212; the same screen,
-        so both sides can be judged.
-      </p>
-    </div>
-
-    <div class="grid">
-
-      <figure>
-        <div class="device">
-          <div class="screen app light" data-clip>
-            <div class="sb">
-              <span>9:41</span>
-              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
-                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
-                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
-                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
-                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
-                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
-              </svg>
-            </div>
-            <div class="scroll">
-              <p class="kicker" style="color:var(--accent)">Challenging shooters</p>
-              <h1 class="large-title">World Shooting League</h1>
-
-              <div class="field">
-                <span class="lbl">Email</span>
-                <div class="input text ph">you@club.org</div>
-              </div>
-              <div class="field">
-                <span class="lbl">Password</span>
-                <div class="input text ph">at least 6 characters</div>
-              </div>
-
-              <div class="btn">Sign in</div>
-              <div class="btn text">New here? Create an account</div>
-
-              <p class="hint" style="margin-top:28px;line-height:1.5">
-                After every series you report your score with a photo of the display.
-                Your opponent's result stays hidden until you have both submitted.
-              </p>
-            </div>
-          </div>
-        </div>
-        <figcaption>
-          <span class="route">(auth)/sign-in</span>
-          <span class="cap-title">Sign in</span>
-          <span class="cap-note">
-            Email and password. Signing up adds handle, display name and country, which
-            travel as metadata and create the profile row.
-          </span>
-        </figcaption>
-      </figure>
-
-      <figure>
-        <div class="device">
-          <div class="screen app light" data-clip>
-            <div class="sb">
-              <span>9:41</span>
-              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
-                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
-                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
-                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
-                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
-                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
-              </svg>
-            </div>
-            <div class="scroll">
-              <p class="kicker">Current season</p>
-              <h1 class="large-title">My matches</h1>
-
-              <div class="card">
-                <div class="row gap-md">
-                  <div class="av">SB</div>
-                  <div class="grow">
-                    <div class="name">Stefan Br&#228;uer</div>
-                    <div class="meta">Air Rifle 10 m &#183; 3 days left</div>
-                  </div>
-                  <div class="pill turn">Your turn</div>
-                </div>
-                <div class="hair"></div>
-                <div class="row between">
-                  <div class="points">2 : 0</div>
-                  <div class="meta">Series 3 of 5</div>
-                </div>
-                <div class="seg" style="margin-top:12px">
-                  <i class="won"></i><i class="won"></i><i></i><i></i><i></i>
-                </div>
-              </div>
-
-              <div class="card">
-                <div class="row gap-md">
-                  <div class="av">AW</div>
-                  <div class="grow">
-                    <div class="name">Alina Weber</div>
-                    <div class="meta">Air Rifle 10 m &#183; 5 days left</div>
-                  </div>
-                  <div class="pill wait">Waiting</div>
-                </div>
-                <div class="hair"></div>
-                <div class="row between">
-                  <div class="points">1 : 1</div>
-                  <div class="meta">Series 3 of 5</div>
-                </div>
-                <div class="seg" style="margin-top:12px">
-                  <i class="won"></i><i class="lost"></i><i></i><i></i><i></i>
-                </div>
-              </div>
-
-              <div class="card">
-                <div class="row gap-md">
-                  <div class="av">MF</div>
-                  <div class="grow">
-                    <div class="name">Manuel Frei</div>
-                    <div class="meta">Air Pistol 10 m &#183; finished</div>
-                  </div>
-                  <div class="pill won">Won</div>
-                </div>
-                <div class="hair"></div>
-                <div class="row between">
-                  <div class="points">3 : 0</div>
-                  <div class="meta">+31 rating</div>
-                </div>
-                <div class="seg" style="margin-top:12px">
-                  <i class="won"></i><i class="won"></i><i class="won"></i><i class="void"></i><i class="void"></i>
-                </div>
-              </div>
-
-            </div>
-            <div class="tabs">
-              <div class="t on">
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="#8788FF" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>
-                <span>Matches</span>
-              </div>
-              <div class="t">
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="#656D80" aria-hidden="true"><rect x="3" y="5" width="18" height="2.4" rx="1.2"/><rect x="3" y="10.8" width="18" height="2.4" rx="1.2"/><rect x="3" y="16.6" width="18" height="2.4" rx="1.2"/></svg>
-                <span>Rankings</span>
-              </div>
-              <div class="t">
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="#656D80" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>
-                <span>Profile</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <figcaption>
-          <span class="route">(tabs)/index &#183; light</span>
-          <span class="cap-title">My matches</span>
-          <span class="cap-note">
-            One slim bar per series, and the score is the largest thing on the card.
-            "Your turn" is the only place urgency appears.
-          </span>
-        </figcaption>
-      </figure>
-
-      <figure>
-        <div class="device">
-          <div class="screen app dark" data-clip>
-            <div class="sb">
-              <span>9:41</span>
-              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
-                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
-                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
-                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
-                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
-                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
-              </svg>
-            </div>
-            <div class="scroll">
-              <p class="kicker">Current season</p>
-              <h1 class="large-title">My matches</h1>
-
-              <div class="card">
-                <div class="row gap-md">
-                  <div class="av">SB</div>
-                  <div class="grow">
-                    <div class="name">Stefan Br&#228;uer</div>
-                    <div class="meta">Air Rifle 10 m &#183; 3 days left</div>
-                  </div>
-                  <div class="pill turn">Your turn</div>
-                </div>
-                <div class="hair"></div>
-                <div class="row between">
-                  <div class="points">2 : 0</div>
-                  <div class="meta">Series 3 of 5</div>
-                </div>
-                <div class="seg" style="margin-top:12px">
-                  <i class="won"></i><i class="won"></i><i></i><i></i><i></i>
-                </div>
-              </div>
-
-              <div class="card">
-                <div class="row gap-md">
-                  <div class="av">AW</div>
-                  <div class="grow">
-                    <div class="name">Alina Weber</div>
-                    <div class="meta">Air Rifle 10 m &#183; 5 days left</div>
-                  </div>
-                  <div class="pill wait">Waiting</div>
-                </div>
-                <div class="hair"></div>
-                <div class="row between">
-                  <div class="points">1 : 1</div>
-                  <div class="meta">Series 3 of 5</div>
-                </div>
-                <div class="seg" style="margin-top:12px">
-                  <i class="won"></i><i class="lost"></i><i></i><i></i><i></i>
-                </div>
-              </div>
-
-              <div class="card">
-                <div class="row gap-md">
-                  <div class="av">MF</div>
-                  <div class="grow">
-                    <div class="name">Manuel Frei</div>
-                    <div class="meta">Air Pistol 10 m &#183; finished</div>
-                  </div>
-                  <div class="pill won">Won</div>
-                </div>
-                <div class="hair"></div>
-                <div class="row between">
-                  <div class="points">3 : 0</div>
-                  <div class="meta">+31 rating</div>
-                </div>
-                <div class="seg" style="margin-top:12px">
-                  <i class="won"></i><i class="won"></i><i class="won"></i><i class="void"></i><i class="void"></i>
-                </div>
-              </div>
-
-            </div>
-            <div class="tabs">
-              <div class="t on">
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="#4B4DE0" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>
-                <span>Matches</span>
-              </div>
-              <div class="t">
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="#838B9E" aria-hidden="true"><rect x="3" y="5" width="18" height="2.4" rx="1.2"/><rect x="3" y="10.8" width="18" height="2.4" rx="1.2"/><rect x="3" y="16.6" width="18" height="2.4" rx="1.2"/></svg>
-                <span>Rankings</span>
-              </div>
-              <div class="t">
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="#838B9E" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>
-                <span>Profile</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <figcaption>
-          <span class="route">(tabs)/index &#183; dark</span>
-          <span class="cap-title">The same, dark</span>
-          <span class="cap-note">
-            Not inverted: the light cards carry a shadow instead of a lift in brightness,
-            and there green and amber move darker so they stay legible on white.
-          </span>
-        </figcaption>
-      </figure>
-
-    </div>
   </section>
 
-  <!-- ============================================== 02 blind reveal ===== -->
+  <!-- ============================================ 01 without an account == -->
   <section class="section">
     <div class="section-head">
-      <h2>02 &#8212; The blind reveal</h2>
+      <h2>01 &#8212; Without an account</h2>
       <p class="section-note">
-        The same screen before and after the opponent reports. Air rifle is scored in
-        tenths, so no inner ten count appears anywhere here.
+        Seasons, tables and finished matches are readable by anyone; a match still being shot is
+        not. This is the only page a shooter ever arrives at cold, from a club chat group or a
+        link a captain sent round.
       </p>
     </div>
 
     <div class="grid">
-
       <figure>
-        <div class="device">
-          <div class="screen app light" data-clip>
-            <div class="sb">
-              <span>9:41</span>
-              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
-                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
-                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
-                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
-                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
-                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
-              </svg>
-            </div>
-            <div class="nav"><span class="chev">&#8249;</span><span class="nav-t">Matches</span></div>
-            <div class="scroll">
-              <p class="kicker">Air Rifle 10 m &#183; Best of 5</p>
-              <h1 class="large-title">vs Stefan Br&#228;uer</h1>
-
-              <div class="card">
-                <div class="row between" style="margin-bottom:12px">
-                  <span class="lbl">Series 1</span>
-                  <span class="pill won">Won</span>
-                </div>
-                <div class="h2h">
-                  <div class="col">
-                    <span class="lbl">You</span>
-                    <span class="num pos">104.4</span>
-                  </div>
-                  <div class="rule"></div>
-                  <div class="col right">
-                    <span class="lbl">Stefan</span>
-                    <span class="num dim">102.7</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="card">
-                <div class="row between" style="margin-bottom:12px">
-                  <span class="lbl">Series 2</span>
-                  <span class="pill wait">Waiting for Stefan</span>
-                </div>
-                <div class="h2h">
-                  <div class="col">
-                    <span class="lbl">You</span>
-                    <span class="num">103.1</span>
-                  </div>
-                  <div class="rule"></div>
-                  <div class="col right">
-                    <span class="lbl">Stefan</span>
-                    <span class="num blind">&#183;&#183;&#183;</span>
-                    <span class="tens">hidden until Stefan submits</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="card">
-                <div class="row between" style="margin-bottom:12px">
-                  <span class="lbl">Series 3</span>
-                  <span class="pill turn">Your turn</span>
-                </div>
-                <div class="btn">Report result</div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="shot"><img src="screenshots/public-home-light.png" alt="The public league page: the format, live figures and open seasons"></div>
         <figcaption>
-          <span class="route">match/[id] &#183; before the reveal</span>
-          <span class="cap-title">Series 2 is hidden</span>
+          <span class="route">(public)/index</span>
+          <span class="cap-title">The front door</span>
           <span class="cap-note">
-            The state is named rather than left blank. The row does not arrive from the
-            server at all, so the client needs no code for this.
+            Leads with the format rather than the product name, which is a wordmark at the top and
+            nothing more. Then liquidity, stated out loud &#8212; an empty ladder is what kills a
+            league, so the page says how many people are in it. Numbered steps because an evening
+            at the range genuinely is a sequence.
           </span>
         </figcaption>
       </figure>
 
       <figure>
-        <div class="device">
-          <div class="screen app light" data-clip>
-            <div class="sb">
-              <span>9:41</span>
-              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
-                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
-                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
-                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
-                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
-                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
-              </svg>
-            </div>
-            <div class="nav"><span class="chev">&#8249;</span><span class="nav-t">Matches</span></div>
-            <div class="scroll">
-              <p class="kicker">Air Rifle 10 m &#183; Best of 5</p>
-              <h1 class="large-title">vs Stefan Br&#228;uer</h1>
-
-              <div class="card" style="background:var(--pos-tint)">
-                <div class="row between">
-                  <div>
-                    <div class="lbl" style="color:var(--pos)">Match won</div>
-                    <div class="num sm pos" style="margin-top:4px">3 : 0</div>
-                  </div>
-                  <div style="text-align:right">
-                    <div class="tens">Rating</div>
-                    <div class="points" style="color:var(--pos)">+31</div>
-                  </div>
-                </div>
-                <div class="hair" style="background:rgba(52,211,153,.22)"></div>
-                <div class="tens" style="color:var(--pos)">
-                  Rated once the dispute window closes &#8212; 22 hrs left.
-                </div>
-              </div>
-
-              <div class="card">
-                <div class="row between" style="margin-bottom:12px">
-                  <span class="lbl">Series 2</span>
-                  <span class="pill won">Won</span>
-                </div>
-                <div class="h2h">
-                  <div class="col">
-                    <span class="lbl">You</span>
-                    <span class="num pos">103.1</span>
-                  </div>
-                  <div class="rule"></div>
-                  <div class="col right">
-                    <span class="lbl">Stefan</span>
-                    <span class="num dim">99.8</span>
-                  </div>
-                </div>
-                <div class="btn quiet sm">Check Stefan's photo</div>
-              </div>
-
-              <div class="card">
-                <div class="row between">
-                  <span class="lbl">Series 4&#8211;5</span>
-                  <span class="pill wait">Dropped</span>
-                </div>
-                <div class="tens" style="margin-top:8px">
-                  Not needed &#8212; the match was already decided.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="shot"><img src="screenshots/public-home-dark.png" alt="The same page on a phone set to dark"></div>
         <figcaption>
-          <span class="route">match/[id] &#183; after the reveal</span>
-          <span class="cap-title">Decided, not yet rated</span>
+          <span class="route">(public)/index &#183; dark</span>
+          <span class="cap-title">The same, dark</span>
           <span class="cap-note">
-            The outcome sits at the top as its own card with the rating effect and the
-            time left to dispute. Series 4 and 5 collapse into one line.
+            Not inverted. Light is card stock under fluorescent light and dark is the concrete of
+            the tunnel; the two were built separately, and amber moves darker in light so it holds
+            against a pale ground.
           </span>
         </figcaption>
       </figure>
 
       <div class="pair-note">
-        <span class="k">Unchanged</span>
+        <span class="k">Enforced below</span>
         <p>
-          The difference between these two screens is not display logic but a row that
-          does not exist in one of them. <strong>The database withholds the opponent's
-          report until both have submitted</strong> &#8212; taking the app apart finds nothing.
+          The split between these pages and the rest is <strong>in the database, not the
+          client</strong>. Spectators read views that run with the owner's rights and expose
+          settled results only; the tables underneath are not granted to <code>anon</code> at all.
+          A match in progress is exactly what the blind reveal protects, so it appears on no
+          public surface.
         </p>
       </div>
 
+      <figure>
+        <div class="shot"><img src="screenshots/public-season-light.png" alt="A season table"></div>
+        <figcaption>
+          <span class="route">(public)/season/[slug]</span>
+          <span class="cap-title">A season table</span>
+          <span class="cap-note">
+            The table a link has to be worth sharing. Server-rendered HTML for the same data lives
+            in the <code>public-pages</code> edge function, so a crawler and a chat preview see the
+            content rather than an empty shell.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="shot"><img src="screenshots/public-match-light.png" alt="A finished match, series by series"></div>
+        <figcaption>
+          <span class="route">match/[id] &#183; signed out</span>
+          <span class="cap-title">A finished match</span>
+          <span class="cap-note">
+            Series by series. Photos stay with the two shooters and the referee; what a spectator
+            sees is the result both of them confirmed. <em>Not yet carrying the new treatment</em>
+            &#8212; the spectator scorecard still uses the old two-figures-across-a-hairline
+            component, so a won series is marked in green here rather than by being the only
+            number in full ink.
+          </span>
+        </figcaption>
+      </figure>
     </div>
   </section>
 
-  <!-- ============================================== 03 report/check ===== -->
+  <!-- ================================================== 02 getting in ==== -->
   <section class="section">
     <div class="section-head">
-      <h2>03 &#8212; Reporting and checking</h2>
+      <h2>02 &#8212; Getting in</h2>
       <p class="section-note">
-        What a shooter does after each series, and how the opponent confirms it. This is
-        the step that replaces automated scoring.
+        Signing up records an age and a consent you have to reach for. A shooter enters a season
+        themselves; a club is entered by one of its officials.
       </p>
     </div>
 
     <div class="grid">
+      <figure>
+        <div class="shot"><img src="screenshots/sign-in-light.png" alt="Sign in"></div>
+        <figcaption>
+          <span class="route">(auth)/sign-in</span>
+          <span class="cap-title">Sign in</span>
+          <span class="cap-note">
+            Email and password. Signing up adds handle, display name and country, which travel as
+            metadata and create the profile row.
+          </span>
+        </figcaption>
+      </figure>
 
       <figure>
-        <div class="device">
-          <div class="screen app light" data-clip>
-            <div class="sb">
-              <span>9:41</span>
-              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
-                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
-                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
-                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
-                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
-                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
-              </svg>
-            </div>
-            <div class="nav"><span class="chev">&#8249;</span><span class="nav-t">Cancel</span></div>
-            <div class="scroll">
-              <p class="kicker">Series 3 &#183; 10 shots</p>
-              <h1 class="large-title">Report result</h1>
+        <div class="shot"><img src="screenshots/sign-up-light.png" alt="Creating an account, with an age gate and a recorded consent"></div>
+        <figcaption>
+          <span class="route">(auth)/sign-in &#183; create</span>
+          <span class="cap-title">Creating an account</span>
+          <span class="cap-note">
+            The age gate is real: the signup trigger refuses anyone under 18, because guardian
+            consent and the protections a junior account needs are not built. A large share of
+            ISSF shooters are juniors, so this is a deliberate hole in the market rather than an
+            oversight.
+          </span>
+        </figcaption>
+      </figure>
 
-              <div class="card">
-                <div class="field" style="margin:0">
-                  <span class="lbl">Total</span>
-                  <div class="input">104.4</div>
-                </div>
-                <div class="hint">At most 109.0 &#183; decimal scoring breaks its own ties</div>
-              </div>
+      <figure>
+        <div class="shot"><img src="screenshots/password-reset-light.png" alt="Setting a new password from a reset link"></div>
+        <figcaption>
+          <span class="route">(auth)/reset</span>
+          <span class="cap-title">A way back in</span>
+          <span class="cap-note">
+            A reset link arrives with a real session attached, so the router makes an exception for
+            it &#8212; without that the shooter would be swept straight past the screen they came
+            to use.
+          </span>
+        </figcaption>
+      </figure>
 
-              <div class="note warn" style="margin-bottom:12px">
-                <b>6.2 above your average.</b> Your last 10 series sit at 98.2. If that is
-                right, carry on. If not, now is the moment.
-              </div>
+      <figure>
+        <div class="shot"><img src="screenshots/season-join-light.png" alt="Entering a season"></div>
+        <figcaption>
+          <span class="route">season/join</span>
+          <span class="cap-title">Entering a season</span>
+          <span class="cap-note">
+            A shooter enters themselves, mid-season if need be. The page carries the link a captain
+            pastes into a chat group.
+          </span>
+        </figcaption>
+      </figure>
 
-              <div class="photo" style="margin-bottom:12px">
-                <svg viewBox="0 0 150 200" role="img" aria-label="Photo of an air rifle result slip">
-                  <rect width="150" height="200" fill="#EFEADF"/>
-                  <rect x="10" y="10" width="130" height="180" fill="#F7F4EC" stroke="#DCD5C6"/>
-                  <text x="18" y="26" font-family="ui-monospace, monospace" font-size="7" fill="#3A3630">LG 10 - Wertung</text>
-                  <line x1="18" y1="31" x2="132" y2="31" stroke="#C9C1B0"/>
-                  <circle cx="112" cy="52" r="17" fill="#FFF" stroke="#7A7366"/>
-                  <circle cx="112" cy="52" r="11" fill="#2A2723"/>
-                  <circle cx="112" cy="52" r="5" fill="#FFF" stroke="#7A7366" stroke-width=".6"/>
-                  <g fill="#0E0D0B">
-                    <circle cx="110" cy="50" r="2.1"/><circle cx="114" cy="53" r="2.1"/>
-                    <circle cx="111" cy="55" r="2.1"/><circle cx="115" cy="49" r="2.1"/>
-                    <circle cx="108" cy="53" r="2.1"/>
-                  </g>
-                  <g font-family="ui-monospace, monospace" font-size="6.4" fill="#3A3630">
-                    <text x="18" y="44">1  10.5</text><text x="18" y="55">2  10.4</text>
-                    <text x="18" y="66">3  10.3</text><text x="18" y="77">4  10.6</text>
-                    <text x="18" y="88">5  10.2</text><text x="18" y="99">6  10.5</text>
-                    <text x="18" y="110">7  10.4</text><text x="18" y="121">8   9.8</text>
-                    <text x="18" y="132">9  10.7</text><text x="18" y="143">10 11.0</text>
-                  </g>
-                  <line x1="18" y1="150" x2="132" y2="150" stroke="#C9C1B0"/>
-                  <text x="18" y="164" font-family="ui-monospace, monospace" font-size="8.5" fill="#1E1C18">Ges. 104.4</text>
-                  <text x="18" y="176" font-family="ui-monospace, monospace" font-size="6.4" fill="#3A3630">10er 8</text>
-                  <text x="18" y="186" font-family="ui-monospace, monospace" font-size="5.6" fill="#6B6357">07.08.2026 19:14</text>
-                </svg>
-              </div>
-              <div class="row gap-sm">
-                <div class="btn quiet sm grow">Retake</div>
-                <div class="btn quiet sm grow">Library</div>
-              </div>
+      <figure>
+        <div class="shot"><img src="screenshots/season-team-join-light.png" alt="A club official entering their club in a team season"></div>
+        <figcaption>
+          <span class="route">season/join &#183; team</span>
+          <span class="cap-title">Entering a club</span>
+          <span class="cap-note">
+            Only an official may enter the club, and the entry says whether the club can actually
+            field a team &#8212; a lineup short of bodies is better caught here than on the night
+            of the first fixture.
+          </span>
+        </figcaption>
+      </figure>
 
-              <div class="btn" style="margin-top:16px">Submit</div>
-              <p class="hint" style="text-align:center">Cannot be changed afterwards.</p>
-            </div>
-          </div>
-        </div>
+      <figure>
+        <div class="shot"><img src="screenshots/club-invite-light.png" alt="An invite code for the rest of the club"></div>
+        <figcaption>
+          <span class="route">club/invite</span>
+          <span class="cap-title">An invite code</span>
+          <span class="cap-note">
+            Shown to every member, not just officials: the screen itself says whether you may use
+            it, because the underlying function returns nothing to a member who is not one. Hiding
+            it would leave a new owner hunting for the one thing they need.
+          </span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ==================================================== 03 competing === -->
+  <section class="section">
+    <div class="section-head">
+      <h2>03 &#8212; Competing</h2>
+      <p class="section-note">
+        The first card is the answer to "I am at a range right now": shoot a series with no
+        opponent in sight, and be compared with whoever reports one next.
+      </p>
+    </div>
+
+    <div class="grid">
+      <figure>
+        <div class="shot"><img src="screenshots/matches-light.png" alt="My matches"></div>
+        <figcaption>
+          <span class="route">(tabs)/index</span>
+          <span class="cap-title">My matches</span>
+          <span class="cap-note">
+            One slim bar per series, and the score is the largest thing on the card. Urgency
+            appears twice and only twice: the "your turn" pill, and the deadline in amber beside
+            the series count &#8212; next to the action rather than crammed into the fixture line,
+            where a club board used to truncate it.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="shot"><img src="screenshots/matches-dark.png" alt="My matches, dark"></div>
+        <figcaption>
+          <span class="route">(tabs)/index &#183; dark</span>
+          <span class="cap-title">The same, dark</span>
+          <span class="cap-note">
+            The tab bar is a bar on the ground with a rule above it, not a floating pill with a
+            drop shadow &#8212; that was the last of the app-card language, and it cost 30 points
+            of a screen that is mostly list. Matches is marked by a target rather than a lightning
+            bolt.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="shot"><img src="screenshots/series-new-light.png" alt="Shooting a series with no opponent"></div>
+        <figcaption>
+          <span class="route">series/new</span>
+          <span class="cap-title">Shoot now, be compared later</span>
+          <span class="cap-note">
+            One tap before you step up to the firing point. That opens a two-hour window on the
+            server's clock, and a series fired before the declaration is refused &#8212; otherwise
+            "shoot ten, report the best" would be a strategy and the ranking would be worthless in
+            a fortnight.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="shot"><img src="screenshots/match-light.png" alt="A running match with one series still sealed"></div>
+        <figcaption>
+          <span class="route">match/[id] &#183; before the reveal</span>
+          <span class="cap-title">Series 2 is sealed</span>
+          <span class="cap-note">
+            The only series with plates is the one being shot. Your number is printed on bone with
+            its ten-shot string; theirs is a shutter. The row does not arrive from the server at
+            all &#8212; row level security withholds it &#8212; so the client needs no code to
+            keep the secret.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="shot"><img src="screenshots/match-dark.png" alt="The same running match, dark"></div>
+        <figcaption>
+          <span class="route">match/[id] &#183; dark</span>
+          <span class="cap-title">Bone against lead</span>
+          <span class="cap-note">
+            The clearest statement of the one rule that holds across both themes. The ground, the
+            rules and the type all flip; the plate does not, because a target card is a target card
+            in a bright hall and in a dark one.
+          </span>
+        </figcaption>
+      </figure>
+
+      <div class="pair-note">
+        <span class="k">Reads as a page</span>
+        <p>
+          Decided series collapse to two ruled lines each, with only the winning number in full
+          ink. That is what lets <strong>four series fit where two did</strong>, and it is why the
+          eye lands on the live one: it is the only thing on the screen carrying weight.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================= 04 reporting and checking === -->
+  <section class="section">
+    <div class="section-head">
+      <h2>04 &#8212; Reporting and checking</h2>
+      <p class="section-note">
+        Two numbers at most, and a photo of the display. Deliberately no OCR: typing one number is
+        not worth automating, and the verification is done by the opponent after the reveal &#8212;
+        motivated, and more reliable than a model reading a photograph of a monitor.
+      </p>
+    </div>
+
+    <div class="grid">
+      <figure>
+        <div class="shot"><img src="screenshots/report-light.png" alt="Reporting a result"></div>
         <figcaption>
           <span class="route">bout/[id]/report &#183; rifle</span>
           <span class="cap-title">One number and a photo</span>
           <span class="cap-note">
-            Air rifle is scored in tenths, so this is the whole form. On pistol a second
-            field for inner tens appears beside the total &#8212; the ISSF tiebreak for
-            full-ring scores.
+            Air rifle is scored in tenths, so this is the whole form. On pistol a second field for
+            inner tens appears beside the total &#8212; the ISSF tiebreak for full-ring scores. The
+            typed total is set in the display face: it is a value, not a sentence.
           </span>
         </figcaption>
       </figure>
 
       <figure>
-        <div class="device">
-          <div class="screen app light" data-clip>
-            <div class="sb">
-              <span>9:41</span>
-              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
-                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
-                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
-                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
-                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
-                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
-              </svg>
-            </div>
-            <div class="nav"><span class="chev">&#8249;</span><span class="nav-t">Match</span></div>
-            <div class="scroll">
-              <p class="kicker">Series 2 &#183; reported 06 Aug, 19:17</p>
-              <h1 class="large-title">Does this match?</h1>
+        <div class="shot"><img src="screenshots/report-dark.png" alt="Reporting a result, dark"></div>
+        <figcaption>
+          <span class="route">bout/[id]/report &#183; dark</span>
+          <span class="cap-title">The usual conditions</span>
+          <span class="cap-note">
+            This is the screen most likely to be used in a dim hall by somebody who has just put a
+            rifle down, which is the whole argument for 52&nbsp;pt controls and a type scale that
+            did not shrink when the palette changed.
+          </span>
+        </figcaption>
+      </figure>
 
-              <div class="card">
-                <div class="row gap-md">
-                  <div class="av">SB</div>
-                  <div class="grow">
-                    <div class="name">Stefan Br&#228;uer</div>
-                    <div class="meta">reported</div>
-                  </div>
-                  <div style="text-align:right">
-                    <div class="num sm">95</div>
-                    <div class="tens">2 inner tens</div>
-                  </div>
-                </div>
-              </div>
+      <figure>
+        <div class="shot"><img src="screenshots/report-warning-light.png" alt="A total well above the shooter's own average"></div>
+        <figcaption>
+          <span class="route">bout/[id]/report &#183; warning</span>
+          <span class="cap-title">Well above your own average</span>
+          <span class="cap-note">
+            Compared against what this shooter has been shooting rather than against an accident of
+            the calendar. It warns and lets the report through: a personal best is a real event,
+            and the check that matters happens after the reveal.
+          </span>
+        </figcaption>
+      </figure>
 
-              <div class="photo tall" style="margin-bottom:12px">
-                <svg viewBox="0 0 150 200" role="img" aria-label="Photo of an air pistol result slip">
-                  <rect width="150" height="200" fill="#EFEADF"/>
-                  <rect x="10" y="10" width="130" height="180" fill="#F7F4EC" stroke="#DCD5C6"/>
-                  <text x="18" y="26" font-family="ui-monospace, monospace" font-size="7" fill="#3A3630">AP 10 - MATCH</text>
-                  <line x1="18" y1="31" x2="132" y2="31" stroke="#C9C1B0"/>
-                  <circle cx="112" cy="52" r="17" fill="#FFF" stroke="#7A7366"/>
-                  <circle cx="112" cy="52" r="11" fill="#2A2723"/>
-                  <circle cx="112" cy="52" r="5.5" fill="none" stroke="#F7F4EC" stroke-width=".7"/>
-                  <g fill="#0E0D0B">
-                    <circle cx="111" cy="51" r="2.1"/><circle cx="114" cy="54" r="2.1"/>
-                    <circle cx="108" cy="49" r="2.1"/><circle cx="117" cy="57" r="2.1"/>
-                    <circle cx="105" cy="57" r="2.1"/>
-                  </g>
-                  <g font-family="ui-monospace, monospace" font-size="6.4" fill="#3A3630">
-                    <text x="18" y="44">1  10</text><text x="18" y="55">2  10</text>
-                    <text x="18" y="66">3   9</text><text x="18" y="77">4  10</text>
-                    <text x="18" y="88">5   9</text><text x="18" y="99">6  10</text>
-                    <text x="18" y="110">7   9</text><text x="18" y="121">8   9</text>
-                    <text x="18" y="132">9  10</text><text x="18" y="143">10  9</text>
-                  </g>
-                  <line x1="18" y1="150" x2="132" y2="150" stroke="#C9C1B0"/>
-                  <text x="18" y="164" font-family="ui-monospace, monospace" font-size="8.5" fill="#1E1C18">Total 95</text>
-                  <text x="18" y="176" font-family="ui-monospace, monospace" font-size="6.4" fill="#3A3630">Inner 10s  2</text>
-                  <text x="18" y="186" font-family="ui-monospace, monospace" font-size="5.6" fill="#6B6357">06 Aug 2026  19:17</text>
-                </svg>
-              </div>
-
-              <div class="btn pos">Looks right</div>
-              <div class="btn quiet">Does not match &#8212; call a referee</div>
-              <p class="hint" style="text-align:center">
-                Without a reply it counts as confirmed after 48 hours, but not as your
-                check.
-              </p>
-            </div>
-          </div>
-        </div>
+      <figure>
+        <div class="shot"><img src="screenshots/confirm-light.png" alt="Checking the opponent's photo"></div>
         <figcaption>
           <span class="route">bout/[id]/confirm &#183; pistol</span>
           <span class="cap-title">Check the opponent's photo</span>
           <span class="cap-note">
-            A pistol series, so the inner ten count is shown alongside the total. Both
-            figures have to agree with the slip in the photo.
+            A pistol series, so the inner ten count is shown alongside the total. Both figures have
+            to agree with the slip in the photo. This is the single reason to believe a reported
+            score, and it is why a series nobody was matched with never moves a rating.
           </span>
         </figcaption>
       </figure>
 
+      <figure>
+        <div class="shot"><img src="screenshots/confirm-dark.png" alt="Checking the opponent's photo, dark"></div>
+        <figcaption>
+          <span class="route">bout/[id]/confirm &#183; dark</span>
+          <span class="cap-title">The same, dark</span>
+          <span class="cap-note">
+            Agreeing is one tap. Disagreeing opens a case rather than a conversation, because two
+            shooters arguing in a chat thread is how a league loses both of them.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="shot"><img src="screenshots/matches-offline-light.png" alt="A report waiting for a connection"></div>
+        <figcaption>
+          <span class="route">(tabs)/index &#183; offline</span>
+          <span class="cap-title">No reception, which is normal</span>
+          <span class="cap-note">
+            A range is a concrete box in a basement, so the moment a shooter is most likely to
+            submit is the moment they are least likely to have a connection. The report queues on
+            the phone and sends itself; <code>shot_at</code> records when the series was fired, not
+            when it reached the server, or the window check would be measuring the wrong thing.
+          </span>
+        </figcaption>
+      </figure>
     </div>
   </section>
 
-  <!-- ============================================== 04 table/profile ==== -->
+  <!-- ============================================= 05 table and shooter == -->
   <section class="section">
     <div class="section-head">
-      <h2>04 &#8212; Table and profile</h2>
+      <h2>05 &#8212; The table and the shooter</h2>
       <p class="section-note">
-        Where a shooter goes to see whether the last few weeks paid off.
+        Two records that answer different questions. Your shooting is everything you reported;
+        your rating is only what somebody checked.
       </p>
     </div>
 
     <div class="grid">
-
       <figure>
-        <div class="device">
-          <div class="screen app light" data-clip>
-            <div class="sb">
-              <span>9:41</span>
-              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
-                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
-                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
-                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
-                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
-                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
-              </svg>
-            </div>
-            <div class="scroll flush">
-              <div style="padding:0 20px">
-                <p class="kicker">Current season</p>
-                <h1 class="large-title">Rankings</h1>
-              </div>
-              <div class="chips">
-                <div class="chip on">Air Rifle 10 m</div>
-                <div class="chip">Air Pistol</div>
-                <div class="chip">Smallbore</div>
-              </div>
-              <div style="padding:0 20px">
-                <div class="lb top">
-                  <span class="pos">1</span>
-                  <div class="av">TG</div>
-                  <div class="grow">
-                    <div class="name">Thomas Gehmann</div>
-                    <div class="meta">DE &#183; Air Rifle 10 m</div>
-                  </div>
-                  <div style="text-align:right">
-                    <div class="r">1662</div>
-                    <div class="wl" style="width:auto">4 / 0</div>
-                  </div>
-                </div>
-                <div class="lb">
-                  <span class="pos">2</span>
-                  <div class="av">AW</div>
-                  <div class="grow">
-                    <div class="name">Alina Weber</div>
-                    <div class="meta">AT &#183; Air Rifle 10 m</div>
-                  </div>
-                  <div style="text-align:right">
-                    <div class="r">1588</div>
-                    <div class="wl" style="width:auto">3 / 1</div>
-                  </div>
-                </div>
-                <div class="lb">
-                  <span class="pos">3</span>
-                  <div class="av">SB</div>
-                  <div class="grow">
-                    <div class="name">Stefan Br&#228;uer</div>
-                    <div class="meta">DE &#183; Air Rifle 10 m</div>
-                  </div>
-                  <div style="text-align:right">
-                    <div class="r">1521</div>
-                    <div class="wl" style="width:auto">2 / 2</div>
-                  </div>
-                </div>
-                <div class="lb">
-                  <span class="pos">4</span>
-                  <div class="av">JK</div>
-                  <div class="grow">
-                    <div class="row gap-sm">
-                      <span class="name">Jonas Keller</span>
-                      <span class="prov">provisional</span>
-                    </div>
-                    <div class="meta">DE &#183; Air Rifle 10 m</div>
-                  </div>
-                  <div style="text-align:right">
-                    <div class="r">1500</div>
-                    <div class="wl" style="width:auto">1 / 1</div>
-                  </div>
-                </div>
-                <div class="lb">
-                  <span class="pos">5</span>
-                  <div class="av">MF</div>
-                  <div class="grow">
-                    <div class="row gap-sm">
-                      <span class="name">Manuel Frei</span>
-                      <span class="prov">provisional</span>
-                    </div>
-                    <div class="meta">CH &#183; Air Rifle 10 m</div>
-                  </div>
-                  <div style="text-align:right">
-                    <div class="r">1463</div>
-                    <div class="wl" style="width:auto">1 / 2</div>
-                  </div>
-                </div>
-                <p class="hint" style="margin-top:14px">
-                  "Provisional" means too few matches so far for a settled rating.
-                </p>
-              </div>
-            </div>
-            <div class="tabs">
-              <div class="t">
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="#656D80" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>
-                <span>Matches</span>
-              </div>
-              <div class="t on">
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="#8788FF" aria-hidden="true"><rect x="3" y="5" width="18" height="2.4" rx="1.2"/><rect x="3" y="10.8" width="18" height="2.4" rx="1.2"/><rect x="3" y="16.6" width="18" height="2.4" rx="1.2"/></svg>
-                <span>Rankings</span>
-              </div>
-              <div class="t">
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="#656D80" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>
-                <span>Profile</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="shot"><img src="screenshots/rankings-light.png" alt="Rankings"></div>
         <figcaption>
           <span class="route">(tabs)/leaderboard</span>
           <span class="cap-title">Rankings</span>
           <span class="cap-note">
-            Glicko-2 rather than Elo, and disciplines spelled out rather than coded. The
-            top place sits in the accent colour.
+            Glicko-2 rather than Elo, so a rating carries its own uncertainty and a shooter with
+            four matches is marked provisional rather than ranked as if they were settled. Set as a
+            table: a header row, a heavy rule under it, hairlines between rows. The top three sit
+            in amber.
           </span>
         </figcaption>
       </figure>
 
       <figure>
-        <div class="device">
-          <div class="screen app light" data-clip>
-            <div class="sb">
-              <span>9:41</span>
-              <svg width="54" height="12" viewBox="0 0 54 12" fill="currentColor" aria-hidden="true">
-                <rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/>
-                <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/>
-                <path d="M23 4.6a7 7 0 0 1 9 0l-1.3 1.5a5 5 0 0 0-6.4 0zM25.4 7.5a3.4 3.4 0 0 1 4.2 0L27.5 10z"/>
-                <rect x="38" y="2" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1"/>
-                <rect x="39.5" y="3.5" width="9" height="5" rx="1.2"/><rect x="51" y="4.5" width="1.6" height="3" rx=".8"/>
-              </svg>
-            </div>
-            <div class="scroll">
-              <div class="row gap-md" style="margin:14px 0 20px">
-                <div class="av" style="width:56px;height:56px;border-radius:18px;font-size:19px">TG</div>
-                <div class="grow">
-                  <div style="font-size:22px;font-weight:700;letter-spacing:-.02em">Thomas Gehmann</div>
-                  <div class="meta">DE &#183; SV Karlsruhe</div>
-                </div>
-              </div>
-
-              <p class="kicker">AR10ET</p>
-              <div class="card">
-                <div class="row between" style="align-items:flex-end;margin-bottom:14px">
-                  <div>
-                    <div class="lbl">Rating</div>
-                    <div class="num sm">1662</div>
-                  </div>
-                </div>
-                <div class="stats">
-                  <div class="stat"><b>4</b><span>Matches</span></div>
-                  <div class="stat"><b>4/0/0</b><span>W/D/L</span></div>
-                  <div class="stat"><b>&#177;118</b><span>Deviation</span></div>
-                </div>
-              </div>
-
-              <p class="kicker">AP10ET</p>
-              <div class="card">
-                <div class="row between" style="align-items:flex-end;margin-bottom:14px">
-                  <div>
-                    <div class="lbl">Rating</div>
-                    <div class="num sm">1519</div>
-                  </div>
-                  <div class="pill wait">Provisional</div>
-                </div>
-                <div class="stats">
-                  <div class="stat"><b>2</b><span>Matches</span></div>
-                  <div class="stat"><b>1/0/1</b><span>W/D/L</span></div>
-                  <div class="stat"><b>&#177;186</b><span>Deviation</span></div>
-                </div>
-              </div>
-
-              <p class="kicker">Reliability</p>
-              <div class="card">
-                <div class="row between">
-                  <span class="tens">Checked yourself</span>
-                  <span class="points" style="color:var(--pos)">86%</span>
-                </div>
-                <div class="meter"><i style="width:86%"></i></div>
-                <p class="hint" style="margin-top:10px">
-                  You confirmed 6 of 7 opponent results yourself.
-                </p>
-              </div>
-            </div>
-            <div class="tabs">
-              <div class="t">
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="#656D80" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg>
-                <span>Matches</span>
-              </div>
-              <div class="t">
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="#656D80" aria-hidden="true"><rect x="3" y="5" width="18" height="2.4" rx="1.2"/><rect x="3" y="10.8" width="18" height="2.4" rx="1.2"/><rect x="3" y="16.6" width="18" height="2.4" rx="1.2"/></svg>
-                <span>Rankings</span>
-              </div>
-              <div class="t on">
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="#8788FF" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z"/></svg>
-                <span>Profile</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="shot"><img src="screenshots/profile-light.png" alt="Profile: your own record, club, ratings"></div>
         <figcaption>
           <span class="route">(tabs)/profile</span>
           <span class="cap-title">Profile</span>
           <span class="cap-note">
-            One block per discipline with the rating as the headline figure. The
-            confirmation rate gets a bar &#8212; in a league without automated scoring it says
-            something about you.
+            "Your shooting" is the paper Schie&#223;buch every shooter already keeps: every series
+            you report goes in, compared or not. The rating below it only moves when there was
+            somebody to compare against, and the two are separated on the screen because they are
+            separated in the database.
           </span>
         </figcaption>
       </figure>
 
+      <figure>
+        <div class="shot"><img src="screenshots/profile-edit-light.png" alt="Editing a profile, and picking the club that fields you"></div>
+        <figcaption>
+          <span class="route">profile/edit</span>
+          <span class="cap-title">The club that fields you</span>
+          <span class="cap-note">
+            A shooter can belong to several clubs but competes for exactly one, and the picker only
+            offers clubs they actually belong to. A constraint enforces the same thing underneath,
+            so the screen cannot lie about it.
+          </span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ================================== 06 settling a disagreement ======= -->
+  <section class="section">
+    <div class="section-head">
+      <h2>06 &#8212; Settling a disagreement</h2>
+      <p class="section-note">
+        When two shooters cannot agree, a referee gets both photos and four ways to end it. Peer
+        confirmation works while everyone knows each other; this is what has to exist before that
+        stops being true.
+      </p>
+    </div>
+
+    <div class="grid">
+      <figure>
+        <div class="shot"><img src="screenshots/referee-queue-light.png" alt="The referee's case queue"></div>
+        <figcaption>
+          <span class="route">(tabs)/cases</span>
+          <span class="cap-title">The case queue</span>
+          <span class="cap-note">
+            A tab rather than a corner of the profile, because a referee who has to go looking for
+            it will not work it. Hidden for everyone else &#8212; and the hiding is cosmetic only:
+            the decision function checks the role itself.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="shot"><img src="screenshots/referee-case-light.png" alt="A case: both reports and both photos"></div>
+        <figcaption>
+          <span class="route">case/[id]</span>
+          <span class="cap-title">Both reports, both photos</span>
+          <span class="cap-note">
+            Side by side, with what each shooter said next to what the display shows. A shooter
+            cannot decide their own case, and a decision without a reason is refused.
+          </span>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <div class="shot"><img src="screenshots/referee-decision-light.png" alt="The four ways a case can end"></div>
+        <figcaption>
+          <span class="route">case/[id] &#183; decide</span>
+          <span class="cap-title">Four ways it can end</span>
+          <span class="cap-note">
+            Uphold, correct the score, award the series, or void it and leave a decider to be shot.
+            A corrected score keeps the reported number readable beside it: the record should show
+            what was claimed as well as what was decided.
+          </span>
+        </figcaption>
+      </figure>
     </div>
   </section>
 
   <footer>
     <p>
-      Colours, spacing, radii and type sizes are read from
-      <code>mobile/lib/theme.ts</code>; the wording is what the screens render. What is
-      invented is the sample data and the result slips in the photos, which are drawn
-      rather than photographed.
+      These frames are regenerated by <code>cd mobile &amp;&amp; npm run screenshots</code>, which
+      needs playwright &#8212; deliberately not a dependency of the app, since it is only used to
+      take the pictures. The same run writes <code>docs/screenshots/</code>, which the README
+      embeds.
     </p>
     <p>
-      Screens taller than the device fade out at the bottom &#8212; that is where the app
-      scrolls.
+      What is invented is the league: the shooters, clubs and results come from
+      <code>mobile/scripts/fixtures.mjs</code>, and the ten-shot strings there add up to the totals
+      they sit under, because the database enforces exactly that cross-check when a range supplies
+      individual shots.
+    </p>
+    <p>
+      The design tokens are in <code>mobile/lib/theme.ts</code> and the components that use them in
+      <code>mobile/components/ui.tsx</code>.
     </p>
   </footer>
 
