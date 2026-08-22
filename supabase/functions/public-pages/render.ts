@@ -69,6 +69,12 @@ export interface PageMeta {
   url: string;
   /** Where the app lives, so a reader can carry on there. */
   appUrl?: string;
+  /**
+   * Absolute URL of the card for this page, if it has one. A result pasted into
+   * a club chat is the only thing this league has that travels on its own, and
+   * without this it travels as a line of grey text.
+   */
+  imageUrl?: string;
 }
 
 /** Escapes text for HTML. Everything interpolated below goes through it. */
@@ -149,7 +155,16 @@ export function page(meta: PageMeta, body: string, jsonLd?: object): string {
 <meta property="og:title" content="${esc(meta.title)}">
 <meta property="og:description" content="${esc(meta.description)}">
 <meta property="og:url" content="${esc(meta.url)}">
-<meta name="twitter:card" content="summary">
+${
+  meta.imageUrl
+    ? `<meta property="og:image" content="${esc(meta.imageUrl)}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="${esc(meta.title)}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="${esc(meta.imageUrl)}">`
+    : '<meta name="twitter:card" content="summary">'
+}
 ${jsonLd ? `<script type="application/ld+json">${jsonForScript(jsonLd)}</script>` : ''}
 <style>${STYLE}</style>
 </head>

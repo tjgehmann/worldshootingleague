@@ -13,6 +13,10 @@ node --experimental-strip-types --no-warnings \
   "$REPO/supabase/functions/public-pages/render.test.ts"
 
 echo
+echo "==> share card"
+node --experimental-strip-types --no-warnings   "$REPO/supabase/functions/public-pages/card.test.ts"
+
+echo
 echo "==> notification emails"
 node --experimental-strip-types --no-warnings \
   "$REPO/supabase/functions/send-notifications/email.test.ts"

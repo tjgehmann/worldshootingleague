@@ -283,15 +283,33 @@ const submissions = [
   },
 ];
 
+/**
+ * Recent form: the last five rated matches, oldest first, as public.leaderboard
+ * reports them. Score is the Glicko-2 outcome and delta the whole rating points
+ * it moved — so the strip shows both what happened and how much it was worth.
+ */
+const form = (...pairs) => pairs.map(([score, delta]) => ({ score, delta }));
+
 const leaderboard = [
-  [1, MANUEL, AR, 1712, 48, 41, 26, 12, 3, false],
-  [2, ME, AR, 1684, 62, 24, 14, 8, 2, false],
-  [3, ALINA, AR, 1651, 55, 33, 19, 11, 3, false],
-  [4, STEFAN, AR, 1622, 71, 18, 10, 7, 1, false],
-  [5, PAULA, AR, 1590, 96, 11, 6, 4, 1, false],
-  [6, LARS, AR, 1548, 132, 7, 3, 3, 1, false],
-  [7, JONAS, AR, 1502, 189, 4, 2, 2, 0, true],
-].map(([position, id, disciplineId, rating, rd, played, wins, losses, draws, provisional]) => ({
+  // Two shooters mid-table with almost the same record and opposite form: the
+  // one thing wins and losses cannot say.
+  [1, MANUEL, AR, 1712, 48, 41, 26, 12, 3, false,
+    form([1, 14], [0, -17], [1, 12], [1, 15], [1, 11])],
+  [2, ME, AR, 1684, 62, 24, 14, 8, 2, false,
+    form([1, 18], [0, -16], [1, 17], [0.5, 1], [1, 19])],
+  [3, ALINA, AR, 1651, 55, 33, 19, 11, 3, false,
+    form([1, 16], [1, 13], [1, 15], [0, -21], [0, -18])],
+  [4, STEFAN, AR, 1622, 71, 18, 10, 7, 1, false,
+    form([0, -19], [1, 22], [1, 16], [1, 20], [0, -14])],
+  [5, PAULA, AR, 1590, 96, 11, 6, 4, 1, false,
+    form([0.5, 2], [1, 24], [0, -20], [1, 26], [1, 21])],
+  // A newcomer has fewer than five, and the strip has to be shorter rather
+  // than padded with something that did not happen.
+  [6, LARS, AR, 1548, 132, 7, 3, 3, 1, false,
+    form([1, 28], [0, -25], [1, 30])],
+  [7, JONAS, AR, 1502, 189, 4, 2, 2, 0, true,
+    form([0, -32], [1, 35])],
+].map(([position, id, disciplineId, rating, rd, played, wins, losses, draws, provisional, recentForm]) => ({
   discipline_id: disciplineId,
   discipline: disciplines[disciplineId].code,
   shooter_id: id,
@@ -306,6 +324,7 @@ const leaderboard = [
   draws,
   is_provisional: provisional,
   position,
+  recent_form: recentForm,
 }));
 
 const seasons = [

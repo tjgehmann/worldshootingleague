@@ -82,6 +82,23 @@ select 'views:             ' ||
    and viewname in ('leaderboard','match_results','shooter_reliability','club_standings',
                     'dispute_queue');
 
+-- The ladder is a create-or-replace, so a migration that never ran leaves a
+-- view that still exists and still answers — just without the column. Every
+-- form strip would come back empty and nothing would say why.
+select 'leaderboard form:  ' ||
+       case when count(*) = 1 then 'OK'
+            else 'MISSING — the ladder would show no recent form' end
+  from information_schema.columns
+ where table_schema = 'public'
+   and table_name = 'leaderboard'
+   and column_name = 'recent_form';
+
+select 'form index:        ' ||
+       case when count(*) = 1 then 'OK'
+            else 'MISSING — the ladder would scan every rated match ever played' end
+  from pg_indexes
+ where schemaname = 'public' and indexname = 'rating_events_form_idx';
+
 select 'notification dedupe:' ||
        case when count(*) = 1 then ' OK'
             else ' MISSING — reminders would resend on every tick' end

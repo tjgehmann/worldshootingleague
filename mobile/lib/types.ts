@@ -161,6 +161,16 @@ export interface MatchWithContext extends Match {
   bouts: Bout[];
 }
 
+/**
+ * One rated match, as the ladder reports it. `score` is the Glicko-2 outcome —
+ * 1, 0.5 or 0 — and `delta` the whole rating points it moved, rounded because
+ * the rating beside it is displayed rounded too.
+ */
+export interface FormEvent {
+  score: number;
+  delta: number;
+}
+
 export interface LeaderboardRow {
   discipline_id: string;
   discipline: string;
@@ -176,6 +186,8 @@ export interface LeaderboardRow {
   draws: number;
   is_provisional: boolean;
   position: number;
+  /** Up to the last five rated matches, oldest first. Never null. */
+  recent_form: FormEvent[];
 }
 
 export interface Rating {

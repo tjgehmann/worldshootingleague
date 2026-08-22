@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { useTheme, type Theme } from '@/lib/theme';
+import type { FormEvent } from '@/lib/types';
 
 /** Builds a stylesheet against the active palette. */
 function useStyles<T extends StyleSheet.NamedStyles<T>>(factory: (t: Theme) => T): T {
@@ -247,68 +248,6 @@ export function Segments({ states }: { states: SegmentState[] }) {
           }}
         />
       ))}
-    </View>
-  );
-}
-
-/**
- * The scoreboard. Two figures facing each other across a hairline — the whole
- * product in one component.
- */
-export function HeadToHead({
-  leftLabel,
-  leftValue,
-  leftMeta,
-  leftWon,
-  rightLabel,
-  rightValue,
-  rightMeta,
-  rightWon,
-  rightBlind,
-}: {
-  leftLabel: string;
-  leftValue: string;
-  leftMeta?: string;
-  leftWon?: boolean;
-  rightLabel: string;
-  rightValue: string;
-  rightMeta?: string;
-  rightWon?: boolean;
-  rightBlind?: boolean;
-}) {
-  const t = useTheme();
-
-  const value = (v: string, won?: boolean, blind?: boolean) => [
-    t.text.score,
-    {
-      color: blind ? t.colors.inkFaint : won ? t.colors.positive : t.colors.ink,
-    },
-    blind && { fontSize: 34, letterSpacing: 4 },
-    !won && !blind && { color: t.colors.ink },
-  ];
-
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'stretch' }}>
-      <View style={{ flex: 1, gap: 3 }}>
-        <Label>{leftLabel}</Label>
-        <Text style={value(leftValue, leftWon)}>{leftValue}</Text>
-        {leftMeta ? <Meta>{leftMeta}</Meta> : null}
-      </View>
-
-      <View
-        style={{
-          width: StyleSheet.hairlineWidth * 2,
-          backgroundColor: t.colors.hairline,
-          marginHorizontal: t.space.lg,
-          marginVertical: t.space.xs,
-        }}
-      />
-
-      <View style={{ flex: 1, gap: 3, alignItems: 'flex-end' }}>
-        <Label>{rightLabel}</Label>
-        <Text style={value(rightValue, rightWon, rightBlind)}>{rightValue}</Text>
-        {rightMeta ? <Meta>{rightMeta}</Meta> : null}
-      </View>
     </View>
   );
 }
@@ -877,5 +816,52 @@ export function ColLabel({
     >
       {children}
     </Text>
+  );
+}
+
+/**
+ * Recent form: up to five rated matches, oldest on the left.
+ *
+ * This is the question a ladder is actually asked and the one wins-and-losses
+ * cannot answer. Six won then six lost is the same pair of counts as six lost
+ * then six won, and only one of those is somebody you want to be drawn against.
+ *
+ * Colour carries the result and height carries the swing, scaled against the
+ * largest move in this shooter's own strip rather than against a fixed axis —
+ * a fixed axis would flatten every strip on the page to the same shape, since
+ * a Glicko-2 move is nearly always between ten and twenty points.
+ */
+export function Form({ events, height = 22 }: { events: FormEvent[]; height?: number }) {
+  const t = useTheme();
+  if (!events?.length) {
+    return (
+      <Text style={[t.text.data, { color: t.colors.inkFaint, textAlign: 'right' }]}>—</Text>
+    );
+  }
+
+  const widest = Math.max(...events.map((e) => Math.abs(e.delta)), 1);
+
+  return (
+    <View
+      accessibilityRole="image"
+      accessibilityLabel={`Recent form, oldest first: ${events
+        .map((e) => (e.score === 1 ? 'won' : e.score === 0 ? 'lost' : 'drew'))
+        .join(', ')}`}
+      style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'flex-end', gap: 2, height }}
+    >
+      {events.map((e, i) => (
+        <View
+          key={i}
+          style={{
+            width: 5,
+            height: Math.max(6, Math.round((Math.abs(e.delta) / widest) * height)),
+            borderRadius: 1,
+            backgroundColor:
+              e.score === 1 ? t.colors.positive : e.score === 0 ? t.colors.negative : t.colors.inkFaint,
+            opacity: e.score === 0.5 ? 0.55 : 1,
+          }}
+        />
+      ))}
+    </View>
   );
 }

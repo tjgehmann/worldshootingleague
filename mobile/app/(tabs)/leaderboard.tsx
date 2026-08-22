@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { FlatList, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ColLabel, Empty, Hint, Kicker, LargeTitle, Loading, Rule } from '@/components/ui';
+import { ColLabel, Empty, Form, Hint, Kicker, LargeTitle, Loading, Rule } from '@/components/ui';
 import { fetchDisciplines, fetchLeaderboard } from '@/lib/queries';
 import { TAB_BAR_CLEARANCE, useTheme } from '@/lib/theme';
 
@@ -82,7 +82,7 @@ export default function LeaderboardScreen() {
                     <ColLabel align="right">Rating</ColLabel>
                   </View>
                   <View style={{ width: 46 }}>
-                    <ColLabel align="right">W/L</ColLabel>
+                    <ColLabel align="right">Form</ColLabel>
                   </View>
                 </View>
                 <Rule heavy />
@@ -150,8 +150,8 @@ export default function LeaderboardScreen() {
                   {/* The code rather than the full name: this line is mono data
                       sitting in a narrow column, and "Air Rifle 10 m" pushed the
                       match count off the end of it. */}
-                  {item.country_code} · {item.discipline} · {item.matches_played}{' '}
-                  {item.matches_played === 1 ? 'match' : 'matches'}
+                  {item.country_code} · {item.discipline} · {item.wins}W {item.losses}L
+                  {item.draws > 0 ? ` ${item.draws}D` : ''}
                 </Text>
               </View>
 
@@ -169,19 +169,20 @@ export default function LeaderboardScreen() {
                 {Math.round(item.rating)}
               </Text>
 
-              <Text
-                style={[
-                  t.text.data,
-                  { width: 46, textAlign: 'right', color: t.colors.inkFaint },
-                ]}
-              >
-                {item.wins}/{item.losses}
-              </Text>
+              {/* Replaces the win/loss pair, which was two numbers nobody read
+                  in the width that answers "is this person climbing?". The
+                  counts still appear, spelled out, on the line below the name. */}
+              <View style={{ width: 46 }}>
+                <Form events={item.recent_form} />
+              </View>
             </View>
           )}
           ListFooterComponent={
             rows.data?.length ? (
-              <Hint>"Provisional" means too few matches so far for a settled rating.</Hint>
+              <Hint>
+                Form is the last five rated matches, oldest first; the taller the mark, the more
+                rating it moved. "Provisional" means too few matches so far for a settled rating.
+              </Hint>
             ) : null
           }
         />

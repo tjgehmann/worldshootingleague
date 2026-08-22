@@ -243,13 +243,14 @@ Migrations:
 | `..._more_metrics.sql` | what the new mode is measured by |
 | `..._reveal_once.sql` | a bout can only be revealed once |
 | `..._late_counts_as_practice.sql` | a late report is kept rather than refused |
+| `..._leaderboard_form.sql` | the ladder stops throwing away the order of a shooter's results |
 
 Edge functions:
 
 | Function | Purpose |
 |---|---|
 | `send-notifications` | drains the notification outbox to push **and** email |
-| `public-pages` | server-rendered HTML for seasons, matches and clubs |
+| `public-pages` | server-rendered HTML for seasons, matches and clubs, and the share card at `/m/{id}/card.png` |
 
 ## Testing locally
 
@@ -260,11 +261,13 @@ Two suites, neither needing Docker, a device or a network.
 ./scripts/test-node.sh    # logic that runs off-database
 ```
 
-`test-node.sh` covers the three pieces that are pure enough to check directly:
+`test-node.sh` covers the four pieces that are pure enough to check directly:
 the public page renderer (escaping, meta tags, content actually being in the
-HTML), the notification email builder (escaping, links, and that no message
-carries a score — the blind reveal would otherwise have a hole an email could
-walk through), and the outbox's error classification, the decision that
+HTML), the share card (escaping into SVG, where a bare ampersand silently
+produces a blank image, and that a name nobody can measure is cut rather than
+run off the edge), the notification email builder (escaping, links, and that no
+message carries a score — the blind reveal would otherwise have a hole an email
+could walk through), and the outbox's error classification, the decision that
 separates "wait for reception" from "the server said no".
 
 The script builds a throwaway cluster, applies stub, migrations and seed, and
@@ -308,6 +311,12 @@ What is covered:
   and practice separately, the sweep saying so when it lets one go, the rating
   not moving for it — and the bout of a matched open series ending **settled**
   rather than `revealed`, which is what caught the reveal trigger firing twice.
+* **`90_leaderboard_form.sql`** — two shooters with the identical record and
+  opposite recent form, which is the case wins and losses cannot tell apart;
+  never more than five marks, fewer for a newcomer, whole-number deltas so they
+  agree with the rounded ratings beside them, an empty array rather than null
+  for a shooter with no rated matches, and a signed-out visitor seeing the same
+  column as a member.
 * **`60_accounts.sql`** — an adult gets in and a minor does not, consent is
   recorded, the export carries what it should, and deletion removes the name
   while the results survive; the beta's own metrics, admin-only.
@@ -474,6 +483,9 @@ ladders grouped by level range so each one stays relevant. Both apply here.
 - [x] **Push notifications.** Done: an outbox written by triggers, drained by
       `supabase/functions/send-notifications`. Deep links carry the reader
       straight to the match.
+- [x] **Recent form on the ladder.** Done: the last five rated matches per
+      shooter, drawn beside their rating. `rating_events` already held it; the
+      view was throwing the ordering away.
 - [ ] **Divisions with promotion and relegation.** One table for everyone is
       demotivating for everyone outside the top ten. FACEIT splits its ladders by
       level range for exactly this reason; ESEA and ESL run divisions. Glicko-2
@@ -534,8 +546,11 @@ announcing bans.
 - [x] **Server-rendered HTML** so a crawler sees those pages. Done: the
       `public-pages` edge function serves real HTML at `/s/{slug}`, `/m/{id}`
       and `/c/{slug}`, with Open Graph tags and JSON-LD.
-- [ ] Shareable match cards for social, and live results during an on-site
-      final.
+- [x] **Shareable match cards.** Done: `/m/{id}/card.png` draws the match as the
+      same score plate the app uses, and the match page carries it as its
+      `og:image`, so a result pasted into a club chat unfurls as a scoreboard
+      rather than a line of grey text.
+- [ ] Live results during an on-site final.
 
 ### Operations, and two things that block a public launch
 

@@ -444,6 +444,15 @@ async function attachPhoto(page, photoPath) {
 
 async function settle(page) {
   await page.waitForLoadState('networkidle').catch(() => {});
+
+  // Wait for the faces, not just the data. The app gates its first render on
+  // useFonts, but on web the browser can still paint a run of text in the
+  // fallback while a face is being swapped in — which produced screenshots
+  // where a few screens were quietly set in Times while the rest were correct.
+  // document.fonts.ready is the only signal that actually means "the type on
+  // this page is the type the app chose".
+  await page.evaluate(() => document.fonts.ready).catch(() => {});
+
   // React Query resolves a tick after the fetch; the tab bar and lists need one
   // more frame to lay out.
   await page.waitForTimeout(700);

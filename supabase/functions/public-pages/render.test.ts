@@ -156,4 +156,22 @@ check('an empty league still renders a readable page', () => {
   assert.ok(html.includes('No matches have been decided yet.'));
 });
 
+check('a page with a card says so, and one without does not pretend', () => {
+  const withCard = renderMatch(
+    { ...meta, imageUrl: 'https://example.org/m/abc/card.png' },
+    result,
+    [],
+  );
+  assert.ok(withCard.includes('property="og:image" content="https://example.org/m/abc/card.png"'));
+  assert.ok(withCard.includes('twitter:card" content="summary_large_image"'));
+  // The dimensions have to be declared or a preview reserves the wrong box and
+  // the card arrives cropped.
+  assert.ok(withCard.includes('og:image:width" content="1200"'));
+  assert.ok(withCard.includes('og:image:height" content="630"'));
+
+  const withoutCard = renderMatch(meta, result, []);
+  assert.ok(!withoutCard.includes('og:image'), 'a page with no card claimed one');
+  assert.ok(withoutCard.includes('twitter:card" content="summary"'));
+});
+
 console.log(`\n${passed} checks passed`);

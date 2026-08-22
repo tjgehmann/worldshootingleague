@@ -6,7 +6,6 @@ import {
   Button,
   Card,
   Empty,
-  HeadToHead,
   Hint,
   Kicker,
   Label,
@@ -209,52 +208,71 @@ function SpectatorMatch({ match }: { match: MatchDetail }) {
         {match.profile_a.display_name} v {match.profile_b.display_name}
       </LargeTitle>
 
-      <Card>
-        <HeadToHead
-          leftLabel={match.profile_a.display_name}
-          leftValue={formatPoints(match.points_a)}
-          leftWon={aWon}
-          rightLabel={match.profile_b.display_name}
-          rightValue={formatPoints(match.points_b)}
-          rightWon={bWon}
-        />
-        <Meta style={{ marginTop: t.space.md }}>
+      <View style={{ marginBottom: t.space.lg }}>
+        <Rule heavy />
+        <View style={{ paddingVertical: t.space.sm }}>
+          <ScoreLine
+            you={aWon}
+            name={match.profile_a.display_name}
+            value={formatPoints(match.points_a)}
+            won={aWon}
+          />
+          <ScoreLine
+            you={bWon}
+            name={match.profile_b.display_name}
+            value={formatPoints(match.points_b)}
+            won={bWon}
+          />
+        </View>
+        <Rule />
+        <Meta style={{ marginTop: t.space.sm }}>
           {match.decided_by === 'forfeit'
             ? 'Decided by walkover.'
             : match.decided_by === 'tiebreak'
               ? 'Decided on a tiebreak.'
               : 'Decided on series won.'}
         </Meta>
-      </Card>
+      </View>
 
       <Kicker>Scorecard</Kicker>
       {scorecard.isLoading ? (
         <Loading />
       ) : (
         (scorecard.data ?? []).map((row) => (
-          <Card key={row.bout}>
+          // The same two ruled lines a shooter sees on their own match. A
+          // spectator reading a result should be reading the same object.
+          <View
+            key={row.bout}
+            style={{
+              paddingVertical: t.space.lg,
+              borderTopWidth: StyleSheet.hairlineWidth,
+              borderTopColor: t.colors.hairline,
+            }}
+          >
             <View
               style={{
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: t.space.md,
+                marginBottom: t.space.sm,
               }}
             >
               <Label>Series {row.bout}</Label>
               {row.is_tie ? <Pill tone="wait">Tied</Pill> : null}
             </View>
-            <HeadToHead
-              leftLabel={match.profile_a.display_name.split(' ')[0]}
-              leftValue={formatScore(row.total_a, mode)}
-              leftMeta={row.inner_tens_a != null ? `${row.inner_tens_a} inner tens` : undefined}
-              leftWon={row.winner_id === match.shooter_a}
-              rightLabel={match.profile_b.display_name.split(' ')[0]}
-              rightValue={formatScore(row.total_b, mode)}
-              rightMeta={row.inner_tens_b != null ? `${row.inner_tens_b} inner tens` : undefined}
-              rightWon={row.winner_id === match.shooter_b}
+            <ScoreLine
+              name={match.profile_a.display_name.split(' ')[0]}
+              value={formatScore(row.total_a, mode)}
+              meta={row.inner_tens_a != null ? `${row.inner_tens_a} inner tens` : undefined}
+              won={row.winner_id === match.shooter_a}
             />
-          </Card>
+            <ScoreLine
+              name={match.profile_b.display_name.split(' ')[0]}
+              value={formatScore(row.total_b, mode)}
+              meta={row.inner_tens_b != null ? `${row.inner_tens_b} inner tens` : undefined}
+              won={row.winner_id === match.shooter_b}
+            />
+          </View>
         ))
       )}
 
