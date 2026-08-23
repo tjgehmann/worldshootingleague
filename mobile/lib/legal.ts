@@ -17,7 +17,7 @@
 export const TERMS_VERSION = '2026-08-01';
 
 export interface LegalDocument {
-  slug: 'imprint' | 'privacy' | 'terms';
+  slug: 'imprint' | 'privacy' | 'terms' | 'source';
   title: string;
   updated: string;
   body: string;
@@ -26,6 +26,14 @@ export interface LegalDocument {
 const OPERATOR = '<Operator name>';
 const ADDRESS = '<Street, postcode, town, country>';
 const EMAIL = '<contact@example.org>';
+
+/**
+ * Where the code this app is built from lives. AGPL § 13 turns this from a
+ * courtesy into an obligation: anyone using the service over a network is
+ * owed the source of the version they are actually using, so a fork that
+ * changes the rating or the reveal has to change this line too.
+ */
+const SOURCE_URL = 'https://github.com/tjgehmann/worldshootingleague';
 
 export const LEGAL: Record<LegalDocument['slug'], LegalDocument> = {
   imprint: {
@@ -161,6 +169,32 @@ account that breaks these terms, and will say why.
 German law applies. Where you are a consumer, the mandatory consumer protection
 of your country of residence is unaffected.`,
   },
+
+  source: {
+    slug: 'source',
+    title: 'Source code',
+    updated: TERMS_VERSION,
+    body: `This service is free software, licensed under the GNU Affero General
+Public License, version 3 or later.
+
+You are entitled to the complete source code of the version you are using, to
+run it yourself, to study how it decides a match, and to redistribute it —
+modified or not — under the same licence.
+
+Where it is
+${SOURCE_URL}
+
+Why you are told this
+Section 13 of the AGPL requires an operator who runs the software as a network
+service to offer its source to the people using it. That is the whole reason
+this licence was chosen over the plain GPL. A league is a set of rules applied
+to other people's results; rules you cannot read are not rules, they are a
+claim. The rating, the pairing and the blind reveal are all in that repository.
+
+No warranty
+The licence gives you the code, not a promise that it works. See sections 15
+and 16 of the licence text, which is in the repository as LICENSE.`,
+  },
 };
 
-export const LEGAL_LIST = [LEGAL.imprint, LEGAL.privacy, LEGAL.terms];
+export const LEGAL_LIST = [LEGAL.imprint, LEGAL.privacy, LEGAL.terms, LEGAL.source];

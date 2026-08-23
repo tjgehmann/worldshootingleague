@@ -576,3 +576,23 @@ announcing bans.
       Challengermode report results automatically and never ask for a screenshot;
       that is the end state, and it is worth reaching only from a position where
       the manufacturers want the distribution.
+
+## License
+
+GNU Affero General Public License, version 3 or later — the full text is in
+[`LICENSE`](LICENSE).
+
+The AGPL rather than the GPL because this is a network service. Section 13 is
+the clause that matters: anyone who runs a modified copy of this and lets other
+people use it over a network has to offer those users the modified source. A
+league's credibility rests on the rules being inspectable, and running a private
+fork of the rating and the reveal logic against public shooters is exactly the
+thing the licence is there to prevent.
+
+To satisfy that offer, both public surfaces link back to this repository — the
+server-rendered pages in `supabase/functions/public-pages` carry a *Source* link
+in the footer, and the app carries one under *The small print* in the profile,
+alongside the imprint. If you deploy a modified copy, point
+`SOURCE_URL` in `mobile/lib/legal.ts` and `render.ts` at your own fork; leaving
+them aimed here means offering users source that is not the source they are
+running.

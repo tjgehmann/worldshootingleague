@@ -141,6 +141,14 @@ function jsonForScript(value: object): string {
     .replace(/&/g, '\\u0026');
 }
 
+/**
+ * The source these pages are served from. AGPL § 13 requires an operator to
+ * offer it to the people reached over the network, and these pages are the
+ * only surface a visitor without an account ever sees — so the link belongs in
+ * the footer, not only in the app. A fork has to repoint it at itself.
+ */
+const SOURCE_URL = 'https://github.com/tjgehmann/worldshootingleague';
+
 export function page(meta: PageMeta, body: string, jsonLd?: object): string {
   return `<!doctype html>
 <html lang="en">
@@ -174,7 +182,8 @@ ${body}
 <p class="foot">World Shooting League — shooters compete independently of time and place.
 Results become visible only once both have submitted.${
     meta.appUrl ? ` <a href="${esc(meta.appUrl)}">Open the app</a>.` : ''
-  }</p>
+  }
+<a href="${esc(SOURCE_URL)}">Source</a>, AGPL-3.0.</p>
 </main>
 </body>
 </html>`;
