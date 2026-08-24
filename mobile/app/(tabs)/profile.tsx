@@ -314,6 +314,13 @@ export default function ProfileScreen() {
           ))}
         </Card>
 
+        {/* The tabs have no route back to the public league page — signing in
+            trades it for "my matches" and nothing here otherwise leads back
+            to seasons running, entries, recent results across the league. */}
+        <Link href="/(public)" asChild>
+          <Button label="View the public league page" variant="quiet" onPress={() => {}} />
+        </Link>
+
         <Button label="Sign out" variant="text" onPress={signOut} />
       </ScrollView>
     </SafeAreaView>

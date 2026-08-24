@@ -49,11 +49,20 @@ export default function ConfirmScreen() {
   });
 
   const theirs = (submissions.data ?? []).find((s) => s.shooter_id !== userId);
+  const mine = (submissions.data ?? []).find((s) => s.shooter_id === userId);
 
   const photoUrl = useQuery({
     queryKey: ['photo', theirs?.photo_path],
     queryFn: () => createSignedPhotoUrl(theirs!.photo_path!),
     enabled: !!theirs?.photo_path,
+  });
+
+  // Your own photo again, next to theirs — checking "does this match" from
+  // memory of what you photographed is a worse version of the same check.
+  const myPhotoUrl = useQuery({
+    queryKey: ['photo', mine?.photo_path],
+    queryFn: () => createSignedPhotoUrl(mine!.photo_path!),
+    enabled: !!mine?.photo_path,
   });
 
   const decide = useMutation({
@@ -115,35 +124,22 @@ export default function ConfirmScreen() {
         </View>
       </Card>
 
-      {photoUrl.data ? (
-        <Image
-          source={{ uri: photoUrl.data }}
-          style={{
-            width: '100%',
-            height: 280,
-            borderRadius: t.radius.xl,
-            backgroundColor: t.colors.surfaceAlt,
-            marginBottom: t.space.md,
-          }}
-          resizeMode="contain"
+      {/* Both photos, side by side — the whole point is comparing them at a
+          glance rather than checking theirs against your memory of yours. */}
+      <View style={{ flexDirection: 'row', gap: t.space.sm, marginBottom: t.space.md }}>
+        <PhotoPane
+          label="You"
+          score={mine ? formatScore(mine.total, mode) : null}
+          uri={myPhotoUrl.data}
+          loading={myPhotoUrl.isLoading}
         />
-      ) : (
-        <View
-          style={{
-            width: '100%',
-            height: 200,
-            borderRadius: t.radius.xl,
-            backgroundColor: t.colors.surfaceAlt,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: t.space.md,
-          }}
-        >
-          <Text style={{ color: t.colors.inkFaint, fontSize: 14 }}>
-            Photo could not be loaded.
-          </Text>
-        </View>
-      )}
+        <PhotoPane
+          label={opponent.display_name}
+          score={formatScore(theirs.total, mode)}
+          uri={photoUrl.data}
+          loading={photoUrl.isLoading}
+        />
+      </View>
 
       {disputing ? (
         <View>
@@ -194,5 +190,55 @@ export default function ConfirmScreen() {
         </View>
       )}
     </ScrollView>
+  );
+}
+
+/** One side of the comparison: whose photo it is, what they reported, and the photo itself. */
+function PhotoPane({
+  label,
+  score,
+  uri,
+  loading,
+}: {
+  label: string;
+  score: string | null;
+  uri: string | null | undefined;
+  loading: boolean;
+}) {
+  const t = useTheme();
+  return (
+    <View style={{ flex: 1, minWidth: 0 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+        <Meta numberOfLines={1}>{label}</Meta>
+        {score ? <Meta>{score}</Meta> : null}
+      </View>
+      {uri ? (
+        <Image
+          source={{ uri }}
+          style={{
+            width: '100%',
+            height: 220,
+            borderRadius: t.radius.lg,
+            backgroundColor: t.colors.surfaceAlt,
+          }}
+          resizeMode="contain"
+        />
+      ) : (
+        <View
+          style={{
+            width: '100%',
+            height: 220,
+            borderRadius: t.radius.lg,
+            backgroundColor: t.colors.surfaceAlt,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ color: t.colors.inkFaint, fontSize: 12, textAlign: 'center' }}>
+            {loading ? 'Loading…' : 'Photo could not be loaded.'}
+          </Text>
+        </View>
+      )}
+    </View>
   );
 }
