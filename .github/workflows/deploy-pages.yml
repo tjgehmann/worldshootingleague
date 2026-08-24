@@ -1,0 +1,72 @@
+name: Deploy web app to GitHub Pages
+
+on:
+  push:
+    branches: [claude/world-shooting-league-vp54f9]
+    paths:
+      - "mobile/**"
+      - ".github/workflows/deploy-pages.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    env:
+      # A repo-scoped GitHub Pages project site is served under /<repo>/, not
+      # from the domain root, so every asset path Metro emits needs this
+      # prefix baked in at build time (see mobile/app.config.js). Root-hosted
+      # deploys (Vercel/Netlify) leave WSL_BASE_PATH unset.
+      WSL_BASE_PATH: /worldshootingleague
+      # These are meant to be public: EXPO_PUBLIC_* vars ship inside the
+      # client bundle regardless, and the anon/publishable key is designed to
+      # be exposed — RLS is what actually protects the data.
+      EXPO_PUBLIC_SUPABASE_URL: https://nkqfhzbqxlrcujgmxuzs.supabase.co
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_RlIJOl_-mikRKF2qZH8--w_FAtac2fh
+      EXPO_PUBLIC_SITE_URL: https://tjgehmann.github.io/worldshootingleague/
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run build:web
+
+      # GitHub Pages has no server-side rewrite, so a refresh on a nested
+      # route (e.g. /leaderboard) 404s unless the 404 page is the app shell
+      # too. GitHub serves 404.html for any unmatched path under the site,
+      # and the client-side router takes it from there. Paths inside it are
+      # already base-prefixed by the build above, so this works unmodified.
+      - run: cp dist/index.html dist/404.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: mobile/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

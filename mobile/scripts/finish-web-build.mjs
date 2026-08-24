@@ -13,6 +13,12 @@
  * here instead, as an explicit step rather than a silent one.
  *
  *   node scripts/finish-web-build.mjs [dist]
+ *
+ * Reads WSL_BASE_PATH from the environment (same variable app.config.js
+ * reads for expo.experiments.baseUrl) so every root-absolute path this
+ * script writes — service worker registration and scope, manifest link,
+ * apple touch icon, and the manifest's own start_url/scope/icons — agrees
+ * with where Metro put the bundled assets. Empty for root hosting.
  */
 
 import { createHash } from 'node:crypto';
@@ -23,6 +29,7 @@ import { fileURLToPath } from 'node:url';
 const MOBILE = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const DIST = resolve(process.argv[2] ?? join(MOBILE, 'dist'));
 const INDEX = join(DIST, 'index.html');
+const BASE = (process.env.WSL_BASE_PATH ?? '').trim().replace(/\/+$/, '');
 
 if (!existsSync(INDEX)) {
   console.error(`No build at ${INDEX}. Run "npm run build:web" first.`);
@@ -35,13 +42,13 @@ const HEAD = `
       // still leaves a worker able to serve the last good build.
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
-          navigator.serviceWorker.register('/sw.js').catch(function () {});
+          navigator.serviceWorker.register('${BASE}/sw.js').catch(function () {});
         });
       }
     </script>
     <meta name="description" content="An online league for sport shooters on electronic targets. Shoot at your own club, report the score with a photo, and neither result is visible until both have submitted." />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="/icon-512.png" />
+    <link rel="manifest" href="${BASE}/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="${BASE}/icon-512.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="WSL" />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F7F8FB" />
@@ -74,6 +81,20 @@ html = html.replace('</head>', `${HEAD}  </head>`);
 
 writeFileSync(INDEX, html);
 
+// ---------------------------------------------------------------- manifest --
+// public/manifest.webmanifest is copied into dist verbatim by expo export, so
+// its root-absolute start_url/scope/icons need the same base-path rewrite the
+// HTML and service worker get above.
+
+const MANIFEST = join(DIST, 'manifest.webmanifest');
+if (existsSync(MANIFEST)) {
+  const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
+  manifest.start_url = `${BASE}/`;
+  manifest.scope = `${BASE}/`;
+  manifest.icons = manifest.icons.map((icon) => ({ ...icon, src: `${BASE}${icon.src}` }));
+  writeFileSync(MANIFEST, JSON.stringify(manifest, null, 2) + '\n');
+}
+
 // ------------------------------------------------------- service worker ----
 
 /**
@@ -98,7 +119,8 @@ const precache = filesUnder(DIST)
   .map((file) => '/' + relative(DIST, file).split(/[\\/]/).join('/'))
   // metadata.json is build bookkeeping and _redirects is a host's routing
   // config; neither is ever fetched by the app.
-  .filter((path) => !['/metadata.json', '/_redirects', '/sw.js'].includes(path));
+  .filter((path) => !['/metadata.json', '/_redirects', '/sw.js'].includes(path))
+  .map((path) => `${BASE}${path}`);
 
 // The cache name has to change whenever anything in it does, or a phone keeps
 // serving last week's build for as long as the worker lives.
@@ -140,7 +162,7 @@ self.addEventListener('fetch', (event) => {
   // network is not there, which is what makes a cold start in a basement work.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match('/index.html').then((r) => r || Response.error())),
+      fetch(request).catch(() => caches.match('${BASE}/index.html').then((r) => r || Response.error())),
     );
     return;
   }
