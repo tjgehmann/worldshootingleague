@@ -576,3 +576,7 @@ announcing bans.
       Challengermode report results automatically and never ask for a screenshot;
       that is the end state, and it is worth reaching only from a position where
       the manufacturers want the distribution.
+
+## License
+
+AGPL-3.0-only. See [`LICENSE`](LICENSE).
