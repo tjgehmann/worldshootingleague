@@ -114,7 +114,14 @@ export async function fetchBoutSubmissions(boutIds: string[]): Promise<Submissio
   return data ?? [];
 }
 
-export async function fetchConfirmedSubmissionIds(userId: string): Promise<Set<string>> {
+/**
+ * A plain array, not a Set: this is cached by react-query under
+ * PersistQueryClientProvider, which round-trips the cache through
+ * JSON.stringify/parse — a Set does not survive that (it comes back as `{}`),
+ * so `.has()` on the rehydrated cache after a reload throws instead of
+ * returning false. Same failure as fetchShooterNames() and the same fix.
+ */
+export async function fetchConfirmedSubmissionIds(userId: string): Promise<string[]> {
   const { data, error } = await supabase
     .from('bout_confirmations')
     .select('submission_id')
@@ -122,7 +129,7 @@ export async function fetchConfirmedSubmissionIds(userId: string): Promise<Set<s
     .returns<{ submission_id: string }[]>();
 
   if (error) throw error;
-  return new Set((data ?? []).map((row) => row.submission_id));
+  return (data ?? []).map((row) => row.submission_id);
 }
 
 /**
@@ -153,6 +160,30 @@ export async function fetchLeaderboard(disciplineCode?: string): Promise<Leaderb
   if (disciplineCode) query = query.eq('discipline', disciplineCode);
 
   const { data, error } = await query.returns<LeaderboardRow[]>();
+  if (error) throw error;
+  return data ?? [];
+}
+
+/**
+ * One shooter's settled matches in one discipline — a season round and a
+ * pairing that came out of an open series look the same here (both are just
+ * rows in public.matches by the time they are decided); round_id is what
+ * tells them apart for display.
+ */
+export async function fetchShooterRecentMatches(
+  shooterId: string,
+  disciplineCode: string,
+  limit = 10,
+): Promise<PublicMatchResult[]> {
+  const { data, error } = await supabase
+    .from('match_results')
+    .select('*')
+    .eq('discipline', disciplineCode)
+    .or(`shooter_a.eq.${shooterId},shooter_b.eq.${shooterId}`)
+    .order('settled_at', { ascending: false })
+    .limit(limit)
+    .returns<PublicMatchResult[]>();
+
   if (error) throw error;
   return data ?? [];
 }

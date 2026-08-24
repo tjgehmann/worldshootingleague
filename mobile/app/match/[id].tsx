@@ -148,7 +148,7 @@ export default function MatchScreen() {
           opponentName={opponent.display_name}
           scoringMode={m.discipline.scoring_mode}
           submissions={submissions.data ?? []}
-          confirmedIds={confirmed.data ?? new Set<string>()}
+          confirmedIds={confirmed.data ?? []}
         />
       ))}
 
@@ -344,7 +344,7 @@ function BoutCard({
   opponentName: string;
   scoringMode: ScoringMode;
   submissions: Submission[];
-  confirmedIds: Set<string>;
+  confirmedIds: string[];
 }) {
   const t = useTheme();
   const { queuedBoutIds } = useOutbox();
@@ -358,7 +358,7 @@ function BoutCard({
   const queued = queuedBoutIds.has(bout.id);
   const canReport =
     !mine && !queued && (bout.state === 'open' || bout.state === 'awaiting_opponent');
-  const needsCheck = !!theirs && !confirmedIds.has(theirs.id);
+  const needsCheck = !!theirs && !confirmedIds.includes(theirs.id);
   const blind = !theirs && !!mine;
   const firstName = opponentName.split(' ')[0];
 

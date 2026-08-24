@@ -372,6 +372,8 @@ export interface ScorecardRow {
 export interface PublicMatchResult {
   match_id: string;
   season_id: string | null;
+  /** Null for a match that came from an open series rather than a season round. */
+  round_id: string | null;
   discipline: string;
   format: string;
   shooter_a: string;
