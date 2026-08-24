@@ -48,6 +48,20 @@ export function resetRedirectUrl(): string {
   return 'wsl://reset';
 }
 
+/**
+ * Where a signup confirmation link comes back to.
+ *
+ * Left unset, Supabase falls back to the project's Site URL — a dashboard
+ * setting, not something a deploy of this repo controls, and easy to leave
+ * pointing at wherever it was last tested from (a `npm start` on
+ * localhost, say) instead of where the link is actually opened.
+ */
+export function confirmRedirectUrl(): string {
+  const origin = appOrigin();
+  if (origin) return `${origin}/`;
+  return 'wsl://';
+}
+
 export function seasonUrl(slug: string): string {
   const origin = appOrigin();
   return origin ? `${origin}/season/${slug}` : publicPage(`/s/${slug}`);

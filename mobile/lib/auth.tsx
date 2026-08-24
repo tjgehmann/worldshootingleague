@@ -2,7 +2,7 @@ import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { TERMS_VERSION } from './legal';
-import { resetRedirectUrl } from './links';
+import { confirmRedirectUrl, resetRedirectUrl } from './links';
 import { registerForPush, unregisterPush } from './notifications';
 import { supabase } from './supabase';
 
@@ -84,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email,
           password,
           options: {
+            emailRedirectTo: confirmRedirectUrl(),
             data: {
               handle: handle.trim().toLowerCase(),
               display_name: displayName.trim(),
@@ -108,7 +109,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { confirmationSent: !data.session };
       },
       async resendConfirmation(email) {
-        const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim() });
+        const { error } = await supabase.auth.resend({
+          type: 'signup',
+          email: email.trim(),
+          options: { emailRedirectTo: confirmRedirectUrl() },
+        });
         if (error) throw error;
       },
       async sendPasswordReset(email) {
