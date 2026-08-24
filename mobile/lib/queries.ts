@@ -133,7 +133,9 @@ export async function fetchConfirmedSubmissionIds(userId: string): Promise<Set<s
 export async function fetchPublicProfileByHandle(handle: string): Promise<PublicProfile | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select(`id, handle, display_name, country_code, bio, club:clubs(${CLUB_FIELDS})`)
+    .select(
+      `id, handle, display_name, country_code, bio, club:clubs!profiles_primary_club_id_fkey(${CLUB_FIELDS})`,
+    )
     .eq('handle', handle)
     .maybeSingle<PublicProfile>();
 
@@ -185,7 +187,7 @@ export async function fetchProfile(userId: string): Promise<Profile> {
     .from('profiles')
     .select(
       `id, handle, display_name, country_code, bio, equipment, role, primary_club_id,
-       notify_push, notify_email, club:clubs(${CLUB_FIELDS})`,
+       notify_push, notify_email, club:clubs!profiles_primary_club_id_fkey(${CLUB_FIELDS})`,
     )
     .eq('id', userId)
     .single<Profile>();
