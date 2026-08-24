@@ -38,9 +38,16 @@ const queryClient = new QueryClient({
   },
 });
 
+// Bumped whenever a query's cached shape changes incompatibly (a Map or Set
+// that used to be returned somewhere, say — neither survives this
+// persister's JSON.stringify/parse). Without a bump, a phone that cached the
+// old shape keeps serving it straight into the first render on every future
+// load — refetching happens too, but only after that render has already
+// thrown. Rather than chase each such crash one query at a time, an
+// incompatible change bumps this and every device starts clean.
 const persister = createAsyncStoragePersister({
   storage: AsyncStorage,
-  key: 'wsl.query-cache.v1',
+  key: 'wsl.query-cache.v2',
 });
 
 function AuthGate() {
