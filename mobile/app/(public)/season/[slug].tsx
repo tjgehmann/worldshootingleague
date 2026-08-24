@@ -193,33 +193,42 @@ export default function PublicSeasonScreen() {
         ))
       ) : (
         (individual.data ?? []).map((row) => (
-          <View
+          <Link
             key={row.shooter_id}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: t.space.md,
-              paddingVertical: 11,
-              borderBottomWidth: 1,
-              borderBottomColor: t.colors.hairline,
-            }}
+            href={{ pathname: '/shooter/[handle]', params: { handle: row.handle } }}
+            asChild
           >
-            <Text style={[POSITION, { color: row.position === 1 ? t.colors.accent : t.colors.inkFaint }]}>
-              {row.position}
-            </Text>
-            <Avatar name={row.display_name} size={34} />
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[t.text.name, { color: t.colors.ink }]} numberOfLines={1}>
-                {row.display_name}
-              </Text>
-              <Meta>
-                {row.country_code}
-                {row.club_name ? ` · ${row.club_name}` : ''} · {row.wins}/{row.draws}/
-                {row.losses}
-              </Meta>
-            </View>
-            <Text style={[t.text.points, { color: t.colors.ink }]}>{row.points}</Text>
-          </View>
+            <Pressable>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: t.space.md,
+                  paddingVertical: 11,
+                  borderBottomWidth: 1,
+                  borderBottomColor: t.colors.hairline,
+                }}
+              >
+                <Text
+                  style={[POSITION, { color: row.position === 1 ? t.colors.accent : t.colors.inkFaint }]}
+                >
+                  {row.position}
+                </Text>
+                <Avatar name={row.display_name} size={34} />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={[t.text.name, { color: t.colors.ink }]} numberOfLines={1}>
+                    {row.display_name}
+                  </Text>
+                  <Meta>
+                    {row.country_code}
+                    {row.club_name ? ` · ${row.club_name}` : ''} · {row.wins}/{row.draws}/
+                    {row.losses}
+                  </Meta>
+                </View>
+                <Text style={[t.text.points, { color: t.colors.ink }]}>{row.points}</Text>
+              </View>
+            </Pressable>
+          </Link>
         ))
       )}
 

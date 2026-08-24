@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -91,14 +92,15 @@ export default function LeaderboardScreen() {
           }
           ItemSeparatorComponent={() => <Rule />}
           renderItem={({ item }) => (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: t.space.md,
-                paddingVertical: 13,
-              }}
-            >
+            <Link href={{ pathname: '/shooter/[handle]', params: { handle: item.handle } }} asChild>
+              <Pressable
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: t.space.md,
+                  paddingVertical: 13,
+                }}
+              >
               <Text
                 style={{
                   width: 22,
@@ -175,7 +177,8 @@ export default function LeaderboardScreen() {
               <View style={{ width: 46 }}>
                 <Form events={item.recent_form} />
               </View>
-            </View>
+              </Pressable>
+            </Link>
           )}
           ListFooterComponent={
             rows.data?.length ? (

@@ -12,6 +12,7 @@ import type {
   Match,
   OpenSeries,
   Profile,
+  PublicProfile,
   Rating,
   RecentForm,
   Reliability,
@@ -124,6 +125,22 @@ export async function fetchConfirmedSubmissionIds(userId: string): Promise<Set<s
   return new Set((data ?? []).map((row) => row.submission_id));
 }
 
+/**
+ * A shooter's public page. read_profiles already restricts this to accounts
+ * with is_public set (or the viewer sharing a match with them, or a referee) —
+ * the query itself has no extra filtering to get wrong.
+ */
+export async function fetchPublicProfileByHandle(handle: string): Promise<PublicProfile | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select(`id, handle, display_name, country_code, bio, club:clubs(${CLUB_FIELDS})`)
+    .eq('handle', handle)
+    .maybeSingle<PublicProfile>();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function fetchLeaderboard(disciplineCode?: string): Promise<LeaderboardRow[]> {
   let query = supabase
     .from('leaderboard')
@@ -134,6 +151,19 @@ export async function fetchLeaderboard(disciplineCode?: string): Promise<Leaderb
   if (disciplineCode) query = query.eq('discipline', disciplineCode);
 
   const { data, error } = await query.returns<LeaderboardRow[]>();
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** A shooter's rated disciplines, for their public page — not the top-100 view fetchLeaderboard gives. */
+export async function fetchShooterRatings(shooterId: string): Promise<LeaderboardRow[]> {
+  const { data, error } = await supabase
+    .from('leaderboard')
+    .select('*')
+    .eq('shooter_id', shooterId)
+    .order('discipline', { ascending: true })
+    .returns<LeaderboardRow[]>();
+
   if (error) throw error;
   return data ?? [];
 }
@@ -311,9 +341,13 @@ export async function fetchClub(clubId: string): Promise<Club> {
 export async function fetchClubRoster(clubId: string) {
   const { data, error } = await supabase
     .from('club_members')
-    .select('role, shooter:profiles!club_members_shooter_id_fkey(id, display_name, country_code)')
+    .select(
+      'role, shooter:profiles!club_members_shooter_id_fkey(id, handle, display_name, country_code)',
+    )
     .eq('club_id', clubId)
-    .returns<{ role: string; shooter: { id: string; display_name: string; country_code: string } }[]>();
+    .returns<
+      { role: string; shooter: { id: string; handle: string; display_name: string; country_code: string } }[]
+    >();
 
   if (error) throw error;
   return data ?? [];

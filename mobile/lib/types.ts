@@ -49,6 +49,16 @@ export interface Club {
   city: string | null;
 }
 
+/** What a stranger may read of a shooter: everything read_profiles allows past is_public. */
+export interface PublicProfile {
+  id: string;
+  handle: string;
+  display_name: string;
+  country_code: string;
+  bio: string | null;
+  club: Club | null;
+}
+
 export type ClubRole = 'member' | 'official' | 'owner';
 
 export interface ClubMembership {

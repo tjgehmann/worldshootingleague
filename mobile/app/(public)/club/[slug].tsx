@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
-import { ScrollView, Text, View } from 'react-native';
+import { Link, useLocalSearchParams } from 'expo-router';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { Avatar, Card, Empty, Hint, Kicker, LargeTitle, Loading, Meta, StatRow } from '@/components/ui';
 import { fetchClubBySlug, fetchClubRoster } from '@/lib/queries';
@@ -60,26 +60,33 @@ export default function PublicClubScreen() {
         </Card>
       ) : (
         (roster.data ?? []).map((member) => (
-          <View
+          <Link
             key={member.shooter.id}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: t.space.md,
-              paddingVertical: 11,
-              borderBottomWidth: 1,
-              borderBottomColor: t.colors.hairline,
-            }}
+            href={{ pathname: '/shooter/[handle]', params: { handle: member.shooter.handle } }}
+            asChild
           >
-            <Avatar name={member.shooter.display_name} size={34} />
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[t.text.name, { color: t.colors.ink }]} numberOfLines={1}>
-                {member.shooter.display_name}
-              </Text>
-              <Meta>{member.shooter.country_code}</Meta>
-            </View>
-            {member.role !== 'member' ? <Meta>{member.role}</Meta> : null}
-          </View>
+            <Pressable>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: t.space.md,
+                  paddingVertical: 11,
+                  borderBottomWidth: 1,
+                  borderBottomColor: t.colors.hairline,
+                }}
+              >
+                <Avatar name={member.shooter.display_name} size={34} />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={[t.text.name, { color: t.colors.ink }]} numberOfLines={1}>
+                    {member.shooter.display_name}
+                  </Text>
+                  <Meta>{member.shooter.country_code}</Meta>
+                </View>
+                {member.role !== 'member' ? <Meta>{member.role}</Meta> : null}
+              </View>
+            </Pressable>
+          </Link>
         ))
       )}
 
