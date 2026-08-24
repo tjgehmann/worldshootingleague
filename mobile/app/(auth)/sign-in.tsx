@@ -21,6 +21,7 @@ export default function SignInScreen() {
   const [birthDate, setBirthDate] = useState('');
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   // Checked here as well as in the database, so somebody who is too young
@@ -32,12 +33,13 @@ export default function SignInScreen() {
 
   async function submit() {
     setError(null);
+    setInfo(null);
     setBusy(true);
     try {
       if (mode === 'in') {
         await signIn(email.trim(), password);
       } else {
-        await signUp({
+        const { confirmationSent } = await signUp({
           email: email.trim(),
           password,
           handle,
@@ -45,6 +47,9 @@ export default function SignInScreen() {
           countryCode: country,
           dateOfBirth: birthDate.trim(),
         });
+        if (confirmationSent) {
+          setInfo('Account created. Check your email for a link to confirm it before signing in.');
+        }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Sign-in failed');
@@ -71,6 +76,7 @@ export default function SignInScreen() {
           </View>
 
           {error ? <Note tone="error">{error}</Note> : null}
+          {info ? <Note>{info}</Note> : null}
 
           <Field
             label="Email"
@@ -143,6 +149,7 @@ export default function SignInScreen() {
             onPress={() => {
               setMode(mode === 'in' ? 'up' : 'in');
               setError(null);
+              setInfo(null);
             }}
           />
           {mode === 'in' ? (

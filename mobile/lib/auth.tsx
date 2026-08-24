@@ -18,7 +18,13 @@ interface AuthValue {
    */
   recovering: boolean;
   signIn(email: string, password: string): Promise<void>;
-  signUp(input: SignUpInput): Promise<void>;
+  /**
+   * Resolves with `confirmationSent: true` when the account was created but
+   * needs a confirmation link before it can sign in — the caller has to tell
+   * the shooter to check their email, because no session arrives to do it for
+   * them.
+   */
+  signUp(input: SignUpInput): Promise<{ confirmationSent: boolean }>;
   signOut(): Promise<void>;
   sendPasswordReset(email: string): Promise<void>;
   setPassword(password: string): Promise<void>;
@@ -72,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       async signUp({ email, password, handle, displayName, countryCode, dateOfBirth }) {
         // handle_new_user() reads this metadata to create the profile row.
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -86,6 +92,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           },
         });
         if (error) throw error;
+
+        // Supabase answers a re-signup on an already-registered, confirmed
+        // email with 200 and an empty identities array rather than an error,
+        // so a client that only checks `error` sees nothing happen at all.
+        if (data.user && data.user.identities?.length === 0) {
+          throw new Error('That email is already registered. Try signing in instead.');
+        }
+
+        // A session here means email confirmation is off and the account can
+        // be used straight away. No session means a confirmation link is on
+        // its way, and there is nothing else here to tell the shooter that.
+        return { confirmationSent: !data.session };
       },
       async sendPasswordReset(email) {
         const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
