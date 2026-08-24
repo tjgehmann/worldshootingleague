@@ -43,7 +43,7 @@ export default function PublicHomeScreen() {
     enabled: !!results.data?.length,
   });
 
-  const nameOf = (id: string) => names.data?.get(id) ?? '…';
+  const nameOf = (id: string) => names.data?.[id] ?? '…';
 
   // Liquidity, stated rather than implied. An empty ladder is the thing that
   // kills a league, so the page says out loud how many people are in it — and

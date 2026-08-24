@@ -735,9 +735,16 @@ export async function fetchRecentResults(limit = 20): Promise<PublicMatchResult[
   return data ?? [];
 }
 
-/** Display names for a set of shooters, for screens that only have their ids. */
-export async function fetchShooterNames(ids: string[]): Promise<Map<string, string>> {
-  if (ids.length === 0) return new Map();
+/**
+ * Display names for a set of shooters, for screens that only have their ids.
+ *
+ * A plain object, not a Map: this query is cached by PersistQueryClientProvider,
+ * which round-trips the cache through JSON.stringify/parse — a Map does not
+ * survive that (it comes back as `{}`), so anything reading it with `.get()`
+ * after a reload would throw on the rehydrated cache, not the fresh one.
+ */
+export async function fetchShooterNames(ids: string[]): Promise<Record<string, string>> {
+  if (ids.length === 0) return {};
 
   const { data, error } = await supabase
     .from('profiles')
@@ -746,5 +753,5 @@ export async function fetchShooterNames(ids: string[]): Promise<Map<string, stri
     .returns<{ id: string; display_name: string }[]>();
 
   if (error) throw error;
-  return new Map((data ?? []).map((row) => [row.id, row.display_name]));
+  return Object.fromEntries((data ?? []).map((row) => [row.id, row.display_name]));
 }
