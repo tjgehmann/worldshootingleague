@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as Network from 'expo-network';
+import { Platform } from 'react-native';
 
 import { isDuplicateSubmission, isTransportFailure } from './outbox-errors';
 import { reportOpenSeries } from './queries';
@@ -109,6 +110,59 @@ function outboxDirectory(): Directory {
   return dir;
 }
 
+// -------------------------------------------------------- photo storage ----
+//
+// "Somewhere the system will not reclaim" means different things on the two
+// platforms. Native has a real filesystem, so the photo is copied into the
+// app's document directory exactly as the comment above the queue describes.
+// expo-file-system's File/Directory are native-only, though — `new File()`
+// on web throws (`this.validatePath is not a function`), because there is no
+// native module behind it to implement path validation at all.
+//
+// The web build has no filesystem to copy into, but it does not need one:
+// the picker already hands back the picked image as a blob: URL, and the
+// outbox entry itself is durable the moment AsyncStorage (localStorage on
+// web) persists it. So the photo is read into a data: URI once and stored as
+// the entry's photoUri directly — self-contained, survives a reload with the
+// rest of the entry, and needs nothing deleted when the report is done with.
+
+function blobToDataUri(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read the photo'));
+    reader.onload = () => resolve(reader.result as string);
+    reader.readAsDataURL(blob);
+  });
+}
+
+/** Copies the picker's file somewhere durable and returns the stored photoUri. */
+async function storePhoto(id: string, sourceUri: string): Promise<string> {
+  if (Platform.OS === 'web') {
+    const blob = await (await fetch(sourceUri)).blob();
+    return blobToDataUri(blob);
+  }
+  const target = new File(outboxDirectory(), `${id}.jpg`);
+  await new File(sourceUri).copy(target);
+  return target.uri;
+}
+
+async function photoExists(photoUri: string): Promise<boolean> {
+  if (Platform.OS === 'web') return photoUri.startsWith('data:');
+  return new File(photoUri).exists;
+}
+
+/** The bytes to upload — a type supabase-js's storage client accepts on both platforms. */
+async function readPhotoBytes(photoUri: string): Promise<Blob | Uint8Array> {
+  if (Platform.OS === 'web') return await (await fetch(photoUri)).blob();
+  return new File(photoUri).bytes();
+}
+
+async function deletePhoto(photoUri: string): Promise<void> {
+  if (Platform.OS === 'web') return; // A data: URI is just a string in the entry; nothing to delete.
+  const file = new File(photoUri);
+  if (file.exists) file.delete();
+}
+
 interface CommonInput {
   shooterId: string;
   total: number;
@@ -131,17 +185,15 @@ export interface QueueSeriesInput extends CommonInput {
 
 /** Copies the photo somewhere the system will not reclaim, and queues the row. */
 async function queue(id: string, input: CommonInput, rest: object): Promise<OutboxEntry> {
-  const target = new File(outboxDirectory(), `${id}.jpg`);
-
   // Out of the picker's cache and into storage we control.
-  await new File(input.sourceUri).copy(target);
+  const photoUri = await storePhoto(id, input.sourceUri);
 
   const entry = {
     id,
     shooterId: input.shooterId,
     total: input.total,
     innerTens: input.innerTens,
-    photoUri: target.uri,
+    photoUri,
     fromCamera: input.fromCamera,
     shotAt: input.shotAt.toISOString(),
     queuedAt: new Date().toISOString(),
@@ -172,8 +224,7 @@ export async function queueSeriesReport(input: QueueSeriesInput): Promise<Outbox
 
 async function discard(entry: OutboxEntry): Promise<void> {
   try {
-    const file = new File(entry.photoUri);
-    if (file.exists) file.delete();
+    await deletePhoto(entry.photoUri);
   } catch {
     // A photo we cannot delete is litter, not a failure.
   }
@@ -186,8 +237,7 @@ async function discard(entry: OutboxEntry): Promise<void> {
  * row pointing at a missing file.
  */
 async function send(entry: OutboxEntry): Promise<void> {
-  const file = new File(entry.photoUri);
-  if (!file.exists) {
+  if (!(await photoExists(entry.photoUri))) {
     throw Object.assign(new Error('The photo for this report is gone.'), { code: 'no_photo' });
   }
 
@@ -207,7 +257,7 @@ async function send(entry: OutboxEntry): Promise<void> {
 
   const folder = entry.kind === 'bout' ? entry.boutId : entry.seriesId;
   const path = targetPhotoPath(folder, entry.shooterId);
-  const bytes = await file.bytes();
+  const bytes = await readPhotoBytes(entry.photoUri);
 
   const { error: uploadError } = await supabase.storage
     .from(TARGET_PHOTOS_BUCKET)
