@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { useTheme } from '@/lib/theme';
 export default function SignInScreen() {
   const { signIn, signUp, resendConfirmation } = useAuth();
   const t = useTheme();
+  const router = useRouter();
 
   const [mode, setMode] = useState<'in' | 'up'>('in');
   const [email, setEmail] = useState('');
@@ -51,9 +52,16 @@ export default function SignInScreen() {
           countryCode: country,
           dateOfBirth: birthDate.trim(),
         });
-        if (confirmationSent) setAwaitingConfirmation(true);
-        // No confirmation needed: a session already arrived, and the auth
-        // gate takes it from there — nothing to show here.
+        if (confirmationSent) {
+          setAwaitingConfirmation(true);
+        } else {
+          // No confirmation required (or already confirmed): a session came
+          // back with the signup itself. The auth gate would get there on
+          // its own once the session updates, but jumping straight to the
+          // matches tab — the "at a range now?" card is the first thing on
+          // it — is the point of skipping the email step at all.
+          router.replace('/(tabs)');
+        }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Sign-in failed');
