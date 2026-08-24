@@ -66,6 +66,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="seasons"
+        options={{
+          title: 'Seasons',
+          tabBarIcon: ({ color, size }) => <Ionicons name="trophy" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
         name="leaderboard"
         options={{
           title: 'Rankings',
