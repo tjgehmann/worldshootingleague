@@ -3,13 +3,13 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button, Field, Hint, Kicker, LargeTitle, Note } from '@/components/ui';
+import { Button, Card, Field, Hint, Kicker, LargeTitle, Meta, Note } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { isAdult } from '@/lib/format';
 import { useTheme } from '@/lib/theme';
 
 export default function SignInScreen() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resendConfirmation } = useAuth();
   const t = useTheme();
 
   const [mode, setMode] = useState<'in' | 'up'>('in');
@@ -21,8 +21,13 @@ export default function SignInScreen() {
   const [birthDate, setBirthDate] = useState('');
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Set once signUp() reports a confirmation link is on its way. The whole
+  // form is replaced by a card below rather than showing a note above it —
+  // an inline note next to a form that otherwise looks untouched is easy to
+  // miss, and leaves it genuinely ambiguous whether anything happened.
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
+  const [resent, setResent] = useState(false);
 
   // Checked here as well as in the database, so somebody who is too young
   // finds out before they have made an account they cannot use.
@@ -33,7 +38,6 @@ export default function SignInScreen() {
 
   async function submit() {
     setError(null);
-    setInfo(null);
     setBusy(true);
     try {
       if (mode === 'in') {
@@ -47,15 +51,36 @@ export default function SignInScreen() {
           countryCode: country,
           dateOfBirth: birthDate.trim(),
         });
-        if (confirmationSent) {
-          setInfo('Account created. Check your email for a link to confirm it before signing in.');
-        }
+        if (confirmationSent) setAwaitingConfirmation(true);
+        // No confirmation needed: a session already arrived, and the auth
+        // gate takes it from there — nothing to show here.
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Sign-in failed');
     } finally {
       setBusy(false);
     }
+  }
+
+  async function resend() {
+    setError(null);
+    setBusy(true);
+    try {
+      await resendConfirmation(email);
+      setResent(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'The email could not be sent');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function backToSignIn() {
+    setMode('in');
+    setAwaitingConfirmation(false);
+    setResent(false);
+    setPassword('');
+    setError(null);
   }
 
   return (
@@ -71,99 +96,130 @@ export default function SignInScreen() {
           <View style={{ marginTop: t.space.xxl }}>
             <Kicker tone={t.colors.accent}>Challenging shooters</Kicker>
             <LargeTitle>
-              {mode === 'in' ? 'World Shooting League' : 'Create an account'}
+              {awaitingConfirmation
+                ? 'Check your email'
+                : mode === 'in'
+                  ? 'World Shooting League'
+                  : 'Create an account'}
             </LargeTitle>
           </View>
 
           {error ? <Note tone="error">{error}</Note> : null}
-          {info ? <Note>{info}</Note> : null}
 
-          <Field
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoComplete="email"
-            placeholder="you@club.org"
-          />
-          <Field
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            placeholder="at least 6 characters"
-          />
-
-          {mode === 'up' ? (
+          {awaitingConfirmation ? (
+            <Card>
+              <Meta>
+                Account created for {email.trim()}. Follow the link we sent to confirm it before
+                signing in.
+              </Meta>
+              <Hint>
+                {resent
+                  ? 'Sent again — give it a minute, and check the spam folder.'
+                  : "Nothing arrived after a few minutes? It's easy to miss or get filtered as spam."}
+              </Hint>
+              <Button
+                label={resent ? 'Sent' : 'Resend the email'}
+                variant="quiet"
+                onPress={resend}
+                busy={busy}
+                disabled={resent}
+              />
+              <Button label="Back to sign in" variant="text" onPress={backToSignIn} />
+            </Card>
+          ) : (
             <>
               <Field
-                label="Handle"
-                value={handle}
-                onChangeText={setHandle}
-                placeholder="thomas"
-                hint="Lower case, digits and _, 3–24 characters"
+                label="Email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoComplete="email"
+                placeholder="you@club.org"
               />
               <Field
-                label="Display name"
-                value={displayName}
-                onChangeText={setDisplayName}
-                autoCapitalize="words"
-                placeholder="Thomas Gehmann"
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                placeholder="at least 6 characters"
               />
-              <Field
-                label="Country"
-                value={country}
-                onChangeText={setCountry}
-                autoCapitalize="characters"
-                maxLength={2}
-                placeholder="DE"
-              />
-              <Field
-                label="Date of birth"
-                value={birthDate}
-                onChangeText={setBirthDate}
-                placeholder="1990-05-14"
-                maxLength={10}
-                hint={
-                  ageProblem ??
-                  'The beta is open to shooters of 18 and over. Later it decides your age class.'
+
+              {mode === 'up' ? (
+                <>
+                  <Field
+                    label="Handle"
+                    value={handle}
+                    onChangeText={setHandle}
+                    placeholder="thomas"
+                    hint="Lower case, digits and _, 3–24 characters"
+                  />
+                  <Field
+                    label="Display name"
+                    value={displayName}
+                    onChangeText={setDisplayName}
+                    autoCapitalize="words"
+                    placeholder="Thomas Gehmann"
+                  />
+                  <Field
+                    label="Country"
+                    value={country}
+                    onChangeText={setCountry}
+                    autoCapitalize="characters"
+                    maxLength={2}
+                    placeholder="DE"
+                  />
+                  <Field
+                    label="Date of birth"
+                    value={birthDate}
+                    onChangeText={setBirthDate}
+                    placeholder="1990-05-14"
+                    maxLength={10}
+                    hint={
+                      ageProblem ??
+                      'The beta is open to shooters of 18 and over. Later it decides your age class.'
+                    }
+                  />
+                  <Consent accepted={accepted} onToggle={() => setAccepted(!accepted)} />
+                </>
+              ) : null}
+
+              <Button
+                label={mode === 'in' ? 'Sign in' : 'Create account'}
+                onPress={submit}
+                busy={busy}
+                disabled={
+                  !email ||
+                  !password ||
+                  (mode === 'up' && (!handle || !accepted || !isAdult(birthDate)))
                 }
               />
-              <Consent accepted={accepted} onToggle={() => setAccepted(!accepted)} />
+              <Button
+                label={mode === 'in' ? 'New here? Create an account' : 'I already have an account'}
+                variant="text"
+                onPress={() => {
+                  setMode(mode === 'in' ? 'up' : 'in');
+                  setError(null);
+                }}
+              />
+              {mode === 'in' ? (
+                <Link href="/reset" asChild>
+                  <Button
+                    label="Forgotten your password?"
+                    variant="text"
+                    size="sm"
+                    onPress={() => {}}
+                  />
+                </Link>
+              ) : null}
+
+              <View style={{ marginTop: t.space.xxl }}>
+                <Text style={{ color: t.colors.inkFaint, fontSize: 14, lineHeight: 21 }}>
+                  After every series you report your score with a photo of the display. Your
+                  opponent's result stays hidden until you have both submitted.
+                </Text>
+              </View>
             </>
-          ) : null}
-
-          <Button
-            label={mode === 'in' ? 'Sign in' : 'Create account'}
-            onPress={submit}
-            busy={busy}
-            disabled={
-              !email ||
-              !password ||
-              (mode === 'up' && (!handle || !accepted || !isAdult(birthDate)))
-            }
-          />
-          <Button
-            label={mode === 'in' ? 'New here? Create an account' : 'I already have an account'}
-            variant="text"
-            onPress={() => {
-              setMode(mode === 'in' ? 'up' : 'in');
-              setError(null);
-              setInfo(null);
-            }}
-          />
-          {mode === 'in' ? (
-            <Link href="/reset" asChild>
-              <Button label="Forgotten your password?" variant="text" size="sm" onPress={() => {}} />
-            </Link>
-          ) : null}
-
-          <View style={{ marginTop: t.space.xxl }}>
-            <Text style={{ color: t.colors.inkFaint, fontSize: 14, lineHeight: 21 }}>
-              After every series you report your score with a photo of the display. Your
-              opponent's result stays hidden until you have both submitted.
-            </Text>
-          </View>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

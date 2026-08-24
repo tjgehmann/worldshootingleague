@@ -25,6 +25,8 @@ interface AuthValue {
    * them.
    */
   signUp(input: SignUpInput): Promise<{ confirmationSent: boolean }>;
+  /** Asks Supabase to send the confirmation link again, for when the first one got lost. */
+  resendConfirmation(email: string): Promise<void>;
   signOut(): Promise<void>;
   sendPasswordReset(email: string): Promise<void>;
   setPassword(password: string): Promise<void>;
@@ -104,6 +106,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // be used straight away. No session means a confirmation link is on
         // its way, and there is nothing else here to tell the shooter that.
         return { confirmationSent: !data.session };
+      },
+      async resendConfirmation(email) {
+        const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim() });
+        if (error) throw error;
       },
       async sendPasswordReset(email) {
         const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
